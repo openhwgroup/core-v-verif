@@ -5,6 +5,10 @@
 `define DUT_PATH dut_wrap.cv32e40s_wrapper_i
 `define CONTROLLER_FSM `DUT_PATH.core_i.controller_i.controller_fsm_i
 
+`define CSR_MSTATUS_ADDR    32'h300
+`define CSR_MIE_ADDR        32'h304
+
+
 typedef struct packed {
     st_rvfi rvfi;
     logic valid;
@@ -162,10 +166,11 @@ module controller
     logic   step_q;
 
     logic   interrupt_taken;
-    logic   [31:0] irq_q;
+    logic   [31:0] irq_q, irq_qq;
 
     logic   [MAX_XLEN-1:0] mstatus;
-    logic   mie;
+    logic   wb_mstatus_mie;
+    logic   [MAX_XLEN-1:0] wb_mie, mie, mie_q;
 
     ////////////////////////////////////////////////////////////////////////////
     // STEP CONTROL
@@ -261,27 +266,95 @@ module controller
     ////////////////////////////////////////////////////////////////////////////
     // INTERRUPT ALLOWED
     ////////////////////////////////////////////////////////////////////////////
+    logic mstatus_found, mie_found;
+    always_comb begin
+        mstatus_found   = 1'b0;
+        mie_found       = 1'b0;
+        wb_mie          = '0;
+
+        foreach(wb_pipe_i.rvfi.csr_valid[i]) begin
+            if(wb_pipe_i.rvfi.csr_valid[i] && wb_pipe_i.valid) begin 
+                if(wb_pipe_i.rvfi.csr_addr[i] == `CSR_MSTATUS_ADDR) begin // IF MSTATUS
+                    mstatus = wb_pipe_i.rvfi.csr_wdata[i];
+                    wb_mstatus_mie = (wb_pipe_i.rvfi.csr_wdata[i] & (32'h00000008 )) != 0;
+                    mstatus_found = 1'b1;
+                end            
+                if(wb_pipe_i.rvfi.csr_addr[i] == `CSR_MIE_ADDR) begin 
+                    wb_mie = wb_pipe_i.rvfi.csr_wdata[i];
+                    mie_found = 1'b1;
+                end
+            end
+        end
+
+        if(!mstatus_found) begin
+            wb_mstatus_mie = 0;
+        end
+
+        if(!mie_found) begin
+            wb_mie = wb_mie;
+        end
+    end
 
     always_ff @(posedge clk, negedge rst_n) begin
         if (rst_n == 1'b0) begin
-            irq_q <= 1'b0;
+            mie_q <= 1'b0;
+        end else if (mie_found) begin
+            mie_q <= wb_mie;
         end else begin
-            irq_q <= irq_i;
+            mie_q <= mie_q;
         end
     end
 
     always_comb begin
-        foreach(wb_pipe_i.rvfi.csr_valid[i]) begin
-            if(wb_pipe_i.rvfi.csr_valid[i]) begin 
-                if(wb_pipe_i.rvfi.csr_addr[i] == 12'h300) begin // IF MSTATUS
-                    mstatus = wb_pipe_i.rvfi.csr_wdata[i];
-                    mie = (wb_pipe_i.rvfi.csr_wdata[i] & (32'h00000008 )) != 0;
-                end            
-            end
+        if(mie_found) begin
+            mie = wb_mie;
+        end else begin
+            mie = mie_q;
         end
     end
 
-    assign interrupt_allowed_o = `CONTROLLER_FSM.interrupt_allowed && mie; 
+    // FSM state encoding
+    typedef enum logic {NOT_ALLOWED, ALLOWED} interrupt_state_e;
+
+    interrupt_state_e interrupt_allowed_cs, interrupt_allowed_ns;
+
+    logic interrupt_enabled;
+
+    // FSM Comb
+    always_comb begin
+        case (interrupt_allowed_cs)
+            NOT_ALLOWED: begin
+                if(wb_mstatus_mie) begin
+                    interrupt_allowed_ns <= ALLOWED;
+                    interrupt_enabled <= 1'b1;
+                end else begin
+                    interrupt_allowed_ns <= NOT_ALLOWED;
+                    interrupt_enabled <= 1'b0;
+                end
+            end
+            ALLOWED: begin
+                interrupt_enabled <= 1'b1;
+
+                if(interrupt_taken) begin
+                    interrupt_allowed_ns = NOT_ALLOWED;
+                end else begin
+                    interrupt_allowed_ns = ALLOWED;
+                end
+            end
+            default:;
+        endcase
+
+    end
+
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            interrupt_allowed_cs <= NOT_ALLOWED;
+        end else begin
+            interrupt_allowed_cs <= interrupt_allowed_ns;
+        end
+    end
+
+    assign interrupt_allowed_o = `CONTROLLER_FSM.interrupt_allowed && interrupt_enabled; 
     // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
     //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
 
@@ -292,8 +365,18 @@ module controller
     // INTERRUPT TAKING
     ////////////////////////////////////////////////////////////////////////////
 
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            irq_q <= 1'b0;
+            irq_qq <= 1'b0;
+        end else begin
+            irq_q <= irq_i;
+            irq_qq <= irq_q;
+        end
+    end
+
     always_ff @(posedge clk) begin
-        interrupt_taken = iss_intr(irq_q, interrupt_allowed_o, 2);
+        interrupt_taken = iss_intr(irq_qq, mie, interrupt_allowed_o, 2);
     end
 
     always_comb begin

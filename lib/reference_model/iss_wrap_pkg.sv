@@ -16,7 +16,7 @@ import "DPI-C" function void spike_set_default_params(string profile);
 import "DPI-C" function void spike_step_svLogic(inout vector_rvfi core, inout vector_rvfi reference_model);
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
 
-import "DPI-C" function bit  spike_interrupt(int unsigned mip, int unsigned revert_steps, bit interrupt_allowed);
+import "DPI-C" function bit  spike_interrupt(int unsigned mip, int unsigned mie, int unsigned revert_steps, bit interrupt_allowed);
 import "DPI-C" function void spike_revert_state(int num_steps);
 
 
@@ -59,10 +59,10 @@ import "DPI-C" function void spike_revert_state(int num_steps);
     //This step does not step through an instruction, so iss_step() must be 
     //called to step through the first instruction of the trap handler.
     //Returns true if the interrupt can be taken, and false if CSRs cause the interrupt to not be taken
-    function automatic logic iss_intr(bit [31:0] irq, logic interrupt_allowed, int num_revert_steps);
+    function automatic logic iss_intr(bit [31:0] irq, bit [31:0] mie, logic interrupt_allowed, int num_revert_steps);
         logic interrupt_taken;
         
-        interrupt_taken = spike_interrupt(irq, num_revert_steps, interrupt_allowed);
+        interrupt_taken = spike_interrupt(irq, mie, num_revert_steps, interrupt_allowed);
 
         return interrupt_taken;
     endfunction
