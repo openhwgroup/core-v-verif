@@ -80,9 +80,9 @@ coverage exclude -line 397 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb
 coverage exclude -line 135 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {Case 2'b00 has been added for completion but is never used.}
 coverage exclude -line 155 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {2'b11 choice that never exists in the decoder.}
 coverage exclude -line 295 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {2'b11 choice that never exists in the decoder.}
-coverage exclude -line 2767 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
-coverage exclude -line 2765 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
-coverage exclude -line 2765 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
+coverage exclude -line 2784 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
+coverage exclude -line 2782 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
+coverage exclude -line 2782 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
 coverage exclude -line 419 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0. }
 coverage exclude -line 451 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
 coverage exclude -line 452 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }

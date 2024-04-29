@@ -1,12 +1,16 @@
-coverage exclude -line 1269 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1270 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1271 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1278 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1279 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1280 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1300 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1301 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
-coverage exclude -line 1302 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1264 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1265 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1266 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1273 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1274 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1275 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1295 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1296 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1297 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreachable since C_XF16ALT is unsupported}
+coverage exclude -line 1353 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Default cannot be reached.}
+coverage exclude -line 1362 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Default cannot be reached.}
+coverage exclude -line 1440 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Default cannot be reached.}
+coverage exclude -line 1483 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Default cannot be reached.}
 coverage exclude -line 150 -code e -scope {/uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/fpu_gen/fp_wrapper_i/i_fpnew_bulk/gen_operation_groups[1]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/gen_num_lanes[0]/active_lane/lane_instance/genblk1/i_fpnew_divsqrt_multi_th} -comment {flush_i set to 1'b0}
 coverage exclude -line 151 -code e -scope {/uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/fpu_gen/fp_wrapper_i/i_fpnew_bulk/gen_operation_groups[1]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/gen_num_lanes[0]/active_lane/lane_instance/genblk1/i_fpnew_divsqrt_multi_th} -comment {flush_i set to 1'b0}
 coverage exclude -line 201 -code b -scope {/uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/fpu_gen/fp_wrapper_i/i_fpnew_bulk/gen_operation_groups[1]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/gen_num_lanes[0]/active_lane/lane_instance/genblk1/i_fpnew_divsqrt_multi_th} -comment {out_ready is stuck to 1. We never go to hold state.}
