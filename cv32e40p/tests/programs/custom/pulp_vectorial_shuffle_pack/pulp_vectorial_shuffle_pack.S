@@ -108,31 +108,31 @@ test6:
 #cv.shuffle.sci.h is of the form "cv.shuffle.sci.h rD, rs1, Imm6".
 test7:
     li x17, 0x65611a7f
-    cv.shuffle.sci.h x19, x17, 0xb
+    cv.shuffle.sci.h x19, x17, 0x3
     li x20, 0x65616561
     beq x20, x19, test8
     c.addi x15, 0x1
 test8:
     li x17, 0xb03ec1e9
-    cv.shuffle.sci.h x19, x17, 0x5
+    cv.shuffle.sci.h x19, x17, 0x1
     li x20, 0xc1e9b03e
     beq x20, x19, test9
     c.addi x15, 0x1
 test9:
     li x17, 0x656b1acf
-    cv.shuffle.sci.h x19, x17, 0x7
+    cv.shuffle.sci.h x19, x17, 0x3
     li x20, 0x656b656b
     beq x20, x19, test10
     c.addi x15, 0x1
 test10:
     li x17, 0xc8440911
-    cv.shuffle.sci.h x19, x17, 0xc
+    cv.shuffle.sci.h x19, x17, 0x0
     li x20, 0x09110911
     beq x20, x19, test11
     c.addi x15, 0x1
 test11:
     li x17, 0xaf077cef
-    cv.shuffle.sci.h x19, x17, 0xe
+    cv.shuffle.sci.h x19, x17, 0x2
     li x20, 0xaf077cef
     beq x20, x19, test12
     c.addi x15, 0x1

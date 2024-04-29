@@ -1,3 +1,5 @@
+# Copyright (c) 2024 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 .globl _start
 .globl main
