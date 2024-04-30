@@ -198,7 +198,6 @@ module uvmt_cv32e40s_reference_model_wrap
     #1;  // time for clknrst_if to set the clk_period
     wait (`CLKNRST_IF.clk_period != 0.0);
     `uvm_info("RM_WRAP", "Starting RM clock", UVM_LOW)
-    #0.5 // Slightly offset the rm clock
     clknrst_if_rm.set_period(`CLKNRST_IF.clk_period);
     clknrst_if_rm.start_clk();
   end
@@ -264,7 +263,8 @@ module uvmt_cv32e40s_reference_model_wrap
 
     assign rvfi_core.clk = `RVFI_IF.clk;
 
-    always_comb begin
+    //Delay one cycle to keep in sync with the reference model
+    always_ff @(posedge `RVFI_IF.clk) begin
       rvfi_core.valid     <= `RVFI_IF.rvfi_valid;
 
       rvfi_core.pc_rdata  <= `RVFI_IF.rvfi_pc_rdata;
