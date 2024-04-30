@@ -8,6 +8,7 @@ riscv_subproject_deps = \
 	softfloat \
 
 riscv_CFLAGS = -fPIC
+riscv_LDFLAGS = -lyaml-cpp
 
 riscv_install_shared_lib = yes
 
@@ -92,6 +93,7 @@ riscv_test_srcs =
 
 riscv_gen_hdrs = \
 	insn_list.h \
+	yaml-cpp \
 
 
 riscv_insn_ext_i = \
