@@ -70,9 +70,8 @@ sprojs         := @subprojects@
 sprojs_enabled := @subprojects_enabled@
 
 EDA_INCLUDES := -I$(VCS_HOME)/include -I/$(QUESTASIM_HOME)/include -I$(XCEL_HOME)/include -I$(VERILATOR_INSTALL_DIR)/share/verilator/include/vltstd/
-YAML_CPP_INCLUDES := -I$(shell pwd)/../yaml-cpp/lib/include/
 
-sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled)) $(EDA_INCLUDES) $(YAML_CPP_INCLUDES)
+sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled)) $(EDA_INCLUDES)
 VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 
 #-------------------------------------------------------------------------
@@ -126,9 +125,9 @@ mcppbs-LDFLAGS := @LDFLAGS@ @BOOST_LDFLAGS@
 all-link-flags := $(mcppbs-LDFLAGS) $(LDFLAGS)
 
 comma := ,
-LD            := $(CXX) 
-LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ -lyaml-cpp
-LINK          := $(LD) -L. $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS))) -L$(shell pwd)/../yaml-cpp/lib/lib64
+LD            := $(CXX)
+LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@
+LINK          := $(LD) -L. $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
 
 # Library creation
 
@@ -384,12 +383,6 @@ check : check-cpp check-bin
 # Installation
 #-------------------------------------------------------------------------
 
-yaml-cpp :
-	mkdir -p $(shell pwd)/../yaml-cpp/lib
-	cmake -S $(shell pwd)/../yaml-cpp -B $(shell pwd)/../yaml-cpp/build -DCMAKE_INSTALL_PREFIX=$(shell pwd)/../yaml-cpp/lib -DYAML_BUILD_SHARED_LIBS=OFF
-	make -C $(shell pwd)/../yaml-cpp/build
-	make -C $(shell pwd)/../yaml-cpp/build install
-
 install-config-hdrs : config.h
 	$(MKINSTALLDIRS) $(install_hdrs_dir)
 	for dir in $(install_config_hdrs); \
@@ -505,8 +498,8 @@ junk += $(project_name)-*.tar.gz
 # Default
 #-------------------------------------------------------------------------
 
-all : yaml-cpp $(install_hdrs) $(install_libs) $(install_exes)
-.PHONY : yaml-cpp all
+all : $(install_hdrs) $(install_libs) $(install_exes)
+.PHONY : all
 
 #-------------------------------------------------------------------------
 # Makefile debugging
