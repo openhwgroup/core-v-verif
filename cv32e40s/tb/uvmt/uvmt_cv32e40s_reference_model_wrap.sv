@@ -38,31 +38,6 @@ module rvfi_compare(
   rvfi_if_t rvfi_rm
 );
 
-
-  function void check_32bit(input string compared, input bit [31:0] core, input logic [31:0] rm); 
-      static int now = 0;
-      if (now != $time) begin
-        now = $time;
-      end
-      if (core !== rm) begin
-        `uvm_error("Step-and-Compare", $sformatf("%s core=0x%8h and rm=0x%8h PC=0x%8h", compared, core, rm, rvfi_core.pc_rdata))
-      end else begin
-        `uvm_info("Step-and-Compare", $sformatf("%s core=0x%8h==core", compared, core), UVM_DEBUG)
-      end
-   endfunction // check_32bit
-
-function void check_4bit(input string compared, input bit [3:0] core, input logic [3:0] rm); 
-      static int now = 0;
-      if (now != $time) begin
-        now = $time;
-      end
-      if (core !== rm) begin
-        `uvm_error("Step-and-Compare", $sformatf("%s core=0x%8h and rm=0x%8h PC=0x%8h", compared, core, rm, rvfi_core.pc_rdata))
-      end else begin
-        `uvm_info("Step-and-Compare", $sformatf("%s core=0x%8h==core", compared, core), UVM_DEBUG)
-      end
-   endfunction // check_4bit
-
   //use assertion to compare the RVFI signals
   rvfi_valid_a: assert property( @(posedge rvfi_core.clk)
     rvfi_core.valid |-> rvfi_rm.valid)
@@ -98,11 +73,53 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
   
   rvfi_intr_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.intr == rvfi_core.intr))
-    else `uvm_error("RVFI_INTR", $sformatf("rvfi_rm.intr=%0h rvfi_core.intr=%0h",$sampled(rvfi_rm.intr), $sampled(rvfi_core.intr)));
+    else `uvm_error("RVFI_INTR", $sformatf("rvfi_rm.intr=%0h #%0d rvfi_core.intr=%0h #%0d",$sampled(rvfi_rm.intr),($sampled(rvfi_rm.intr) >> 3), $sampled(rvfi_core.intr), ($sampled(rvfi_core.intr) >>3)));
 
   rvfi_mode_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.mode == rvfi_core.mode))
     else `uvm_error("RVFI_MODE", $sformatf("rvfi_rm.mode=%0h rvfi_core.mode=%0h",$sampled(rvfi_rm.mode), $sampled(rvfi_core.mode)));
+
+  rvfi_rd1_addr_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid |-> (rvfi_rm.rd1_addr == rvfi_core.rd1_addr))
+    else `uvm_error("RVFI_RD1_ADDR", $sformatf("rvfi_rm.rd1_addr=%0h rvfi_core.rd1_addr=%0h",$sampled(rvfi_rm.rd1_addr), $sampled(rvfi_core.rd1_addr)));
+
+  rvfi_rd1_wdata_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid && rvfi_rm.rd1_addr |-> (rvfi_rm.rd1_wdata == rvfi_core.rd1_wdata))
+    else `uvm_error("RVFI_RD1_WDATA", $sformatf("rvfi_rm.rd1_wdata=%0h rvfi_core.rd1_wdata=%0h",$sampled(rvfi_rm.rd1_wdata), $sampled(rvfi_core.rd1_wdata)));
+
+  rvfi_mem_rmask_a: assert property(@ (posedge rvfi_core.clk) 
+    rvfi_rm.valid |-> (rvfi_rm.mem_rmask == rvfi_core.mem_rmask[3:0]))
+    else `uvm_error("RVFI_MEM_RMASK", $sformatf("rvfi_rm.mem_rmask=%0h rvfi_core.mem_rmask=%0h",$sampled(rvfi_rm.mem_rmask), $sampled(rvfi_core.mem_rmask)));
+
+  rvfi_mem_wmask_a: assert property(@ (posedge rvfi_core.clk) 
+    rvfi_rm.valid |-> (rvfi_rm.mem_wmask == rvfi_core.mem_wmask[3:0]))
+    else `uvm_error("RVFI_MEM_WMASK", $sformatf("rvfi_rm.mem_wmask=%0h rvfi_core.mem_wmask=%0h",$sampled(rvfi_rm.mem_wmask), $sampled(rvfi_core.mem_wmask)));
+
+  rvfi_mem_addr_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and ((rvfi_core.mem_rmask || rvfi_core.mem_wmask))|-> (rvfi_rm.mem_addr[31:0] == rvfi_core.mem_addr[31:0]))
+    else `uvm_error("RVFI_MEM_ADDR", $sformatf("pc %0h rvfi_rm.mem_addr=%0h rvfi_core.mem_addr=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_addr), $sampled(rvfi_core.mem_addr)));
+
+  rvfi_mem_wdata_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_wmask)|-> (rvfi_rm.mem_wdata[31:0] == rvfi_core.mem_wdata[31:0]))
+    else `uvm_error("RVFI_MEM_WDATA", $sformatf("pc %0h rvfi_rm.mem_wdata=%0h rvfi_core.mem_wdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_wdata), $sampled(rvfi_core.mem_wdata)));
+
+  rvfi_mem_rdata_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_rmask)|-> (rvfi_rm.mem_rdata[31:0] == rvfi_core.mem_rdata[31:0]))
+    else `uvm_error("RVFI_MEM_RDATA", $sformatf("pc %0h rvfi_rm.mem_rdata=%0h rvfi_core.mem_rdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_rdata), $sampled(rvfi_core.mem_rdata)));
+
+  rvfi_pc_wdata_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid |-> (rvfi_rm.pc_wdata == rvfi_core.pc_wdata))
+    else `uvm_error("RVFI_PC_WDATA", $sformatf("rvfi_rm.pc_wdata=%0h rvfi_core.pc_wdata=%0h",$sampled(rvfi_rm.pc_wdata), $sampled(rvfi_core.pc_wdata)));
+
+  /* TODO: Spike outputs wrong values for rs1_addr and rs2_addr
+  rvfi_rs1_addr_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid |-> (rvfi_rm.rs1_addr == rvfi_core.rs1_addr))
+    else `uvm_error("RVFI_RS1_ADDR", $sformatf("rvfi_rm.rs1_addr=%0h rvfi_core.rs1_addr=%0h",$sampled(rvfi_rm.rs1_addr), $sampled(rvfi_core.rs1_addr)));
+
+  rvfi_rs2_addr_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid |-> (rvfi_rm.rs2_addr == rvfi_core.rs2_addr))
+    else `uvm_error("RVFI_RS2_ADDR", $sformatf("rvfi_rm.rs2_addr=%0h rvfi_core.rs2_addr=%0h",$sampled(rvfi_rm.rs2_addr), $sampled(rvfi_core.rs2_addr)));
+  */
 
   /*TODO: 
   ixl
@@ -118,58 +135,6 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
 
   CSRs
   */
-
-  // TODO: implement these with assertions
-  always_ff @(posedge rvfi_core.clk) begin
-    if (rvfi_rm.valid) begin
-      //Disable instructions with multiple memory accesses
-      if(~(rvfi_core.mem_rmask[511:4] || rvfi_core.mem_wmask[511:4])) begin
-        //Disable checking of rd1 if a trap occurs, since core and Spike mismatch
-        if(~(rvfi_core.trap || rvfi_rm.trap)) begin
-          check_32bit("rd1_addr", rvfi_core.rd1_addr, rvfi_rm.rd1_addr);
-
-          // rd1_wdata is not guaranteed to be 0 even though rd1_addr is 0
-          if(rvfi_core.rd1_addr != 0) begin
-            check_32bit("rd1_wdata", rvfi_core.rd1_wdata, rvfi_rm.rd1_wdata);
-          end
-        end
-
-        //Only check addr and data if there is a memory access
-        check_32bit("mem_rmask", rvfi_core.mem_rmask, rvfi_rm.mem_rmask);
-
-        check_32bit("mem_wmask", rvfi_core.mem_wmask, rvfi_rm.mem_wmask);
-        if (rvfi_core.mem_rmask) begin
-
-          check_32bit("mem_addr", rvfi_core.mem_addr, rvfi_rm.mem_addr);
-
-          //check_32bit("mem_rdata", rvfi_core.mem_rdata, rvfi_rm.mem_rdata );
-        end else if (rvfi_core.mem_wmask) begin
-
-          check_32bit("mem_addr", rvfi_core.mem_addr, rvfi_rm.mem_addr);
-
-          //check_32bit("mem_wdata", rvfi_core.mem_wdata, rvfi_rm.mem_wdata);
-
-        end 
-
-        //Only compare the bytes that are masked
-        for (int i = 0; i < 4; i++) begin
-          if (rvfi_core.mem_wmask[(4) + i]) begin
-            check_4bit($sformatf("mem_wdata[%0d]", i), rvfi_core.mem_wdata[i*8 +:8], rvfi_rm.mem_wdata[i*8 +:8]);
-          end
-
-          if (`RVFI_IF.rvfi_mem_rmask[(4) + i]) begin
-          check_4bit($sformatf("mem_wdata[%0d]", i), rvfi_core.mem_rdata[i*8 +:8], rvfi_rm.mem_rdata[i*8 +:8]);
-        end
-
-      end
-
-      end
-
-    end
-
-  end
-  
-
 
 endmodule
 
