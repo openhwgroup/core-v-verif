@@ -179,6 +179,7 @@ function void uvma_axi_amo_synchronizer_c::add_w_trs(uvma_axi_base_seq_item_c ax
       w_trs_class.push_back(axi_item.aw_id);
 
       if(w_trs_item_bp.size() > 0) begin
+
          do begin
 
             w_trs_queue[axi_item.aw_id][i].mon_req.w_valid      = w_trs_item_bp[0].w_valid;
@@ -200,11 +201,12 @@ function void uvma_axi_amo_synchronizer_c::add_w_trs(uvma_axi_base_seq_item_c ax
             w_trs_id[w_trs_queue[axi_item.aw_id][i-1].mon_req.aw_id].push_back(axi_item.write_trs_id);
             w_trs_class.delete(0);
          end
+
       end
    end
 
    if(axi_item.w_valid && axi_item.w_ready) begin
-      if(w_trs_queue.size() > 0 && w_trs_queue[w_trs_class[0]].size() > 0) begin
+      if(w_trs_queue.size() > 0 && w_trs_queue[w_trs_class[0]].size() > 0 && w_trs_queue[w_trs_class[0]][$].mon_req.w_trs_status == ADDR_DATA_NOT_COMPLETE) begin
          `uvm_info( "Core Test", $sformatf("NEW W_TRS"), UVM_HIGH)
          foreach(w_trs_queue[w_trs_class[0]][i]) begin
 

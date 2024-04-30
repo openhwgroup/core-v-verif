@@ -246,7 +246,7 @@ function void uvma_axi_synchronizer_c::add_w_trs(uvma_axi_base_seq_item_c axi_it
    end
 
    if(axi_item.w_valid && axi_item.w_ready) begin
-      if(w_trs_queue.size() > 0 && w_trs_queue[w_trs_class[0]].size() > 0) begin
+      if(w_trs_queue.size() > 0 && w_trs_queue[w_trs_class[0]].size() > 0 && w_trs_queue[w_trs_class[0]][$].mon_req.w_trs_status == ADDR_DATA_NOT_COMPLETE) begin
 
          `uvm_info( "Core Test", $sformatf("NEW W_TRS"), UVM_HIGH)
          foreach(w_trs_queue[w_trs_class[0]][i]) begin
