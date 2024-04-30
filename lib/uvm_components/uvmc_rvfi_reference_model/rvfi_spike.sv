@@ -45,15 +45,15 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         if($value$plusargs("config_file=%s", config_file)) begin
             void'(spike_set_params_from_file(config_file));
         end else begin
-            rtl_isa = rvfi_get_isa_str(core_cfg);
+            rtl_isa = get_isa_str(core_cfg);
 
-            rtl_priv = rvfi_get_priv_str(core_cfg);
+            rtl_priv = get_priv_str(core_cfg);
 
             if (core_cfg.ext_cv32a60x_supported) begin
                 void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
             end
 
-            # This block is redundant wrt. another copy below.
+            // FIXME TODO: This block is redundant wrt. another copy below.
             if (core_cfg.boot_addr_valid) begin
                 void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
             end
@@ -66,7 +66,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             void'(spike_set_param_str(base, "priv", rtl_priv));
             void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
 
-	    # The next four lines are redundant wrt. subsequent four line blocks.
+	    // FIXME TODO: The next four lines are redundant wrt. subsequent four line blocks.
             void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
             void'(spike_set_param_uint64_t(base, "mhartid", core_cfg.mhartid));
             void'(spike_set_param_uint64_t(base, "marchid", core_cfg.marchid));
@@ -82,7 +82,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             void'(spike_set_param_uint64_t(base, "marchid_override_mask", 64'hFFFFFFFF));
             void'(spike_set_param_uint64_t(base, "marchid_override_value", core_cfg.marchid));
 
-            # Next two line blocks are duplicates of each other
+            // FIXME TODO: Next two line blocks are duplicates of each other
             void'(spike_set_param_uint64_t(base, "mvendorid_override_mask", 64'hFFFFFFFF));
             void'(spike_set_param_uint64_t(base, "mvendorid_override_value", core_cfg.mvendorid));
 
