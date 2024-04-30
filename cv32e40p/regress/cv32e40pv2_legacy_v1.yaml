@@ -157,17 +157,51 @@ tests:
     dir: cv32e40p/sim/uvmt
     cmd: make test COREV=YES TEST=matmul_32b_int CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
 
+  # Can only run with num_mhpmcounter_29 configuration
   mhpmcounter29_csr_access_test_1:
-    build: uvmt_cv32e40p
+    build: uvmt_cv32e40p_num_mhpmcounter_29
     description: mhpmcounter29_csr_access_test_1
     dir: cv32e40p/sim/uvmt
     cmd: make test COREV=YES TEST=mhpmcounter29_csr_access_test_1 CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    skip_sim: default
+              no_pulp
+              pulp
+              pulp_fpu
+              pulp_fpu_1cyc_lat
+              pulp_fpu_2cyc_lat
+              pulp_fpu_zfinx
+              pulp_fpu_zfinx_1cyc_lat
+              pulp_fpu_zfinx_2cyc_lat
+              pulp_cluster
+              pulp_cluster_fpu
+              pulp_cluster_fpu_1cyc_lat
+              pulp_cluster_fpu_2cyc_lat
+              pulp_cluster_fpu_zfinx
+              pulp_cluster_fpu_zfinx_1cyc_lat
+              pulp_cluster_fpu_zfinx_2cyc_lat
 
+  # Can only run with num_mhpmcounter_29 configuration
   mhpmcounter29_csr_access_test_2:
-    build: uvmt_cv32e40p
+    build: uvmt_cv32e40p_num_mhpmcounter_29
     description: mhpmcounter29_csr_access_test_2
     dir: cv32e40p/sim/uvmt
     cmd: make test COREV=YES TEST=mhpmcounter29_csr_access_test_2 CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    skip_sim: default
+              no_pulp
+              pulp
+              pulp_fpu
+              pulp_fpu_1cyc_lat
+              pulp_fpu_2cyc_lat
+              pulp_fpu_zfinx
+              pulp_fpu_zfinx_1cyc_lat
+              pulp_fpu_zfinx_2cyc_lat
+              pulp_cluster
+              pulp_cluster_fpu
+              pulp_cluster_fpu_1cyc_lat
+              pulp_cluster_fpu_2cyc_lat
+              pulp_cluster_fpu_zfinx
+              pulp_cluster_fpu_zfinx_1cyc_lat
+              pulp_cluster_fpu_zfinx_2cyc_lat
 
   misalign:
     build: uvmt_cv32e40p
