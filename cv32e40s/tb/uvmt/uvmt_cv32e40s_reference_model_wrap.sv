@@ -120,7 +120,7 @@ module rvfi_compare(
     rvfi_rm.valid |-> (rvfi_rm.rs2_addr == rvfi_core.rs2_addr))
     else `uvm_error("RVFI_RS2_ADDR", $sformatf("rvfi_rm.rs2_addr=%0h rvfi_core.rs2_addr=%0h",$sampled(rvfi_rm.rs2_addr), $sampled(rvfi_core.rs2_addr)));
   */
-
+  
   /*TODO: 
   ixl
   pc_wdata
@@ -227,19 +227,17 @@ module uvmt_cv32e40s_reference_model_wrap
               reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata,
               reference_model_i.pipeline_shell_i.ex_wb_pipe.valid,
               rvfi_rm.pc_rdata, rvfi_rm.valid);
-      $sformat(pipelineLine, "%s| ia %x / %x | it %x |  li %x / %x | db %x | f %x | cp %x | si %x | ib %x | cf %x | sl %x |",pipelineLine,
+      $sformat(pipelineLine, "%s| irq %x| ia %x / %x | it %x | ie %x | mie %x / %x | INTR %x %d / %x %d |",pipelineLine,
+              `INTERRUPT_IF.irq,
               `CORE_I.controller_i.controller_fsm_i.interrupt_allowed,
               reference_model_i.pipeline_shell_i.controller_i.interrupt_allowed_o,
               reference_model_i.pipeline_shell_i.controller_i.interrupt_taken,
-              `CORE_I.controller_i.controller_fsm_i.lsu_interruptible_i,
-              reference_model_i.pipeline_shell_i.controller_i.lsu_interruptible,
-              `CORE_I.controller_i.controller_fsm_i.debug_interruptible,
-              `CORE_I.controller_i.controller_fsm_i.fencei_ongoing,
-              `CORE_I.controller_i.controller_fsm_i.clic_ptr_in_pipeline,
-              `CORE_I.controller_i.controller_fsm_i.sequence_interruptible,
-              `CORE_I.controller_i.controller_fsm_i.interrupt_blanking_q,
-              `CORE_I.controller_i.controller_fsm_i.csr_flush_ack_q,
-              (`CORE_I.controller_i.controller_fsm_i.ctrl_fsm_cs == SLEEP));
+              reference_model_i.pipeline_shell_i.controller_i.interrupt_enabled,
+              `CORE_I.mie,
+              reference_model_i.pipeline_shell_i.controller_i.mie,
+              `RVFI_IF.rvfi_intr, (`RVFI_IF.rvfi_intr >> 3),
+              rvfi_rm.intr, (rvfi_rm.intr >> 3)
+              );
 
       if(rvfi_core.valid) begin
         $sformat(line, " %-8s | %d | %x (%x) | %x, (%x) | IF %x | ID %x | EX %x | WB %x |",`RVFI_IF.instr_asm.instr.name(), clock_cnt, rvfi_core.pc_rdata, rvfi_core.insn, rvfi_rm.pc_rdata, rvfi_rm.insn, `CORE_I.if_id_pipe.pc, `CORE_I.id_ex_pipe.pc, `CORE_I.ex_wb_pipe.pc, rvfi_core.pc_rdata);
