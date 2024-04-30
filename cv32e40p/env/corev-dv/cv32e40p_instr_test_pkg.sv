@@ -118,19 +118,24 @@ package cv32e40p_instr_test_pkg;
   // Push general purpose register to the debugger stack
   function automatic void push_gpr_to_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
                                                      ref string instr[$]);
-    string store_instr = (XLEN == 32) ? "sw" : "sd";
+    string        store_instr = (XLEN == 32) ? "sw" : "sd";
+    bit           done_store_mscratch = 1'b0;
+    int unsigned  total_gpr = 32;
     // Reserve space from debugger stack to save all 32 GPR except for x0 + MSCRATCH
     instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", cfg_corev.dp, cfg_corev.dp, 32 * (XLEN/8)));
     // Push all GPRs to debugger stack
-    for(int i = 1; i < 32; i++) begin
+    for(int i = 1; i < total_gpr; i++) begin
       if (i == cfg_corev.dp) continue;
       if (i == cfg_corev.sp) continue;
       if (i == cfg_corev.tp) continue;
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, (i-1) * (XLEN/8), cfg_corev.dp));
+      if (!done_store_mscratch) begin
+        // Read and Push MSCRATCH to debugger stack
+        instr.push_back($sformatf("csrrw x%0d, 0x340, x%0d # MSCRATCH", i, i));
+        instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, (total_gpr-1) * (XLEN/8), cfg_corev.dp));
+        done_store_mscratch = 1;
+      end
     end
-    // Read and Push MSCRATCH to debugger stack
-    instr.push_back($sformatf("csrrw x5, 0x340, x5 # MSCRATCH"));
-    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, 5, 31 * (XLEN/8), cfg_corev.dp));
   endfunction : push_gpr_to_debugger_stack
 
   // Push floating point registers to the debugger stack
@@ -212,17 +217,22 @@ package cv32e40p_instr_test_pkg;
   // Pop general purpose register from debugger stack
   function automatic void pop_gpr_from_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
                                                       ref string instr[$]);
-    string load_instr = (XLEN == 32) ? "lw" : "ld";
+    string        load_instr = (XLEN == 32) ? "lw" : "ld";
+    bit           done_load_mscratch = 1'b0;
+    int unsigned  total_gpr = 32;
     // Pop user mode GPRs from kernel stack
-    for(int i = 1; i < 32; i++) begin
+    for(int i = 1; i < total_gpr; i++) begin
       if (i == cfg_corev.dp) continue;
       if (i == cfg_corev.sp) continue;
       if (i == cfg_corev.tp) continue;
+      if (!done_load_mscratch) begin
+        // Pop and Write MSCRATCH from debugger stack
+        instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, (total_gpr-1) * (XLEN/8), cfg_corev.dp));
+        instr.push_back($sformatf("csrrw x%0d, 0x340, x%0d # MSCRATCH", i, i));
+        done_load_mscratch = 1;
+      end
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, (i-1) * (XLEN/8), cfg_corev.dp));
     end
-    // Pop and Write MSCRATCH from debugger stack
-    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, 5, 31 * (XLEN/8), cfg_corev.dp));
-    instr.push_back($sformatf("csrrw x5, 0x340, x5 # MSCRATCH"));
     // Restore debugger stack pointer
     instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
   endfunction : pop_gpr_from_debugger_stack
