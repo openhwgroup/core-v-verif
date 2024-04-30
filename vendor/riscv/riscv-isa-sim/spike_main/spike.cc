@@ -123,8 +123,7 @@ static void help(int exit_code = 1)
                   "                        A uint64_t value can be any unsigned number literal\n"
                   "                        in C/C++ syntax (42, 0x2a, etc.)\n"
                   "                        This flag can be used multiple times.\n");
-  fprintf(stderr, "  --param-file <Yaml file path>  Set parameters to file-specified value (see 'spike --print-params' for a full list.)\n"
-                  "                          This flag can be used multiple times.\n");
+  fprintf(stderr, "  --param-file <Yaml file path>  Set parameters to file-specified value (see 'spike --print-params' for a full list.)\n");
 
   exit(exit_code);
 }
