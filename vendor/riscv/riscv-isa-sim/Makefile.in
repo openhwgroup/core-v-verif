@@ -389,7 +389,6 @@ yaml-cpp :
 	cmake -S $(shell pwd)/../yaml-cpp -B $(shell pwd)/../yaml-cpp/build -DCMAKE_INSTALL_PREFIX=$(shell pwd)/../yaml-cpp/lib -DYAML_BUILD_SHARED_LIBS=OFF
 	make -C $(shell pwd)/../yaml-cpp/build
 	make -C $(shell pwd)/../yaml-cpp/build install
-.PHONY : yaml-cpp
 
 install-config-hdrs : config.h
 	$(MKINSTALLDIRS) $(install_hdrs_dir)
