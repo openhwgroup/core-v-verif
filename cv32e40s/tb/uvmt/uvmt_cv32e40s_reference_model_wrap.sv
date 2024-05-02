@@ -38,103 +38,88 @@ module rvfi_compare(
   rvfi_if_t rvfi_rm
 );
 
-  //use assertion to compare the RVFI signals
+`define ASSERT_EQUAL(NAME, NAME_STR) \
+    NAME``_a: assert property( @(posedge rvfi_core.clk) \
+      rvfi_rm.valid |-> (rvfi_rm.NAME == rvfi_core.NAME)) \
+      else `uvm_error(NAME_STR, $sformatf("PC: %0h rvfi_rm.%0s=%0h rvfi_core.%0s=%0h", rvfi_rm.pc_rdata, NAME_STR, $sampled(rvfi_rm.NAME), NAME_STR, $sampled(rvfi_core.NAME)))
+
   rvfi_valid_a: assert property( @(posedge rvfi_core.clk)
-    rvfi_core.valid |-> rvfi_rm.valid)
+    rvfi_core.valid || rvfi_rm.valid |-> (rvfi_rm.valid == rvfi_core.valid))
     else `uvm_error("RVFI_VALID", $sformatf("rvfi_rm.valid=%0h rvfi_core.valid=%0h",$sampled(rvfi_rm.valid), $sampled(rvfi_core.valid)));
 
-  rvfi_pc_a: assert property( @(posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.pc_rdata == rvfi_core.pc_rdata))
-    else `uvm_error("RVFI_PC", $sformatf("rvfi_rm.pc_rdata=%0h rvfi_core.pc_rdata=%0h",$sampled(rvfi_rm.pc_rdata), $sampled(rvfi_core.pc_rdata)));
+  `ASSERT_EQUAL(insn, "RVFI_INSN")
+  `ASSERT_EQUAL(trap, "RVFI_TRAP")
+  `ASSERT_EQUAL(halt, "RVFI_HALT")
+  `ASSERT_EQUAL(dbg, "RVFI_DBG")
+  `ASSERT_EQUAL(dbg_mode, "RVFI_DBG_MODE")
+  `ASSERT_EQUAL(nmip, "RVFI_NMIP")
+  `ASSERT_EQUAL(intr, "RVFI_INTR")
+  `ASSERT_EQUAL(mode, "RVFI_MODE")
+  `ASSERT_EQUAL(rd1_addr, "RVFI_RD1_ADDR")
 
-  rvfi_insn_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.insn == rvfi_core.insn))
-    else `uvm_error("RVFI_INSN", $sformatf("rvfi_rm.insn=%0h rvfi_core.insn=%0h",$sampled(rvfi_rm.insn), $sampled(rvfi_core.insn)));
+  // TODO: Spike outputs wrong values for rs1_addr and rs2_addr
+  //`ASSERT_EQUAL(rs1_addr, "RVFI_RS1_ADDR")
+  //`ASSERT_EQUAL(rs1_rdata, "RVFI_RS1_RDATA")
+  //`ASSERT_EQUAL(rs2_addr, "RVFI_RS2_ADDR")
+  //`ASSERT_EQUAL(rs2_rdata, "RVFI_RS2_RDATA")
 
-  rvfi_trap_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.trap == rvfi_core.trap))
-    else `uvm_error("RVFI_TRAP", $sformatf("rvfi_rm.trap=%0h rvfi_core.trap=%0h",$sampled(rvfi_rm.trap), $sampled(rvfi_core.trap)));
+  // TODO: The following assertions cant use the macro because they require more conditions
 
-  rvfi_halt_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.halt == rvfi_core.halt))
-    else `uvm_error("RVFI_HALT", $sformatf("rvfi_rm.halt=%0h rvfi_core.halt=%0h",$sampled(rvfi_rm.halt), $sampled(rvfi_core.halt)));
-
-  rvfi_dbg_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.dbg == rvfi_core.dbg))
-    else `uvm_error("RVFI_DBG", $sformatf("rvfi_rm.dbg=%0h rvfi_core.dbg=%0h",$sampled(rvfi_rm.dbg), $sampled(rvfi_core.dbg)));
-
-  rvfi_dbg_mode_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.dbg_mode == rvfi_core.dbg_mode))
-    else `uvm_error("RVFI_DBG_MODE", $sformatf("rvfi_rm.dbg_mode=%0h rvfi_core.dbg_mode=%0h",$sampled(rvfi_rm.dbg_mode), $sampled(rvfi_core.dbg_mode)));
-
-  rvfi_nmip_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.nmip == rvfi_core.nmip))
-    else `uvm_error("RVFI_NMIP", $sformatf("rvfi_rm.nmip=%0h rvfi_core.nmip=%0h",$sampled(rvfi_rm.nmip), $sampled(rvfi_core.nmip)));
-  
-  rvfi_intr_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.intr == rvfi_core.intr))
-    else `uvm_error("RVFI_INTR", $sformatf("rvfi_rm.intr=%0h #%0d rvfi_core.intr=%0h #%0d",$sampled(rvfi_rm.intr),($sampled(rvfi_rm.intr) >> 3), $sampled(rvfi_core.intr), ($sampled(rvfi_core.intr) >>3)));
-
-  rvfi_mode_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.mode == rvfi_core.mode))
-    else `uvm_error("RVFI_MODE", $sformatf("rvfi_rm.mode=%0h rvfi_core.mode=%0h",$sampled(rvfi_rm.mode), $sampled(rvfi_core.mode)));
-
-  rvfi_rd1_addr_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.rd1_addr == rvfi_core.rd1_addr))
-    else `uvm_error("RVFI_RD1_ADDR", $sformatf("rvfi_rm.rd1_addr=%0h rvfi_core.rd1_addr=%0h",$sampled(rvfi_rm.rd1_addr), $sampled(rvfi_core.rd1_addr)));
-
+  //`ASSERT_EQUAL(rd1_wdata, "RVFI_RD1_WDATA")
   rvfi_rd1_wdata_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid && rvfi_rm.rd1_addr |-> (rvfi_rm.rd1_wdata == rvfi_core.rd1_wdata))
     else `uvm_error("RVFI_RD1_WDATA", $sformatf("rvfi_rm.rd1_wdata=%0h rvfi_core.rd1_wdata=%0h",$sampled(rvfi_rm.rd1_wdata), $sampled(rvfi_core.rd1_wdata)));
 
+  //`ASSERT_EQUAL(mem_rmask, "RVFI_MEM_RMASK")
   rvfi_mem_rmask_a: assert property(@ (posedge rvfi_core.clk) 
-    rvfi_rm.valid |-> (rvfi_rm.mem_rmask == rvfi_core.mem_rmask[3:0]))
+    rvfi_rm.valid |-> (rvfi_rm.mem_rmask == rvfi_core.mem_rmask[3:0])) 
     else `uvm_error("RVFI_MEM_RMASK", $sformatf("rvfi_rm.mem_rmask=%0h rvfi_core.mem_rmask=%0h",$sampled(rvfi_rm.mem_rmask), $sampled(rvfi_core.mem_rmask)));
 
+  //`ASSERT_EQUAL(mem_wmask, "RVFI_MEM_WMASK")
   rvfi_mem_wmask_a: assert property(@ (posedge rvfi_core.clk) 
     rvfi_rm.valid |-> (rvfi_rm.mem_wmask == rvfi_core.mem_wmask[3:0]))
     else `uvm_error("RVFI_MEM_WMASK", $sformatf("rvfi_rm.mem_wmask=%0h rvfi_core.mem_wmask=%0h",$sampled(rvfi_rm.mem_wmask), $sampled(rvfi_core.mem_wmask)));
 
+  //`ASSERT_EQUAL(mem_addr, "RVFI_MEM_ADDR")
   rvfi_mem_addr_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid and ((rvfi_core.mem_rmask || rvfi_core.mem_wmask))|-> (rvfi_rm.mem_addr[31:0] == rvfi_core.mem_addr[31:0]))
-    else `uvm_error("RVFI_MEM_ADDR", $sformatf("pc %0h rvfi_rm.mem_addr=%0h rvfi_core.mem_addr=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_addr), $sampled(rvfi_core.mem_addr)));
+    else `uvm_error("RVFI_MEM_ADDR", $sformatf("PC: %0h rvfi_rm.mem_addr=%0h rvfi_core.mem_addr=%0h", $sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_addr), $sampled(rvfi_core.mem_addr)));
 
-  rvfi_mem_wdata_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid and (rvfi_core.mem_wmask)|-> (rvfi_rm.mem_wdata[31:0] == rvfi_core.mem_wdata[31:0]))
-    else `uvm_error("RVFI_MEM_WDATA", $sformatf("pc %0h rvfi_rm.mem_wdata=%0h rvfi_core.mem_wdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_wdata), $sampled(rvfi_core.mem_wdata)));
+  // rvfi_mem_wdata is 32 bits wide, but we only check the bytes masked by mem_wmask
+  rvfi_mem_wdata_0_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_wmask[0])|-> (rvfi_rm.mem_wdata[7:0] == rvfi_core.mem_wdata[7:0]))
+    else `uvm_error("RVFI_MEM_WDATA", $sformatf("PC: %0h rvfi_rm.mem_wdata=%0h rvfi_core.mem_wdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_wdata), $sampled(rvfi_core.mem_wdata)));
 
-  rvfi_mem_rdata_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid and (rvfi_core.mem_rmask)|-> (rvfi_rm.mem_rdata[31:0] == rvfi_core.mem_rdata[31:0]))
-    else `uvm_error("RVFI_MEM_RDATA", $sformatf("pc %0h rvfi_rm.mem_rdata=%0h rvfi_core.mem_rdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_rdata), $sampled(rvfi_core.mem_rdata)));
-
-  rvfi_pc_wdata_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.pc_wdata == rvfi_core.pc_wdata))
-    else `uvm_error("RVFI_PC_WDATA", $sformatf("rvfi_rm.pc_wdata=%0h rvfi_core.pc_wdata=%0h",$sampled(rvfi_rm.pc_wdata), $sampled(rvfi_core.pc_wdata)));
-
-  /* TODO: Spike outputs wrong values for rs1_addr and rs2_addr
-  rvfi_rs1_addr_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.rs1_addr == rvfi_core.rs1_addr))
-    else `uvm_error("RVFI_RS1_ADDR", $sformatf("rvfi_rm.rs1_addr=%0h rvfi_core.rs1_addr=%0h",$sampled(rvfi_rm.rs1_addr), $sampled(rvfi_core.rs1_addr)));
-
-  rvfi_rs2_addr_a: assert property(@ (posedge rvfi_core.clk)
-    rvfi_rm.valid |-> (rvfi_rm.rs2_addr == rvfi_core.rs2_addr))
-    else `uvm_error("RVFI_RS2_ADDR", $sformatf("rvfi_rm.rs2_addr=%0h rvfi_core.rs2_addr=%0h",$sampled(rvfi_rm.rs2_addr), $sampled(rvfi_core.rs2_addr)));
-  */
+  rvfi_mem_wdata_1_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_wmask[1])|-> (rvfi_rm.mem_wdata[15:8] == rvfi_core.mem_wdata[15:8]))
+    else `uvm_error("RVFI_MEM_WDATA", $sformatf("PC: %0h rvfi_rm.mem_wdata=%0h rvfi_core.mem_wdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_wdata), $sampled(rvfi_core.mem_wdata)));
   
-  /*TODO: 
-  ixl
-  pc_wdata
-  rs1_addr
-  rs1_rdata;
-  rs2_addr
-  rs2_rdata
-  rs3_addr
-  rs3_rdata
-  rd2_addr
-  rd2_wdata
+  rvfi_mem_wdata_2_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_wmask[2])|-> (rvfi_rm.mem_wdata[23:16] == rvfi_core.mem_wdata[23:16]))
+    else `uvm_error("RVFI_MEM_WDATA", $sformatf("PC: %0h rvfi_rm.mem_wdata=%0h rvfi_core.mem_wdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_wdata), $sampled(rvfi_core.mem_wdata)));
 
-  CSRs
-  */
+  rvfi_mem_wdata_3_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_wmask[3])|-> (rvfi_rm.mem_wdata[31:24] == rvfi_core.mem_wdata[31:24]))
+    else `uvm_error("RVFI_MEM_WDATA", $sformatf("PC: %0h rvfi_rm.mem_wdata=%0h rvfi_core.mem_wdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_wdata), $sampled(rvfi_core.mem_wdata)));
+
+
+  // rvfi_mem_rdata
+  rvfi_mem_rdata_0_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_rmask[0])|-> (rvfi_rm.mem_rdata[7:0] == rvfi_core.mem_rdata[7:0]))
+    else `uvm_error("RVFI_MEM_RDATA", $sformatf("byte 0 pc %0h rvfi_rm.mem_rdata=%0h rvfi_core.mem_rdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_rdata[7:0]), $sampled(rvfi_core.mem_rdata[7:0])));
+
+  rvfi_mem_rdata_1_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_rmask[1])|-> (rvfi_rm.mem_rdata[15:8] == rvfi_core.mem_rdata[15:8]))
+    else `uvm_error("RVFI_MEM_RDATA", $sformatf("byte 1 pc %0h rvfi_rm.mem_rdata=%0h rvfi_core.mem_rdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_rdata[15:8]), $sampled(rvfi_core.mem_rdata[15:8])));
+
+  rvfi_mem_rdata_2_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_rmask[2])|-> (rvfi_rm.mem_rdata[23:16] == rvfi_core.mem_rdata[23:16]))
+    else `uvm_error("RVFI_MEM_RDATA", $sformatf("byte 2 pc %0h rvfi_rm.mem_rdata=%0h rvfi_core.mem_rdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_rdata[23:16]), $sampled(rvfi_core.mem_rdata[23:16])));
+
+  rvfi_mem_rdata_3_a: assert property(@ (posedge rvfi_core.clk)
+    rvfi_rm.valid and (rvfi_core.mem_rmask[3])|-> (rvfi_rm.mem_rdata[31:24] == rvfi_core.mem_rdata[31:24]))
+    else `uvm_error("RVFI_MEM_RDATA", $sformatf("byte 3 pc %0h rvfi_rm.mem_rdata=%0h rvfi_core.mem_rdata=%0h",$sampled(rvfi_core.pc_rdata), $sampled(rvfi_rm.mem_rdata[31:24]), $sampled(rvfi_core.mem_rdata[31:24])));
+
 
 endmodule
 
