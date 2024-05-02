@@ -3695,9 +3695,19 @@ _fsgnjx_jr31:   fsgnjx.s      x31, x31, x31
       # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_non_rv32f_rd_rv32f_rs1 - end
     ######### FOR PULP_FPU CFG - END   #########
 
-    li x18, TEST_PASS
+    ######### Added for ex_stage hole coverage #########
+    la x1, test_end
+    li x2, 1
+    fcvt.s.w x2, x2
+
+    fdiv.s x3, x1, x2
+    div x4, x5, x0
+    jalr x0, x3, 0
+    ######### End for ex_stage hole coverage #########
 
 test_end:
+    li x18, TEST_PASS
+
     li x17, VIRT_PERIPH_STATUS_FLAG_ADDR
     sw x18,0(x17)
     j _exit
