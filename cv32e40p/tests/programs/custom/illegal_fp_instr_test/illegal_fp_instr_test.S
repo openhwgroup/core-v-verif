@@ -11,7 +11,7 @@
 #define TEST_FAIL                              1
 #define VIRT_PERIPH_STATUS_FLAG_ADDR  0x20000000
 
-#define EXPECTED_ILLEGAL_INSTRUCTIONS 31741
+#define EXPECTED_ILLEGAL_INSTRUCTIONS 31751
 
 main:
     li        t0, (0x1 << 3)
@@ -31769,6 +31769,21 @@ main:
     csrwi frm, 5
     .word(0x0151dfd3)
     .word(0xadf06543)
+    .word(0xadf05543)
+    csrwi frm, 4
+    .word(0xadf05543)
+    .word(0x0151dfd3)
+    csrwi frm, 3
+    .word(0x0151dfd3)
+    .word(0xadf05543)
+    csrwi frm, 2
+    .word(0x0151dfd3)
+    .word(0xadf05543)
+    csrwi frm, 1
+    .word(0x0151dfd3)
+    .word(0xadf05543)
+    csrwi frm, 0
+    .word(0x0151dfd3)
     .word(0xadf05543)
 
     li x18, TEST_PASS
