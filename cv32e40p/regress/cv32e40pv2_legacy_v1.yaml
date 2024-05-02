@@ -167,18 +167,18 @@ tests:
               no_pulp
               pulp
               pulp_fpu
-              pulp_fpu_1cyc_lat
-              pulp_fpu_2cyc_lat
+              pulp_fpu_1cyclat
+              pulp_fpu_2cyclat
               pulp_fpu_zfinx
-              pulp_fpu_zfinx_1cyc_lat
-              pulp_fpu_zfinx_2cyc_lat
+              pulp_fpu_zfinx_1cyclat
+              pulp_fpu_zfinx_2cyclat
               pulp_cluster
               pulp_cluster_fpu
-              pulp_cluster_fpu_1cyc_lat
-              pulp_cluster_fpu_2cyc_lat
+              pulp_cluster_fpu_1cyclat
+              pulp_cluster_fpu_2cyclat
               pulp_cluster_fpu_zfinx
-              pulp_cluster_fpu_zfinx_1cyc_lat
-              pulp_cluster_fpu_zfinx_2cyc_lat
+              pulp_cluster_fpu_zfinx_1cyclat
+              pulp_cluster_fpu_zfinx_2cyclat
 
   # Can only run with num_mhpmcounter_29 configuration
   mhpmcounter29_csr_access_test_2:
@@ -190,18 +190,18 @@ tests:
               no_pulp
               pulp
               pulp_fpu
-              pulp_fpu_1cyc_lat
-              pulp_fpu_2cyc_lat
+              pulp_fpu_1cyclat
+              pulp_fpu_2cyclat
               pulp_fpu_zfinx
-              pulp_fpu_zfinx_1cyc_lat
-              pulp_fpu_zfinx_2cyc_lat
+              pulp_fpu_zfinx_1cyclat
+              pulp_fpu_zfinx_2cyclat
               pulp_cluster
               pulp_cluster_fpu
-              pulp_cluster_fpu_1cyc_lat
-              pulp_cluster_fpu_2cyc_lat
+              pulp_cluster_fpu_1cyclat
+              pulp_cluster_fpu_2cyclat
               pulp_cluster_fpu_zfinx
-              pulp_cluster_fpu_zfinx_1cyc_lat
-              pulp_cluster_fpu_zfinx_2cyc_lat
+              pulp_cluster_fpu_zfinx_1cyclat
+              pulp_cluster_fpu_zfinx_2cyclat
 
   misalign:
     build: uvmt_cv32e40p
