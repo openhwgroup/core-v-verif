@@ -21,7 +21,6 @@ import "DPI-C" function void spike_set_param_uint64_t(string base, string name, 
 import "DPI-C" function void spike_set_param_str(string base, string name, string value);
 import "DPI-C" function void spike_set_param_bool(string base, string name, bit value);
 import "DPI-C" function void spike_set_default_params(string profile);
-import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
 
     st_core_cntrl_cfg m_core_cfg;
 
