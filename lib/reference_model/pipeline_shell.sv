@@ -140,9 +140,7 @@ module controller
         output logic if_flush_o,
         output logic id_flush_o,
         output logic ex_flush_o,
-        output logic wb_flush_o,
-
-        output interrupt_allowed_o
+        output logic wb_flush_o
     );
 
     localparam LSU_DEPTH = 2;
@@ -165,18 +163,19 @@ module controller
     logic   step;
     logic   step_q;
 
-    logic   interrupt_taken;
+    logic   interrupt_enabled;
+    logic   interrupt_allowed;
+    logic   interrupt_taken, interrupt_taken_q;
     logic   [31:0] irq_q, irq_qq;
 
-    logic   [MAX_XLEN-1:0] mstatus;
+    logic   [MAX_XLEN-1:0] wb_mstatus;
     logic   wb_mstatus_mie;
-    logic   [MAX_XLEN-1:0] wb_mie, mie, mie_q;
+    logic   [MAX_XLEN-1:0] wb_mie, mie;
 
     ////////////////////////////////////////////////////////////////////////////
     // STEP CONTROL
     ////////////////////////////////////////////////////////////////////////////
 
-    assign flush_pipeline = interrupt_taken;
 
     // Count the amount of filled pipeline stages at the start or after a flush 
     always_ff @(posedge clk) begin
@@ -206,11 +205,131 @@ module controller
 
     end
 
-    assign if_step_o = step;
-    assign id_step_o = step;
-    assign ex_step_o = step;
-    assign wb_step_o = step;
+    always_comb begin
+        if_step_o <= step;
+        id_step_o <= step;
+        ex_step_o <= step;
+        wb_step_o <= step;
+    end
 
+    ////////////////////////////////////////////////////////////////////////////
+    // FLUSH CONTROL
+    ////////////////////////////////////////////////////////////////////////////
+
+    assign flush_pipeline = interrupt_taken;
+
+    always_comb begin
+        if_flush_o <= flush_pipeline;
+        id_flush_o <= flush_pipeline;
+        ex_flush_o <= flush_pipeline;
+        wb_flush_o <= flush_pipeline;
+    end
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Delayed CSRs
+    ////////////////////////////////////////////////////////////////////////////
+
+    // The effects of the MSTATUS and MIE CSRs have to be applied in the WB stage
+    // to properly match the core. When these CSRs are changed in the ISS in IF,
+    // they travel through the pipeline, and are applied in the WB stage through 
+    // the iss_intr() function.
+
+
+    logic mstatus_found, mie_found;
+    always_comb begin
+        mstatus_found   = 1'b0;
+        mie_found       = 1'b0;
+        wb_mie          = '0;
+
+        foreach(ex_wb_pipe_i.rvfi.csr_valid[i]) begin
+            if(ex_wb_pipe_i.rvfi.csr_valid[i]) begin 
+                if(ex_wb_pipe_i.rvfi.csr_addr[i] == `CSR_MSTATUS_ADDR) begin // IF MSTATUS
+                    wb_mstatus = ex_wb_pipe_i.rvfi.csr_wdata[i];
+                    wb_mstatus_mie = (wb_mstatus & (32'h00000008 )) != 0;
+                    mstatus_found = 1'b1;
+                end            
+                if(ex_wb_pipe_i.rvfi.csr_addr[i] == `CSR_MIE_ADDR) begin 
+                    wb_mie = ex_wb_pipe_i.rvfi.csr_wdata[i];
+                    mie_found = 1'b1;
+                end
+            end
+        end
+
+        if(!mstatus_found) begin
+            wb_mstatus = wb_mstatus;
+            wb_mstatus_mie = 0;
+        end
+
+        if(!mie_found) begin
+            wb_mie = wb_mie;
+        end
+    end
+
+    // Check if the MIE bit is set in the MSTATUS register
+
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            mie <= 1'b0;
+        end else if (mie_found && step) begin
+            mie <= wb_mie;
+        end else begin
+            mie <= mie;
+        end
+    end
+
+
+    // interrupt_enabled only enabled interrupts when the mstatus.mie bit is set 
+    // in WB and it is disabled the cycle after an interrupt is taken.
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            interrupt_enabled <= 1'b0;
+        end else if (wb_mstatus_mie && step) begin
+            interrupt_enabled <= 1'b1;
+        end else if (interrupt_taken_q) begin
+            interrupt_enabled <= 1'b0;
+        end else begin
+            interrupt_enabled <= interrupt_enabled;
+        end
+    end
+
+
+    // Temporarily inject the interrupt allowed signal directly from the core
+    // TODO: Use the content of the pipeline stages to recreate the interrupt_allowed 
+    //       signal independently of the core
+    assign interrupt_allowed = `CONTROLLER_FSM.interrupt_allowed && interrupt_enabled; 
+    // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
+    //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // INTERRUPT TAKING
+    ////////////////////////////////////////////////////////////////////////////
+
+    // Delay the irq 2 cycles take the correct irq after the flush
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            irq_q <= 1'b0;
+            irq_qq <= 1'b0;
+        end else begin
+            irq_q <= irq_i;
+            irq_qq <= irq_q;
+        end
+    end
+
+    // Call iss_intr every cycle to inform the ISS changes in irq and mie, and 
+    // determine if an interrupt can be taken
+    always_ff @(posedge clk) begin
+        interrupt_taken <= iss_intr(irq_qq, mie, interrupt_allowed, 2);
+    end
+
+    // Delay interrupt_taken to properly time the interrupt_enabled signal
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            interrupt_taken_q <= 1'b0;
+        end else begin
+            interrupt_taken_q <= interrupt_taken;
+        end
+    end
 
     ////////////////////////////////////////////////////////////////////////////
     // LSU INTERRUPTIBLE
@@ -263,130 +382,6 @@ module controller
 
     assign lsu_interruptible = (lsu_cnt_q == '0);
 
-    ////////////////////////////////////////////////////////////////////////////
-    // INTERRUPT ALLOWED
-    ////////////////////////////////////////////////////////////////////////////
-    logic mstatus_found, mie_found;
-    always_comb begin
-        mstatus_found   = 1'b0;
-        mie_found       = 1'b0;
-        wb_mie          = '0;
-
-        foreach(wb_pipe_i.rvfi.csr_valid[i]) begin
-            if(wb_pipe_i.rvfi.csr_valid[i] && wb_pipe_i.valid) begin 
-                if(wb_pipe_i.rvfi.csr_addr[i] == `CSR_MSTATUS_ADDR) begin // IF MSTATUS
-                    mstatus = wb_pipe_i.rvfi.csr_wdata[i];
-                    wb_mstatus_mie = (wb_pipe_i.rvfi.csr_wdata[i] & (32'h00000008 )) != 0;
-                    mstatus_found = 1'b1;
-                end            
-                if(wb_pipe_i.rvfi.csr_addr[i] == `CSR_MIE_ADDR) begin 
-                    wb_mie = wb_pipe_i.rvfi.csr_wdata[i];
-                    mie_found = 1'b1;
-                end
-            end
-        end
-
-        if(!mstatus_found) begin
-            wb_mstatus_mie = 0;
-        end
-
-        if(!mie_found) begin
-            wb_mie = wb_mie;
-        end
-    end
-
-    always_ff @(posedge clk, negedge rst_n) begin
-        if (rst_n == 1'b0) begin
-            mie_q <= 1'b0;
-        end else if (mie_found) begin
-            mie_q <= wb_mie;
-        end else begin
-            mie_q <= mie_q;
-        end
-    end
-
-    always_comb begin
-        if(mie_found) begin
-            mie = wb_mie;
-        end else begin
-            mie = mie_q;
-        end
-    end
-
-    // FSM state encoding
-    typedef enum logic {NOT_ALLOWED, ALLOWED} interrupt_state_e;
-
-    interrupt_state_e interrupt_allowed_cs, interrupt_allowed_ns;
-
-    logic interrupt_enabled;
-
-    // FSM Comb
-    always_comb begin
-        case (interrupt_allowed_cs)
-            NOT_ALLOWED: begin
-                if(wb_mstatus_mie) begin
-                    interrupt_allowed_ns <= ALLOWED;
-                    interrupt_enabled <= 1'b1;
-                end else begin
-                    interrupt_allowed_ns <= NOT_ALLOWED;
-                    interrupt_enabled <= 1'b0;
-                end
-            end
-            ALLOWED: begin
-                interrupt_enabled <= 1'b1;
-
-                if(interrupt_taken) begin
-                    interrupt_allowed_ns = NOT_ALLOWED;
-                end else begin
-                    interrupt_allowed_ns = ALLOWED;
-                end
-            end
-            default:;
-        endcase
-
-    end
-
-    always_ff @(posedge clk, negedge rst_n) begin
-        if (rst_n == 1'b0) begin
-            interrupt_allowed_cs <= NOT_ALLOWED;
-        end else begin
-            interrupt_allowed_cs <= interrupt_allowed_ns;
-        end
-    end
-
-    assign interrupt_allowed_o = `CONTROLLER_FSM.interrupt_allowed && interrupt_enabled; 
-    // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
-    //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
-
-    //TODO: take interrupt if interrupt_allowed && pending_interrupt
-
-
-    ////////////////////////////////////////////////////////////////////////////
-    // INTERRUPT TAKING
-    ////////////////////////////////////////////////////////////////////////////
-
-    always_ff @(posedge clk, negedge rst_n) begin
-        if (rst_n == 1'b0) begin
-            irq_q <= 1'b0;
-            irq_qq <= 1'b0;
-        end else begin
-            irq_q <= irq_i;
-            irq_qq <= irq_q;
-        end
-    end
-
-    always_ff @(posedge clk) begin
-        interrupt_taken = iss_intr(irq_qq, mie, interrupt_allowed_o, 2);
-    end
-
-    always_comb begin
-        if_flush_o <= flush_pipeline;
-        id_flush_o <= flush_pipeline;
-        ex_flush_o <= flush_pipeline;
-        wb_flush_o <= flush_pipeline;
-    end
-
-
 endmodule
 
 module pipeline_shell 
@@ -430,9 +425,7 @@ module pipeline_shell
         .if_flush_o              (if_flush            ),
         .id_flush_o              (id_flush            ),
         .ex_flush_o              (ex_flush            ),
-        .wb_flush_o              (wb_flush            ),
-        .interrupt_allowed_o    (interrupt_allowed  )
-
+        .wb_flush_o              (wb_flush            )
     );
 
     if_stage if_stage_i(

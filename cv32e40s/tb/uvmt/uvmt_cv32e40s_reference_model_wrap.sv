@@ -230,7 +230,7 @@ module uvmt_cv32e40s_reference_model_wrap
       $sformat(pipelineLine, "%s| irq %x| ia %x / %x | it %x | ie %x | mie %x / %x | INTR %x %d / %x %d |",pipelineLine,
               `INTERRUPT_IF.irq,
               `CORE_I.controller_i.controller_fsm_i.interrupt_allowed,
-              reference_model_i.pipeline_shell_i.controller_i.interrupt_allowed_o,
+              reference_model_i.pipeline_shell_i.controller_i.interrupt_allowed,
               reference_model_i.pipeline_shell_i.controller_i.interrupt_taken,
               reference_model_i.pipeline_shell_i.controller_i.interrupt_enabled,
               `CORE_I.mie,
