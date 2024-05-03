@@ -42,16 +42,23 @@
 # there are 2 env calls in the code
 # there are 5 breakpoints in the code
 # there are 129 unknown encodings (minus 2 because of 2 last instructions unused fields in fence), 2 unimp corresponding to .word 00000000, 1 (uret), 29 illegal CSR access = 9d
-# For FPU-enabled configuration, letting mstatus_FS at default value lead to the same number of illegal instrucions
+# For FPU-enabled configuration, letting mstatus_FS at default value lead to the same number of illegal instructions.
+# Pascal Gouedo comment: Last sentence not true anymore as in Zfinx extension, mstatus_FS does not exist and FCSRs accesses don't lead to IIE.
+#                        So removed 3 to illegal CSR access giving 9a for magic number in ZFINX configurations.
 
+
+#ifndef ZFINX
 #define MAGIC_NUMBER 0x259d
+#else
+#define MAGIC_NUMBER 0x259a
+#endif
 
 test_results:
 	.word 123456789
 # main test
 main:
     li x15, 0x00001800
-    csrrw x0, mstatus, x15  # redundant in cv32e40p: hardwired PoR value
+    csrrw x0, mstatus, x15
     li x0, 0xf21ee7dc
     li x1, 0x80000000
     li x3, 0xccda4374
