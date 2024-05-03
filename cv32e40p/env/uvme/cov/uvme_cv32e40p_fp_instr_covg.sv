@@ -147,9 +147,8 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             bins clk17 = {17};
             bins clk18 = {18};
             bins clk19 = {19};
-            bins clk20 = {20};
             ignore_bins ignore_idle = {0};
-            illegal_bins clk_more_than_19 = {[21:31]};
+            illegal_bins clk_more_than_19 = {[20:31]};
         }
 
         cp_id_stage_inst_valid : coverpoint `COVIF_CB.id_stage_instr_valid_i {

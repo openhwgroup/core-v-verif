@@ -763,7 +763,7 @@ interface uvmt_cv32e40p_cov_if
   assign is_mulh_ex = ex_mulh_active && (ex_mult_op_ex == 3'h6);
   assign is_misaligned_data_req_ex = ex_data_misaligned_i || ex_data_misaligned_ex_i;
   assign is_post_inc_ld_st_inst_ex = (ex_data_req_i || ex_data_rvalid_i) && ex_regfile_alu_we_i;
-  assign ex_apu_valid_memorised = ~ex_apu_valid & ex_apu_rvalid_q;
+  assign ex_apu_valid_memorised = ex_apu_valid & ex_apu_rvalid_q;
 
 endinterface : uvmt_cv32e40p_cov_if
 
