@@ -21,6 +21,18 @@ builds:
 
 # List of tests
 tests:
+  corev_rand_interrupt_wfi:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt_wfi
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  corev_rand_interrupt_wfi_mem_stress:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt_wfi_mem_stress
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress CFG_PLUSARGS="+UVM_TIMEOUT=50000000"
+
   corev_rand_debug:
     build: uvmt_cv32e40p
     description: corev_rand_debug
@@ -74,18 +86,6 @@ tests:
 #    description: corev_rand_interrupt_nested
 #    dir: cv32e40p/sim/uvmt
 #    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_nested CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
-
-  corev_rand_interrupt_wfi:
-    build: uvmt_cv32e40p
-    description: corev_rand_interrupt_wfi
-    dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
-
-  corev_rand_interrupt_wfi_mem_stress:
-    build: uvmt_cv32e40p
-    description: corev_rand_interrupt_wfi_mem_stress
-    dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress CFG_PLUSARGS="+UVM_TIMEOUT=50000000"
 
 # list of corev_rand_pulp_hwloop_debug - START
 
