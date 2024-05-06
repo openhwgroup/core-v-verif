@@ -59,7 +59,9 @@ covergroup cg_request(
 
    cross_req : cross cp_id, cp_rs_valid, cp_mode;
    cross_valid_ready : cross cp_valid, cp_ready;
-   cross_commit : cross cp_commit_valid, cp_commit_kill, cp_commit_id;
+   cross_commit : cross cp_commit_valid, cp_commit_kill, cp_commit_id {
+   ignore_bins IGN_BINS = binsof(cp_commit_valid) intersect{0}; //commit signals are valid when commmit_valid is assert
+   }
 
 endgroup: cg_request
 
@@ -166,6 +168,7 @@ covergroup cg_result(
    cross_result : cross cp_id, cp_we, cp_exc, cp_exccode {
    illegal_bins ILLEGAL_BINS = binsof(cp_we) intersect{1} &&
                                binsof(cp_exc) intersect{1};
+   ignore_bins IGN_BINS = binsof(cp_exc) intersect{0}; //if exc=0 that means no exception
    }
 endgroup: cg_result
 

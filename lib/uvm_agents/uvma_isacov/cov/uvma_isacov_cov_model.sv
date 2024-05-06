@@ -550,9 +550,9 @@ covergroup cg_div_special_results(
   }
 
   cp_div_arithmetic_overflow : coverpoint instr.rs1_value {
-    //ignore_bins IGN_OVERFLOW = {[0:$]} with (!check_overflow);
     `ifdef UNSUPPORTED_WITH
-     bins OFLOW = {32'h8000_0000} iff (check_overflow && instr.rs2_value == 32'hffff_ffff); //TODO
+     ignore_bins IGN_OVERFLOW = cp_div_arithmetic_overflow iff (!check_overflow);
+     bins OFLOW = {32'h8000_0000} iff (instr.rs2_value == 32'hffff_ffff); //TODO
     `else
      bins OFLOW = {32'h8000_0000} with (check_overflow) iff (instr.rs2_value == 32'hffff_ffff);
     `endif
@@ -1156,7 +1156,7 @@ covergroup cg_ciw(
   option.per_instance = 1;
   option.name = name;
 
-  cp_rd: coverpoint instr.c_rdp;
+  cp_c_rd: coverpoint instr.c_rd;
 
   `ISACOV_CP_BITWISE(cp_rd_toggle, instr.rd_value, 1)
   `ISACOV_CP_BITWISE_7_0(cp_imm_toggle, instr.get_field_imm(), 1)
@@ -1187,15 +1187,14 @@ covergroup cg_cl(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (imm_is_signed);
   }
 
-  cp_rs1: coverpoint instr.c_rs1s;
-  cp_rd:  coverpoint instr.c_rdp;
+  cp_c_rs1: coverpoint instr.c_rs1;
+  cp_c_rd:  coverpoint instr.c_rd;
 
-  cp_rd_rs1_hazard: coverpoint instr.rd {
+  cp_c_rd_rs1_hazard: coverpoint instr.c_rd {
     ignore_bins IGN_RS1_HAZARD_OFF = {[0:$]} `WITH (!reg_hazards_enabled);
-    bins RD[] = {[0:31]} iff (instr.rd == instr.rs1);
+    bins RD[] = {[0:7]} iff (instr.c_rd == instr.c_rs1);
   }
 
-  `ISACOV_CP_BITWISE(cp_rs2_toggle, instr.rs2_value, 1)
   `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
   `ISACOV_CP_BITWISE_4_0(cp_imm_toggle, instr.get_field_imm(), 1)
 
@@ -1225,8 +1224,8 @@ covergroup cg_cs(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs2_is_signed);
   }
 
-  cp_rs1: coverpoint instr.c_rs1s;
-  cp_rs2: coverpoint instr.c_rs2s;
+  cp_c_rs1: coverpoint instr.c_rs1;
+  cp_c_rs2: coverpoint instr.c_rs2;
 
   `ISACOV_CP_BITWISE(cp_rs2_toggle, instr.rs2_value, 1)
   `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
@@ -1265,11 +1264,10 @@ covergroup cg_ca(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rd_is_signed);
   }
 
-  cp_rs1: coverpoint instr.c_rs1s;
-  cp_rs2: coverpoint instr.c_rs2s;
-  cp_rd: coverpoint instr.c_rdp;
+  cp_c_rs2: coverpoint instr.c_rs2;
+  cp_c_rdrs1: coverpoint instr.c_rs1;
 
-  cross_rs1_rs2: cross cp_rs1, cp_rs2 {
+  cross_rs1_rs2: cross cp_c_rs2, cp_c_rdrs1 {
     ignore_bins IGN_OFF = cross_rs1_rs2 `WITH (!reg_crosses_enabled);
   }
 
@@ -1301,7 +1299,7 @@ covergroup cg_cb(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (imm_is_signed);
   }
 
-  cp_rs1: coverpoint instr.c_rs1s;
+  cp_c_rs1: coverpoint instr.c_rs1;
 
   `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
   `ISACOV_CP_BITWISE_7_0(cp_imm_toggle, instr.get_field_imm(), 1)
@@ -1330,7 +1328,7 @@ covergroup cg_cb_andi(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (imm_is_signed);
   }
 
-  cp_rs1: coverpoint instr.rs1;
+  cp_c_rdrs1: coverpoint instr.c_rs1;
 
   `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
   `ISACOV_CP_BITWISE_5_0(cp_imm_toggle, instr.get_field_imm(), 1)
@@ -1357,7 +1355,7 @@ covergroup cg_cb_shift(
     illegal_bins ILLEGAL_SHAMT[] = {[32:63]};                                  // MSB of the immediate value should be always zero
   }
 
-  cp_rs1: coverpoint instr.rs1;
+  cp_c_rdrs1: coverpoint instr.c_rs1;
 
   `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)							// No need to toggle imm again because cp_shamt did the job
 
