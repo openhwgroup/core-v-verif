@@ -1,4 +1,4 @@
-#Copyright 202[x] Silicon Labs, Inc.
+#Copyright (c) 2024 Dolphin Design
 #  
 #This file, and derivatives thereof are licensed under the
 #Solderpad License, Version 2.0 (the "License");
