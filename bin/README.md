@@ -6,7 +6,7 @@ activities in the core-v-verif repository.
 
 Unless otherwise noted all utilities in this directory should be agnostic to $CWD.  Therefore a user
 should be able to run the utilities via a PATH from any directory.  The utilities will be able to 
-determine their own directory based on the implementation langugage hooks available.
+determine their own directory based on the implementation language hooks available.
 
 For example from a bash-type shell:<br>
 > % export PATH=./core-v-verif/bin:$PATH
@@ -39,7 +39,7 @@ and conventions should be passed to the underlying Makefile directory.
 
 *Examples:*
 > \# makeuvmt can be invoked from any directory<br>
-> % makeuvmt test TEST=hello-world WAVES=1 SIMUALTOR=vsim<br>
+> % makeuvmt test TEST=hello-world WAVES=1 SIMULATOR=vsim<br>
 > \# Override the core to cv32e40x (regardless of CV_CORE environment setting)<br>
 > % makeuvmt test TEST=hello-world WAVES=1 CV_CORE=cv32e40x<br>
 
@@ -63,7 +63,7 @@ If required, the step and compare ISS can be disabled for this regression by set
 ## cv_regress
 
 Regression script generator utility.  *cv_regress* will read in one or more regressions defined in a specific
-YAML format into an output format suitable for the specified regression platform or utlity.  The currently supported
+YAML format into an output format suitable for the specified regression platform or utility.  The currently supported
 output platforms are:<br>
 - Metrics JSON (--metrics)
 - Shell Script (--sh)
@@ -105,7 +105,7 @@ builds:<br>
 \# Multiple tests can be defined<br>
 tests:<br>
 &nbsp;&nbsp;test_name0:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<*Required*: build dependecies, can be a list of single build_name><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<*Required*: build dependencies, can be a list of single build_name><br>
 &nbsp;&nbsp;&nbsp;&nbsp;build: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: human-readable test description><br>
 &nbsp;&nbsp;&nbsp;&nbsp;description: \<string><br>
