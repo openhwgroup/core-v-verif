@@ -1,7 +1,7 @@
 ..
    Copyright (c) 2023 OpenHW Group
 
-   Copyright (c) 2023 Thales DIS design services SAS
+   Copyright (c) 2023 Thales DIS SAS
 
 
    SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -87,14 +87,14 @@ All instructions use opcode `CUSTOM_3`(0x7b, 0b111_1011).
 
 - **CUS_EXC**: Custom Exception
 
-    **Format**: cus_exc rd, rs1, rs2 -> |1100000|rs2|rs1|010|rd|111_1011|
+    **Format**: cus_exc imm[5:0] -> |1100000|000000000001|imm|111_1011|
 
     **Description**: raise an exception.
 
-    **Pseudocode**: mcause[5:0] = rs1
+    **Pseudocode**: mcause[5:0] = imm[5:0]
 
-    **Invalid values**: rd = 0x0 & rs2 = 0x0
+    **Invalid values**: NONE
 
-    **Exception raised**: raise an exception based on the rs1 register address,also raised an illegal instruction exception if rd != 0x0 or rs2 != 0x0
+    **Exception raised**: raise an exception based on the value on the immediate field.
 
 When a CV-X-IF exception is raised, mcause[5:0] of the corresponding CORE-V hart is assumed set to exccode[5:0] of CV-X-IF.

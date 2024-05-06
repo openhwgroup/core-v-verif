@@ -202,9 +202,10 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                mon_trn.insn_interrupt_id = { 1'b0, mon_trn.intr.cause };
             end
          end
-
-         dcsr_ret_data = mon_trn.csrs["dcsr"].get_csr_retirement_data();
-         // In debug mode, detect NMIP event for a data bus error
+         if (mon_trn.csrs.exists("dcsr")) begin
+            dcsr_ret_data = mon_trn.csrs["dcsr"].get_csr_retirement_data();
+         end
+        // In debug mode, detect NMIP event for a data bus error
          if (mon_trn.dbg_mode &&
              !last_dcsr_nmip &&
              mon_trn.nmip[0] &&

@@ -1388,6 +1388,7 @@ covergroup cg_sequential(string name,
                          bit seq_instr_group_x4_enabled,
                          bit seq_instr_x2_enabled,
                          bit [CSR_MASK_WL-1:0] cfg_illegal_csr,
+                         bit unaligned_access_supported,
                          bit ext_m_supported,
                          bit ext_c_supported,
                          bit ext_zba_supported,
@@ -1417,24 +1418,28 @@ covergroup cg_sequential(string name,
   cp_group: coverpoint (instr.group) {
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
+    illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
   }
 
   cp_group_pipe_x2:  coverpoint (instr_prev.group) iff (instr_prev != null) {
     ignore_bins IGN_X2_OFF = {[0:$]} `WITH (!seq_instr_group_x2_enabled);
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
+    illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
   }
 
   cp_group_pipe_x3: coverpoint (instr_prev2.group) iff (instr_prev2 != null) {
     ignore_bins IGN_X3_OFF = {[0:$]} `WITH (!seq_instr_group_x3_enabled);
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
+    illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
   }
 
   cp_group_pipe_x4: coverpoint (instr_prev3.group) iff (instr_prev3 != null) {
     ignore_bins IGN_X4_OFF = {[0:$]} `WITH (!seq_instr_group_x4_enabled);
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
+    illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
   }
 
   cp_gpr_raw_hazard: coverpoint(raw_hazard) {
@@ -1455,10 +1460,23 @@ covergroup cg_sequential(string name,
   cross_seq_group_x3: cross cp_group, cp_group_pipe_x2, cp_group_pipe_x3;
   cross_seq_group_x4: cross cp_group, cp_group_pipe_x2, cp_group_pipe_x3, cp_group_pipe_x4;
 
-  // FIXME: This will need more filtering
   cross_seq_gpr_raw_hazard: cross cp_group, cp_group_pipe_x2, cp_gpr_raw_hazard {
     // Ignore non-hazard bins
     ignore_bins IGN_HAZ = binsof(cp_gpr_raw_hazard) intersect {0};
+    ignore_bins IGN_GROUP = binsof(cp_group) intersect {UNKNOWN_GROUP,
+                                                        FENCE_GROUP,
+                                                        FENCE_I_GROUP,
+                                                        RET_GROUP,
+                                                        WFI_GROUP,
+                                                        ENV_GROUP};
+    ignore_bins IGN_PREV_GROUP = binsof(cp_group_pipe_x2) intersect {UNKNOWN_GROUP,
+                                                                     FENCE_GROUP,
+                                                                     FENCE_I_GROUP,
+                                                                     RET_GROUP,
+                                                                     WFI_GROUP,
+                                                                     ENV_GROUP,
+                                                                     STORE_GROUP,
+                                                                     BRANCH_GROUP};
   }
 
   cross_seq_csr_hazard_x2: cross cp_csr, cp_instr, cp_csr_hazard {
@@ -2374,6 +2392,7 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                       .seq_instr_group_x4_enabled(cfg.seq_instr_group_x4_enabled),
                       .seq_instr_x2_enabled(cfg.seq_instr_x2_enabled),
                       .cfg_illegal_csr(cfg.core_cfg.unsupported_csr_mask),
+                      .unaligned_access_supported(cfg.core_cfg.unaligned_access_supported),
                       .ext_m_supported(cfg.core_cfg.ext_m_supported),
                       .ext_c_supported(cfg.core_cfg.ext_c_supported),
                       .ext_a_supported(cfg.core_cfg.ext_a_supported),

@@ -38,6 +38,10 @@ issrun_opts     ?=
 isspostrun_opts ?=
 log             ?=
 variant         ?=
+# Set Spike step count limit if the caller provided a step count value in variable 'steps'.
+ifneq ($(steps),)
+  spike_stepout = --steps=$(steps)
+endif
 
 # TRACE_FAST, TRACE_COMPACT and VERDI are mutually exclusive and imply non-empty DEBUG.
 ifneq ($(TRACE_FAST),)
@@ -101,7 +105,7 @@ endif
 # Spike specific commands, variables
 ###############################################################################
 spike:
-	$(tool_path)/spike --log-commits --isa=$(variant) -l $(elf)
+	$(tool_path)/spike $(spike_stepout) --log-commits --isa=$(variant) -l $(elf)
 	cp $(log).iss $(log)
 
 ###############################################################################
@@ -110,7 +114,7 @@ spike:
 vcs-testharness:
 	make -C $(path_var) vcs_build target=$(target) defines=$(subst +define+,,$(isscomp_opts))
 	$(path_var)/work-vcs/simv $(if $(VERDI), -verdi -do $(path_var)/init_testharness.do,) +permissive -sv_lib $(path_var)/work-dpi/ariane_dpi \
-	  +tohost_addr=$(shell $$RISCV/bin/riscv-none-elf-nm -B $(elf) | grep -w tohost | cut -d' ' -f1) \
+	  +tohost_addr=$(shell $$RISCV/bin/${CV_SW_PREFIX}nm -B $(elf) | grep -w tohost | cut -d' ' -f1) \
 	  +PRELOAD=$(elf) +permissive-off ++$(elf) $(issrun_opts)
 	$(tool_path)/spike-dasm --isa=$(variant) < ./trace_rvfi_hart_00.dasm > $(log)
 	grep $(isspostrun_opts) ./trace_rvfi_hart_00.dasm
@@ -118,7 +122,7 @@ vcs-testharness:
 veri-testharness:
 	make -C $(path_var) verilate verilator="verilator --no-timing" target=$(target) defines=$(subst +define+,,$(isscomp_opts))
 	$(path_var)/work-ver/Variane_testharness $(if $(TRACE_COMPACT), -f verilator.fst) $(if $(TRACE_FAST), -v verilator.vcd) $(elf) $(issrun_opts) +PRELOAD=$(elf) \
-	  +tohost_addr=$(shell $$RISCV/bin/riscv-none-elf-nm -B $(elf) | grep -w tohost | cut -d' ' -f1)
+	  +tohost_addr=$(shell $$RISCV/bin/${CV_SW_PREFIX}nm -B $(elf) | grep -w tohost | cut -d' ' -f1)
 	$(tool_path)/spike-dasm --isa=$(variant) < ./trace_rvfi_hart_00.dasm > $(log)
 	# If present, move default trace files to per-test directory.
 	[ ! -f verilator.fst ] || mv verilator.fst `dirname $(log)`/`basename $(log) .log`.$(target).fst
@@ -239,7 +243,7 @@ vcs-uvm:
           for i in `ls *.$(SIMV_TRACE_EXTN)` ; do mv $$i `dirname $(log)`/`basename $(log) .log`.$(target).$$i ; done || true
 
 generate_cov_dash:
-	urg -dir $(VCS_WORK_DIR)/simv.vdb
+	urg -dir $(VCS_WORK_DIR)/simv.vdb -group instcov_for_score
 
 vcs_clean_all:
 	@echo "[VCS] Cleanup (entire vcs_work dir)"
