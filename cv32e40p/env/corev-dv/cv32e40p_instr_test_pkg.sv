@@ -364,7 +364,13 @@ package cv32e40p_instr_test_pkg;
       instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
       instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));  //Check MSTATUS.FS bit
       instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));
-      instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not push
+      if (cfg_corev.enable_nested_interrupt) begin
+        // fixme: refer workaround_1
+        instr.push_back($sformatf("# bne x%0d, x%0d, 2f # workaround for mstatus.FS during nested irq", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not push
+      end
+      else begin
+        instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not push
+      end
 
       // Reserve space from kernel stack to save all 32 FPR + FCSR
       instr.push_back($sformatf("addi x%0d, x%0d, -%0d", sp, sp, 33 * (XLEN/8)));
@@ -442,18 +448,31 @@ package cv32e40p_instr_test_pkg;
 
       // Pop MSTATUS.FS from kernel stack
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg_corev.gpr[0], 0, sp));
+
       // Restore MSTATUS.FS
-      instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));  //Clear FS
-      instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[1]));
-      instr.push_back($sformatf("csrrc x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
-      instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[0]));
-      instr.push_back($sformatf("csrrs x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
+      if (cfg_corev.enable_nested_interrupt) begin
+        // fixme: refer workaround_1
+        // do not clear FS
+      end
+      else begin
+        instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));  //Clear FS
+        instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[1]));
+        instr.push_back($sformatf("csrrc x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
+        instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[0]));
+        instr.push_back($sformatf("csrrs x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
+      end
 
       // Restore kernel stack pointer
       instr.push_back($sformatf("addi x%0d, x%0d, %0d", sp, sp, 1 * (XLEN/8)));
 
       instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));
-      instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not pop FPR
+      if (cfg_corev.enable_nested_interrupt) begin
+        // fixme: refer workaround_1
+        instr.push_back($sformatf("# bne x%0d, x%0d, 2f # workaround for mstatus.FS during nested irq", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not pop FPR
+      end
+      else begin
+        instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not pop FPR
+      end
 
       randcase
         1: load_instr = (FLEN == 32) ? "flw" : "fld";
@@ -476,6 +495,15 @@ package cv32e40p_instr_test_pkg;
 
       instr.push_back($sformatf("2: nop")); //BNE 2f Target
 
+    end
+
+    // fixme: the irq handling logic flow need to be rework to consider nested irq scenario for fpu csr such as FS.  
+    // workaround_1 for MSTATUS.FS during nested irq by assuming FS always DIRTY prior irq handling.
+    if (cfg_corev.enable_nested_interrupt) begin
+      // always set FS to DIRTY prior mret
+      instr.push_back($sformatf("li x%0d, 0x3             # workaround for mstatus.FS during nested irq", cfg_corev.gpr[1]));
+      instr.push_back($sformatf("slli x%0d, x%0d, 13      # workaround for mstatus.FS during nested irq", cfg_corev.gpr[1], cfg_corev.gpr[1]));
+      instr.push_back($sformatf("csrrs x0, mstatus, x%0d  # workaround for mstatus.FS during nested irq", cfg_corev.gpr[1]));
     end
 
     load_instr = (XLEN == 32) ? "lw" : "ld";
