@@ -21,7 +21,7 @@ main:
 #endif
 
     ######### FOR PULP_FPU CFG - START #########
-      # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_non_rv32f_rd_rv32f_rs1 - start
+      # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_non_rv32f_rd_rv32f_rs[1/2/3] - start
         .align 2
 
         // 1 - jal -> fsub (rs1, rs2)
@@ -3675,13 +3675,76 @@ _fsgnjx_jr31:   fsgnjx.s      x31, x31, x31
         cv.lbu    x0, (x1), 4
         fcvt.wu.s x1, x0
 
+        cv.lbu    x0, (x1), 4
+        fcvt.s.wu x1, x0
+        cv.lbu    x5, (x1), 4
+        fcvt.s.wu x1, x5
+        cv.lbu    x0, (x1), 4
+        flt.s     x1, x0, x0
+        cv.lbu    x15, (x1), 4
+        flt.s     x1, x15, x15
+        cv.lbu    x7, (x1), 4
+        fle.s     x1, x7, x7
+        cv.lbu    x9, (x1), 4
+        fdiv.s    x1, x9, x9
+        cv.lbu    x22, (x1), 4
+        fdiv.s    x1, x22, x22
+        cv.lbu    x31, (x1), 4
+        fdiv.s    x1, x31, x31
+        cv.lbu    x17, (x1), 4
+        fnmsub.s  x1, x17, x17, x17
+        cv.lbu    x18, (x1), 4
+        fnmsub.s  x1, x18, x18, x18
+        cv.lbu    x24, (x1), 4
+        fmadd.s   x1, x24, x24, x24
+        cv.lbu    x29, (x1), 4
+        fmadd.s   x1, x29, x29, x29
+        cv.lbu    x27, (x1), 4
+        feq.s     x1, x27, x27
+        cv.lbu    x5, (x1), 4
+        fnmadd.s  x1, x5, x5, x5
+        cv.lbu    x13, (x1), 4
+        fnmadd.s  x1, x13, x13, x13
+        cv.lbu    x15, (x1), 4
+        fnmadd.s  x1, x15, x15, x15
+        cv.lbu    x25, (x1), 4
+        fnmadd.s  x1, x25, x25, x25
+        cv.lbu    x29, (x1), 4
+        fnmadd.s  x1, x29, x29, x29
+        cv.lbu    x7, (x1), 4
+        fsgnjn.s  x1, x0, x0
+        cv.lbu    x21, (x1), 4
+        fdiv.s    x1, x21, x21
+        cv.lbu    x23, (x1), 4
+        feq.s     x1, x23, x23
+        cv.lbu    x25, (x1), 4
+        fnmsub.s  x1, x25, x25, x25
+        cv.lbu    x14, (x1), 4
+        fmadd.s   x1, x14, x14, x14
+        cv.lbu    x21, (x1), 4
+        fnmsub.s  x1, x21, x21, x21
+        cv.lbu    x5, (x1), 4
+        flt.s     x1, x5, x5
+        cv.lbu    x7, (x1), 4
+        fsgnjn.s  x1, x7, x7
+        cv.lbu    x13, (x1), 4
+        fmadd.s   x1, x13, x13, x13
+        cv.lbu    x15, (x1), 4
+        fmadd.s   x1, x15, x15, x15
+
         // 46 - custom_1 - rd0
         cv.lbu    x0, (x1), x0
         fnmsub.s  x1, x0, x0, x0
         cv.lbu    x0, (x1), x0
         fnmadd.s  x1, x0, x0, x0
+        cv.lbu    x0, (x1), x0
+        feq.s     x1, x0, x0
 
-        // 47 - 
+        // 47 - custom_2 - rd0
+        cv.addun  x19,   x19, x0, 0
+        fsgnjx.s  x1, x19, x19
+
+
         // 48 - 
         // 49 - 
         // 50 - 
@@ -3692,14 +3755,173 @@ _fsgnjx_jr31:   fsgnjx.s      x31, x31, x31
         // (rs1)            refer lines 190-253
         // (rs1)            refer lines 256-351
 
-      # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_non_rv32f_rd_rv32f_rs1 - end
+      # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_non_rv32f_rd_rv32f_rs[1/2/3] - end
+
+
+      # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_rv32f_rd_non_rv32f_rs[1/2]_eq_nonzero_lat - start
+        
+        fdiv.s  x0, x0, x0
+        bne     x0, x0, _branch_0
+        fdiv.s  x1, x1, x1
+        bne     x1, x1, _branch_0
+        fdiv.s  x2, x2, x2
+        bne     x2, x2, _branch_0
+        fdiv.s  x3, x3, x3
+        bne     x3, x3, _branch_0
+        fdiv.s  x4, x4, x4
+        bne     x4, x4, _branch_0
+        fdiv.s  x5, x5, x5
+        bne     x5, x5, _branch_0
+        fdiv.s  x6, x6, x6
+        bne     x6, x6, _branch_0
+        fdiv.s  x7, x7, x7
+        bne     x7, x7, _branch_0
+        fdiv.s  x8, x8, x8
+        bne     x8, x8, _branch_0
+        fdiv.s  x9, x9, x9
+        bne     x9, x9, _branch_0
+        fdiv.s  x10, x10, x10
+        bne     x10, x10, _branch_0
+        fdiv.s  x11, x11, x11
+        bne     x11, x11, _branch_0
+        fdiv.s  x12, x12, x12
+        bne     x12, x12, _branch_0
+        fdiv.s  x13, x13, x13
+        bne     x13, x13, _branch_0
+        fdiv.s  x14, x14, x14
+        bne     x14, x14, _branch_0
+        fdiv.s  x15, x15, x15
+        bne     x15, x15, _branch_0
+        fdiv.s  x16, x16, x16
+        bne     x16, x16, _branch_0
+        fdiv.s  x17, x17, x17
+        bne     x17, x17, _branch_0
+        fdiv.s  x18, x18, x18
+        bne     x18, x18, _branch_0
+        fdiv.s  x19, x19, x19
+        bne     x19, x19, _branch_0
+        fdiv.s  x20, x20, x20
+        bne     x20, x20, _branch_0
+        fdiv.s  x21, x21, x21
+        bne     x21, x21, _branch_0
+        fdiv.s  x22, x22, x22
+        bne     x22, x22, _branch_0
+        fdiv.s  x23, x23, x23
+        bne     x23, x23, _branch_0
+        fdiv.s  x24, x24, x24
+        bne     x24, x24, _branch_0
+        fdiv.s  x25, x25, x25
+        bne     x25, x25, _branch_0
+        fdiv.s  x26, x26, x26
+        bne     x26, x26, _branch_0
+        fdiv.s  x27, x27, x27
+        bne     x27, x27, _branch_0
+        fdiv.s  x28, x28, x28
+        bne     x28, x28, _branch_0
+        fdiv.s  x29, x29, x29
+        bne     x29, x29, _branch_0
+        fdiv.s  x30, x30, x30
+        bne     x30, x30, _branch_0
+        fdiv.s  x31, x31, x31
+        bne     x31, x31, _branch_0
+
+        fsqrt.s  x0, x0
+        bne      x0, x0, _branch_0
+        fsqrt.s  x1, x1
+        bne      x1, x1, _branch_0
+        fsqrt.s  x2, x2
+        bne      x2, x2, _branch_0
+        fsqrt.s  x3, x3
+        bne      x3, x3, _branch_0
+        fsqrt.s  x4, x4
+        bne      x4, x4, _branch_0
+        fsqrt.s  x5, x5
+        bne      x5, x5, _branch_0
+        fsqrt.s  x6, x6
+        bne      x6, x6, _branch_0
+        fsqrt.s  x7, x7
+        bne      x7, x7, _branch_0
+        fsqrt.s  x8, x8
+        bne      x8, x8, _branch_0
+        fsqrt.s  x9, x9
+        bne      x9, x9, _branch_0
+        fsqrt.s  x10, x10
+        bne      x10, x10, _branch_0
+        fsqrt.s  x11, x11
+        bne      x11, x11, _branch_0
+        fsqrt.s  x12, x12
+        bne      x12, x12, _branch_0
+        fsqrt.s  x13, x13
+        bne      x13, x13, _branch_0
+        fsqrt.s  x14, x14
+        bne      x14, x14, _branch_0
+        fsqrt.s  x15, x15
+        bne      x15, x15, _branch_0
+        fsqrt.s  x16, x16
+        bne      x16, x16, _branch_0
+        fsqrt.s  x17, x17
+        bne      x17, x17, _branch_0
+        fsqrt.s  x18, x18
+        bne      x18, x18, _branch_0
+        fsqrt.s  x19, x19
+        bne      x19, x19, _branch_0
+        fsqrt.s  x20, x20
+        bne      x20, x20, _branch_0
+        fsqrt.s  x21, x21
+        bne      x21, x21, _branch_0
+        fsqrt.s  x22, x22
+        bne      x22, x22, _branch_0
+        fsqrt.s  x23, x23
+        bne      x23, x23, _branch_0
+        fsqrt.s  x24, x24
+        bne      x24, x24, _branch_0
+        fsqrt.s  x25, x25
+        bne      x25, x25, _branch_0
+        fsqrt.s  x26, x26
+        bne      x26, x26, _branch_0
+        fsqrt.s  x27, x27
+        bne      x27, x27, _branch_0
+        fsqrt.s  x28, x28
+        bne      x28, x28, _branch_0
+        fsqrt.s  x29, x29
+        bne      x29, x29, _branch_0
+        fsqrt.s  x30, x30
+        bne      x30, x30, _branch_0
+        fsqrt.s  x31, x31
+        bne      x31, x31, _branch_0
+_branch_0:
+
+        fsqrt.s  x0,   x1
+        sw       x0, 0(x0)
+
+// below codes are not straight forward and for operand forward between fsqrt->jalr : start
+        li       x2, 32871    // x2 == jalr x0, x1, 0
+        and      x1, x1, x0   
+        auipc    x1, 0x0    
+        addi     x1, x1, 18   // x1 == pc for symbol _fsqrt_jr_3
+        sw       x2, 0(x0)    // store x2 to pc=0
+        fsqrt.s  x3, x0
+        jalr	   x0, x3, 0
+_fsqrt_jr_3:
+        li       x2, 32871    // x2 == jalr x0, x1, 0
+        and      x1, x1, x0   
+        auipc    x1, 0x0    
+        addi     x1, x1, 18   // x1 == pc for symbol _fsqrt_jr_3
+        sw       x2, 0(x0)    // store x2 to pc=0
+        fsqrt.s  x16, x0
+        jalr	   x0, x16, 0
+_fsqrt_jr_16:
+// below codes are not straight forward and for operand forward between fsqrt->jalr : end
+
+      # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_rv32f_rd_non_rv32f_rs[1/2]_eq_nonzero_lat - end
+
     ######### FOR PULP_FPU CFG - END   #########
 
     ######### Added for ex_stage hole coverage #########
     la x1, test_end
     li x2, 1
     fcvt.s.w x2, x2
-
+  
     fdiv.s x3, x1, x2
     div x4, x5, x0
     jalr x0, x3, 0
