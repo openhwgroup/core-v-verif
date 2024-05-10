@@ -133,10 +133,6 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
-# Add the ISS to compilation
-#VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
-VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/reference_model.flist
-#VLOG_FILE_LIST += -dpiheader $(RM_HOME)/sv_dpi.h #$(SPIKE_HOME)/riscv/spike_dpi.cc
 
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+UVM"
@@ -186,12 +182,12 @@ VSIM_FLAGS        	+= -dpicpppath $(GCC_PATH)
 VSIM_FLAGS 			+= -noautoldlibpath
 
 ifeq ($(call IS_YES,$(USE_RM)),YES)
-    export FILE_LIST_RM      ?= -f $(DV_UVMT_PATH)/reference_model.flist
-  	VSIM_FLAGS += +USE_RM
-  	VSIM_FLAGS += +define+USE_RM
-	VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
-	VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
-
+  export FILE_LIST_RM      ?= -f $(DV_UVMT_PATH)/reference_model.flist
+  SIM_FLAGS += +USE_RM
+  SIM_FLAGS += +define+USE_RM
+  VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
+  VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
+  VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/reference_model.flist
 else ifeq ($(call IS_YES,$(USE_ISS)),YES)
   ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
@@ -204,6 +200,7 @@ else ifeq ($(call IS_YES,$(USE_ISS)),YES)
   VSIM_FLAGS += +USE_ISS
   VSIM_FLAGS += +define+USE_IMPERASDV
   VSIM_FLAGS += +define+USE_ISS
+  VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
 else
   VSIM_PLUSARGS               += +DISABLE_OVPSIM
   VLOG_FLAGS                  += +DISABLE_OVPSIM

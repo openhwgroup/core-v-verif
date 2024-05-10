@@ -29,7 +29,7 @@
 
 
 // Imperas dv dependencies (rvvi, idv) or dummy package goes here (later packages depend on this)
-//${FILE_LIST_IDV_DEPS}
+${FILE_LIST_IDV_DEPS}
 
 
 // Agents
@@ -45,8 +45,6 @@
 -f ${DV_UVMA_FENCEI_PATH}/uvma_fencei_pkg.flist
 -f ${DV_UVMA_WFE_WU_PATH}/uvma_wfe_wu_pkg.flist
 
-// Reference model dependencies
-${FILE_LIST_RM_DEPS}
 
 // CV32E40S test bench Directories
 +incdir+${DV_UVMT_PATH}

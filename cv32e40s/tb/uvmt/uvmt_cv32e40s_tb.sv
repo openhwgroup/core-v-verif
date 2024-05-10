@@ -34,7 +34,7 @@ module uvmt_cv32e40s_tb;
    import uvmt_cv32e40s_base_test_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    `ifndef FORMAL
-   //import rvviApiPkg::*;//TODO: conditionally include this
+   import rvviApiPkg::*;
    `endif
 
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
@@ -85,8 +85,8 @@ module uvmt_cv32e40s_tb;
 
    // RVVI SystemVerilog Interface
    `ifndef FORMAL
-      //rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
-      //uvmt_imperas_dv_if_t imperas_dv_if();
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+      uvmt_imperas_dv_if_t imperas_dv_if();
    `endif
 
 
@@ -1761,9 +1761,13 @@ module uvmt_cv32e40s_tb;
 
     // IMPERAS DV
     `ifndef FORMAL
-      //uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+      uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
     `endif
-    uvmt_cv32e40s_reference_model_wrap reference_model ();
+
+    `ifdef USE_RM
+      `uvm_info("RM", "Using reference model", UVM_NONE);
+      uvmt_cv32e40s_reference_model_wrap reference_model ();
+    `endif
 
    /**
     * Test bench entry point.
@@ -1774,7 +1778,7 @@ module uvmt_cv32e40s_tb;
      // Specify time format for simulation (units_number, precision_number, suffix_string, minimum_field_width)
      $timeformat(-9, 3, " ns", 8);
 
-     //uvm_config_db#(virtual uvmt_imperas_dv_if_t)::set(.cntxt(null), .inst_name("uvm_test_top"), .field_name("idv_support_vif"), .value(imperas_dv_if));
+     uvm_config_db#(virtual uvmt_imperas_dv_if_t)::set(.cntxt(null), .inst_name("uvm_test_top"), .field_name("idv_support_vif"), .value(imperas_dv_if));
      // Add interfaces handles to uvm_config_db
      uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
      uvm_config_db#(virtual uvma_clknrst_if_t           )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
@@ -2048,7 +2052,7 @@ module uvmt_cv32e40s_tb;
 
      // IMPERAS_DV interface
      if ($test$plusargs("USE_ISS")) begin
-       //uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
+       uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
      end
 
      // Virtual Peripheral Status interface
@@ -2131,7 +2135,7 @@ module uvmt_cv32e40s_tb;
       fatal_count   = rs.get_severity_count(UVM_FATAL);
 
       if ($test$plusargs("USE_ISS")) begin
-         //void'(rvviApiPkg::rvviRefShutdown());
+         void'(rvviApiPkg::rvviRefShutdown());
       end
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
