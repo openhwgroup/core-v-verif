@@ -1,0 +1,2766 @@
+diff --git a/vendor/riscv/riscv-isa-sim/Makefile.in b/vendor/riscv/riscv-isa-sim/Makefile.in
+index c3e1822d..f9c4b09a 100644
+--- a/vendor/riscv/riscv-isa-sim/Makefile.in
++++ b/vendor/riscv/riscv-isa-sim/Makefile.in
+@@ -69,11 +69,13 @@ install_exes_dir := $(INSTALLDIR)/bin
+ sprojs         := @subprojects@
+ sprojs_enabled := @subprojects_enabled@
+ 
+-sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled))
++EDA_INCLUDES := -I$(VCS_HOME)/include -I/$(QUESTASIM_HOME)/include -I$(XCEL_HOME)/include -I$(VERILATOR_INSTALL_DIR)/share/verilator/include/vltstd/
++
++sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled)) $(EDA_INCLUDES)
+ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
+ 
+ #-------------------------------------------------------------------------
+-# Programs and flags 
++# Programs and flags
+ #-------------------------------------------------------------------------
+ 
+ # C++ compiler
+@@ -92,8 +94,9 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
+ #
+ # These all appear on the command line, from lowest precedence to
+ # highest.
++SPIKE_HASH_VERSION:= $(shell git log -1 --pretty=tformat:"%h" -- .. )
+ 
+-default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC
++default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC -DSPIKE_HASH_VERSION=0x$(SPIKE_HASH_VERSION)
+ default-CXXFLAGS := $(default-CFLAGS) -std=c++17
+ 
+ mcppbs-CPPFLAGS := @CPPFLAGS@
+@@ -163,7 +166,7 @@ dist_junk += $(sprojs_mk)
+ #-------------------------------------------------------------------------
+ # This function is used by the subproject template to reverse the list
+ # of dependencies. It uses recursion to perform the reversal.
+-# 
++#
+ # Arguments:
+ #  $(1)   : space separated input list
+ #  retval : input list in reverse order
+@@ -185,7 +188,7 @@ endef
+ # subprojects defining a certain set of make variables which are all
+ # prefixed with the subproject name. Since subproject names can have
+ # dashes in them (and the make variables are assumed to only use
+-# underscores) the template takes two arguments - one with the regular 
++# underscores) the template takes two arguments - one with the regular
+ # subproject name and one with dashes replaced with underscores.
+ #
+ # Arguments:
+@@ -441,7 +444,7 @@ dist_junk += config.status config.h Makefile config.log
+ # Distribution
+ #-------------------------------------------------------------------------
+ # The distribution tarball is named project-ver.tar.gz and it includes
+-# both enabled and disabled subprojects. 
++# both enabled and disabled subprojects.
+ 
+ dist_files = \
+   $(sprojs) \
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
+index 9eafb12f..4ef09a29 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
+@@ -1,5 +1,10 @@
+ disasm_srcs = \
+   disasm.cc \
+   regnames.cc \
++  dpi_dasm.cc
++
++disasm_install_hdrs = \
++  dpi_dasm_imports.svh
+ 
+ disasm_install_lib = yes
++disasm_install_shared_lib = yes
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm.cc b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm.cc
+new file mode 100644
+index 00000000..f88723e6
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm.cc
+@@ -0,0 +1,654 @@
++// Copyright 2021 OpenHW Group
++// Copyright 2021 Silicon Labs, Inc.
++//
++// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     https://solderpad.org/licenses/
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++//
++// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
++
++#include "svdpi.h"
++#include "string.h"
++#include "extension.h"
++
++using namespace std;
++
++// Global class pointers
++function <extension_t*()> gcp_extension;
++
++// Global strings
++string          gs_ext_str;
++string          gs_ret_str;
++
++// Global pointers
++disassembler_t* gp_disassembler;
++insn_t*         gp_insn;
++
++// Global variables
++uint8_t         gv_xlen;
++uint8_t         gv_is_big_endian;
++isa_parser_t*   isa_parser;
++
++// Error messages
++const           string errmsg[2] = { /* 0 */ "DPI_ERROR: Invalid arguments in disassembler configuration\n",
++                                     /* 1 */ "DPI_ERROR: Disassembler config not set\n" };
++
++// Constants
++const int       instr_len    = 32;
++
++// Headers
++uint64_t               endian_swap(uint64_t bits, uint8_t swap_ena);
++extern "C" void        set_config(uint32_t bsize, char* isa, uint8_t is_big_endian);
++extern "C" void        initialize_disassembler();
++extern "C" const char* disassemble_insn_str(uint64_t insn);
++extern "C" const char* get_insn_name(uint64_t insn);
++
++//--------------------------------------------------------------------------------
++
++extern "C" void set_config(uint32_t bsize, char* isa, uint8_t is_big_endian) {
++
++  gs_ext_str       = string(isa);
++  gv_is_big_endian = is_big_endian;
++
++  [&](const char* gs_ext_str){gcp_extension = find_extension(gs_ext_str);};
++
++  if (bsize != 32 && bsize != 64) {
++    cout << errmsg[0];
++    return;
++  }
++
++  isa_parser = new isa_parser_t(isa, "MSU");
++  gv_xlen = bsize;
++
++  if (gp_disassembler) {
++    delete gp_disassembler;
++  }
++  initialize_disassembler();
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" void initialize_disassembler() {
++  if (!gv_xlen) {
++    cout << errmsg[1];
++    return;
++  }
++
++  gp_disassembler = new disassembler_t(isa_parser);
++
++  if (gcp_extension) {
++    for (auto disasm_insn : gcp_extension()->get_disasms()){
++      gp_disassembler->add_insn(disasm_insn);
++    }
++  }
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" const char* disassemble_insn_str(uint64_t insn) {
++  if (!gp_disassembler) {
++    initialize_disassembler();
++  }
++
++  insn        = endian_swap(insn, gv_is_big_endian);
++  gs_ret_str  = gp_disassembler->disassemble(insn & 0xFFFFFFFF);
++
++  return gs_ret_str.data();
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" const char* get_insn_name(uint64_t insn) {
++  const disasm_insn_t* the_insn;
++
++  if (!gp_disassembler) {
++    initialize_disassembler();
++  }
++
++  insn       = endian_swap(insn, gv_is_big_endian);
++  the_insn = gp_disassembler->lookup(insn & 0xFFFFFFFF);
++
++  // If the opcode is not valid, then return illegal
++  if (the_insn == NULL) {
++    return "unknown";
++  }
++
++  gs_ret_str = the_insn->get_name();
++
++  return gs_ret_str.data();
++}
++
++//--------------------------------------------------------------------------------
++
++uint64_t endian_swap(uint64_t bits, uint8_t swap_ena) {
++  uint64_t temp = bits;
++  if (swap_ena) {
++      if (__GNUC__) {
++        temp = __builtin_bswap64(bits);
++      } else {
++        temp = ( ((bits >> 56) & 0x00000000000000FF) |
++                 ((bits << 56) & 0xFF00000000000000) |
++                 ((bits >> 40) & 0x000000000000FF00) |
++                 ((bits << 40) & 0x00FF000000000000) |
++                 ((bits >> 24) & 0x0000000000FF0000) |
++                 ((bits << 24) & 0x0000FF0000000000) |
++                 ((bits >>  8) & 0x00000000FF000000) |
++                 ((bits <<  8) & 0x000000FF00000000) );
++      }
++    temp >>= (64 - instr_len);
++  }
++  return temp;
++}
++
++//--------------------------------------------------------------------------------
++// C-wrappers for insn_t methods
++//--------------------------------------------------------------------------------
++
++extern "C" int length(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint32_t tmp = gp_insn->length();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t i_imm(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->i_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t s_imm(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->s_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t sb_imm(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->sb_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t u_imm(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->u_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t uj_imm(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->uj_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t shamt(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->shamt();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rd(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rd();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rs1(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rs1();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rs2(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rs2();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rs3(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rs3();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rm(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t csr(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->csr();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t iorw(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->iorw();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t bs(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->bs();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rcon(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rcon();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_zimm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_zimm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_addi4spn_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_addi4spn_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_addi16sp_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_addi16sp_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_lwsp_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_lwsp_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_ldsp_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_ldsp_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_swsp_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_swsp_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_sdsp_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_sdsp_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_lw_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_lw_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_ld_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_ld_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_j_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_j_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_b_imm(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_b_imm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" int64_t rvc_simm3(uint64_t insn) {
++  gp_insn     = new insn_t(insn);
++  int64_t tmp = gp_insn->rvc_simm3();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rvc_rd(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rvc_rd();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rvc_rs1(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rvc_rs1();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rvc_rs2(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rvc_rs2();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rvc_rs1s(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rvc_rs1s();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t rvc_rs2s(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->rvc_rs2s();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_vm(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_vm();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_wd(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_wd();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_nf(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_nf();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_simm5(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_simm5();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_zimm5(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_zimm5();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_zimm11(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_zimm11();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_lmul(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_lmul();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_frac_lmul(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_frac_lmul();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_sew(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_sew();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_width(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_width();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_mop(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_mop();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_lumop(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_lumop();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_sumop(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_sumop();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_vta(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_vta();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_vma(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_vma();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
++extern "C" uint64_t v_mew(uint64_t insn) {
++  gp_insn      = new insn_t(insn);
++  uint64_t tmp = gp_insn->v_mew();
++
++  delete gp_insn;
++  return tmp;
++}
++
++//--------------------------------------------------------------------------------
++
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm_imports.svh b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm_imports.svh
+new file mode 100644
+index 00000000..8a0bfbd9
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm_imports.svh
+@@ -0,0 +1,75 @@
++// Copyright 2021 OpenHW Group
++// Copyright 2021 Silicon Labs, Inc.
++//
++// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     https://solderpad.org/licenses/
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++//
++// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
++
++import "DPI-C" set_config = function void dasm_set_config(int bit_size, string isa,
++                                                        int swap_endinanness);
++import "DPI-C" initialize_disassembler = function void dasm_init();
++import "DPI-C" disassemble_insn_str = function string dasm_insn(longint instruction);
++import "DPI-C" get_insn_name = function string dasm_name(longint instruction);
++
++import "DPI-C" length = function int dasm_length(longint instruction);
++import "DPI-C" i_imm = function longint dasm_i_imm(longint instruction);
++import "DPI-C" s_imm = function longint dasm_s_imm(longint instruction);
++import "DPI-C" sb_imm = function longint dasm_sb_imm(longint instruction);
++import "DPI-C" u_imm = function longint dasm_u_imm(longint instruction);
++import "DPI-C" uj_imm = function longint dasm_uj_imm(longint instruction);
++import "DPI-C" shamt = function longint dasm_shamt(longint instruction);
++import "DPI-C" rd = function longint unsigned dasm_rd(longint instruction);
++import "DPI-C" rs1 = function longint unsigned dasm_rs1(longint instruction);
++import "DPI-C" rs2 = function longint unsigned dasm_rs2(longint instruction);
++import "DPI-C" rs3 = function longint unsigned dasm_rs3(longint instruction);
++import "DPI-C" rm = function longint unsigned dasm_rm(longint instruction);
++import "DPI-C" csr = function longint unsigned dasm_csr(longint instruction);
++import "DPI-C" iorw = function longint unsigned dasm_iorw(longint instruction);
++import "DPI-C" bs = function longint unsigned dasm_bs(longint instruction);
++import "DPI-C" rcon = function longint unsigned dasm_rcon(longint instruction);
++
++import "DPI-C" rvc_imm = function longint dasm_rvc_imm(longint instruction);
++import "DPI-C" rvc_zimm = function longint dasm_rvc_zimm(longint instruction);
++import "DPI-C" rvc_addi4spn_imm = function longint dasm_rvc_addi4spn_imm(longint instruction);
++import "DPI-C" rvc_addi16sp_imm = function longint dasm_rvc_addi16sp_imm(longint instruction);
++import "DPI-C" rvc_lwsp_imm = function longint dasm_rvc_lwsp_imm(longint instruction);
++import "DPI-C" rvc_ldsp_imm = function longint dasm_rvc_ldsp_imm(longint instruction);
++import "DPI-C" rvc_swsp_imm = function longint dasm_rvc_swsp_imm(longint instruction);
++import "DPI-C" rvc_sdsp_imm = function longint dasm_rvc_sdsp_imm(longint instruction);
++import "DPI-C" rvc_lw_imm = function longint dasm_rvc_lw_imm(longint instruction);
++import "DPI-C" rvc_ld_imm = function longint dasm_rvc_ld_imm(longint instruction);
++import "DPI-C" rvc_j_imm = function longint dasm_rvc_j_imm(longint instruction);
++import "DPI-C" rvc_b_imm = function longint dasm_rvc_b_imm(longint instruction);
++import "DPI-C" rvc_simm3 = function longint dasm_rvc_simm3(longint instruction);
++import "DPI-C" rvc_rd = function longint unsigned dasm_rvc_rd(longint instruction);
++import "DPI-C" rvc_rs1 = function longint unsigned dasm_rvc_rs1(longint instruction);
++import "DPI-C" rvc_rs2 = function longint unsigned dasm_rvc_rs2(longint instruction);
++import "DPI-C" rvc_rs1s = function longint unsigned dasm_rvc_rs1s(longint instruction);
++import "DPI-C" rvc_rs2s = function longint unsigned dasm_rvc_rs2s(longint instruction);
++
++import "DPI-C" v_vm = function longint unsigned dasm_v_vm(longint instruction);
++import "DPI-C" v_wd = function longint unsigned dasm_v_wd(longint instruction);
++import "DPI-C" v_nf = function longint unsigned dasm_v_nf(longint instruction);
++import "DPI-C" v_simm5 = function longint unsigned dasm_v_simm5(longint instruction);
++import "DPI-C" v_zimm5 = function longint unsigned dasm_v_zimm5(longint instruction);
++import "DPI-C" v_zimm11 = function longint unsigned dasm_v_zimm11(longint instruction);
++import "DPI-C" v_lmul = function longint unsigned dasm_v_lmul(longint instruction);
++import "DPI-C" v_frac_lmul = function longint unsigned dasm_v_frac_lmul(longint instruction);
++import "DPI-C" v_sew = function longint unsigned dasm_v_sew(longint instruction);
++import "DPI-C" v_width = function longint unsigned dasm_v_width(longint instruction);
++import "DPI-C" v_mop = function longint unsigned dasm_v_mop(longint instruction);
++import "DPI-C" v_lumop = function longint unsigned dasm_v_lumop(longint instruction);
++import "DPI-C" v_sumop = function longint unsigned dasm_v_sumop(longint instruction);
++import "DPI-C" v_vta = function longint unsigned dasm_v_vta(longint instruction);
++import "DPI-C" v_vma = function longint unsigned dasm_v_vma(longint instruction);
++import "DPI-C" v_mew = function longint unsigned dasm_v_mew(longint instruction);
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/SimDTM.cc b/vendor/riscv/riscv-isa-sim/fesvr/SimDTM.cc
+new file mode 100644
+index 00000000..a6898ba2
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/fesvr/SimDTM.cc
+@@ -0,0 +1,95 @@
++// See LICENSE.SiFive for license details.
++
++#include <fesvr/dtm.h>
++#include <vpi_user.h>
++#include <svdpi.h>
++#include <stdio.h>
++#include <string.h>
++#include <vector>
++
++dtm_t* dtm;
++
++std::vector<std::string> sanitize_args() {
++    bool permissive_on = false;
++
++    s_vpi_vlog_info info;
++    if (!vpi_get_vlog_info(&info))
++      abort();
++
++    std::vector<std::string> htif_args;
++
++    // sanitize arguments
++    for (int i = 1; i < info.argc; i++) {
++      if (strcmp(info.argv[i], "+permissive") == 0) {
++        permissive_on = true;
++        // printf("Found permissive %s\n", info.argv[i]);
++      }
++
++      // remove any two double pluses at the beginning (those are target arguments)
++      if (info.argv[i][0] == '+' && info.argv[i][1] == '+' && strlen(info.argv[i]) > 3) {
++          for (int j = 0; j < strlen(info.argv[i]) - 1; j++) {
++            info.argv[i][j] = info.argv[i][j + 2];
++          }
++      }
++
++      if (!permissive_on) {
++        htif_args.push_back(info.argv[i]);
++      }
++
++      if (strcmp(info.argv[i], "+permissive-off") == 0) {
++        permissive_on = false;
++        // printf("Found permissive-off %s\n", info.argv[i]);
++      }
++    }
++
++    return htif_args;
++}
++
++extern "C" int debug_tick
++(
++  unsigned char* debug_req_valid,
++  unsigned char  debug_req_ready,
++  int*           debug_req_bits_addr,
++  int*           debug_req_bits_op,
++  int*           debug_req_bits_data,
++  unsigned char  debug_resp_valid,
++  unsigned char* debug_resp_ready,
++  int            debug_resp_bits_resp,
++  int            debug_resp_bits_data
++)
++{
++
++  if (!dtm) {
++
++      std::vector<std::string> htif_args = sanitize_args();
++
++      // convert vector to argc and argv
++      int argc = htif_args.size() + 1;
++      char * argv[argc];
++      argv[0] = (char *) "htif";
++      for (unsigned int i = 0; i < htif_args.size(); i++) {
++        argv[i+1] = (char *) htif_args[i].c_str();
++      }
++
++      dtm = new dtm_t(argc, argv);
++  }
++
++  dtm_t::resp resp_bits;
++  resp_bits.resp = debug_resp_bits_resp;
++  resp_bits.data = debug_resp_bits_data;
++
++  dtm->tick
++  (
++    debug_req_ready,
++    debug_resp_valid,
++    resp_bits
++  );
++
++  *debug_resp_ready = dtm->resp_ready();
++  *debug_req_valid = dtm->req_valid();
++  *debug_req_bits_addr = dtm->req_bits().addr;
++  *debug_req_bits_op = dtm->req_bits().op;
++  *debug_req_bits_data = dtm->req_bits().data;
++
++  return dtm->done() ? (dtm->exit_code() << 1 | 1) : 0;
++}
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in b/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in
+index c8549399..1d6bc866 100644
+--- a/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in
++++ b/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in
+@@ -22,6 +22,7 @@ fesvr_install_shared_lib = yes
+ 
+ fesvr_srcs = \
+   elfloader.cc \
++  fesvr_dpi.cc \
+   htif.cc \
+   memif.cc \
+   dtm.cc \
+@@ -35,6 +36,7 @@ fesvr_srcs = \
+   option_parser.cc \
+   term.cc \
+   tsi.cc \
++  SimDTM.cc \
+ 
+ fesvr_install_prog_srcs = \
+   elf2hex.cc \
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/fesvr_dpi.cc b/vendor/riscv/riscv-isa-sim/fesvr/fesvr_dpi.cc
+new file mode 100644
+index 00000000..9c3e692a
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/fesvr/fesvr_dpi.cc
+@@ -0,0 +1,121 @@
++#include "config.h"
++#include "elf.h"
++#include "htif.h"
++#include "htif_hexwriter.h"
++#include "elfloader.h"
++#include "memif.h"
++#include "byteorder.h"
++#include <cstring>
++#include <string>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <sys/mman.h>
++#include <assert.h>
++#include <unistd.h>
++#include <stdexcept>
++#include <stdlib.h>
++#include <stdio.h>
++#include <vector>
++#include <map>
++#include <iostream>
++
++#include <svdpi.h>
++
++std::string loaded_binary;
++// address and size
++std::map<reg_t, reg_t> sections;
++std::map<std::string, uint64_t> symbols;
++// memory based address and content
++std::map<reg_t, std::vector<uint8_t>> mems;
++memif_t* memif;
++htif_hexwriter_t *htif;
++reg_t* entry;
++int section_index = 0;
++
++class dpi_memif_t : public memif_t {
++public:
++    dpi_memif_t (htif_t* htif) : memif_t(htif), htif(htif) {}
++
++    void write(addr_t taddr, size_t len, const void* src) override
++    {
++        memif_t::write(taddr, len, src);
++
++        sections[taddr] = len;
++        uint64_t datum;
++        uint8_t* buf = (uint8_t*) src;
++        std::vector<uint8_t> mem;
++        for (int i = 0; i < len; i++) {
++            mem.push_back(buf[i]);
++        }
++        mems.insert(std::make_pair(taddr, mem));
++    }
++    void read(addr_t addr, size_t len, void* bytes) override
++    {
++        memif_t::read(addr, len, bytes);
++    }
++
++private:
++    htif_t* htif;
++};
++
++// Communicate the section address and len
++// Returns:
++// 0 if there are no more sections
++// 1 if there are more sections to load
++extern "C" char get_section (long long* address, long long* len) {
++    if (section_index < sections.size()) {
++      auto it = sections.begin();
++      for( int i = 0; i < section_index; i++ , it++);
++      *address = it->first;
++      *len = it->second;
++      section_index++;
++      return 1;
++    } else return 0;
++}
++
++extern "C" void read_section_void (long long address, void* buffer, uint64_t size = 0) {
++    // check that the address points to a section
++    assert(mems.count(address) > 0);
++    // copy array
++    auto it = mems.find(address);
++
++    if (it == mems.end())
++        return;
++
++    memif->read(address, (size == 0) ? sections[address] : size , buffer);
++}
++
++extern "C" void read_section_sv (long long address, const svOpenArrayHandle buffer) {
++    // get actual poitner
++    void* buf = svGetArrayPtr(buffer);
++    // check that the address points to a section
++    assert(mems.count(address) > 0);
++
++    int i = 0;
++    for (auto &datum : mems.find(address)->second) {
++      *((char *) buf + i) = datum;
++      i++;
++    }
++}
++
++extern "C" char read_symbol (const char* symbol_name, long long* address) {
++    std::string symbol_str(symbol_name);
++    auto it = symbols.find(symbol_name);
++    if (it != symbols.end()) {
++        *address = it->second;
++        return 0;
++    }
++    return 1;
++}
++
++extern "C" void read_elf(const char* filename) {
++    loaded_binary = filename;
++
++    htif = new htif_hexwriter_t(0x0, 1, -1);
++
++    entry = new reg_t;
++
++    memif = new dpi_memif_t((htif_t*) htif);
++
++    symbols = load_elf(filename, memif, entry);
++}
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/htif.cc b/vendor/riscv/riscv-isa-sim/fesvr/htif.cc
+index 3f93f7b5..4555b192 100644
+--- a/vendor/riscv/riscv-isa-sim/fesvr/htif.cc
++++ b/vendor/riscv/riscv-isa-sim/fesvr/htif.cc
+@@ -116,7 +116,7 @@ std::map<std::string, uint64_t> htif_t::load_payload(const std::string& payload,
+     else
+       throw std::runtime_error(
+         "could not open " + payload + "; searched paths:\n" +
+-        "\t. (current directory)\n" + 
++        "\t. (current directory)\n" +
+         "\t" + PREFIX TARGET_DIR + " (based on configured --prefix and --with-target)"
+       );
+   }
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Params.cc b/vendor/riscv/riscv-isa-sim/riscv/Params.cc
+new file mode 100644
+index 00000000..5b468700
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/Params.cc
+@@ -0,0 +1,18 @@
++#include "Params.h"
++
++namespace openhw
++{
++    void ParseParams(string base, Params& baseParams, Params& newParams)
++    {
++
++        if (newParams.v.find(base) == newParams.v.end())
++            return;
++
++        for (auto it = newParams.v[base].begin(); it != newParams.v[base].end(); it++)
++        {
++            string name = it->first;
++            Param p = it->second;
++            baseParams.set(base, name, p);
++        }
++    }
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Params.h b/vendor/riscv/riscv-isa-sim/riscv/Params.h
+new file mode 100644
+index 00000000..914bbafe
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/Params.h
+@@ -0,0 +1,71 @@
++#include <iostream>
++#include <string>
++#include <unordered_map>
++#include <any>
++#include <iostream>
++#include <stdexcept>
++
++#pragma once
++
++using namespace std;
++
++namespace openhw
++{
++    typedef struct {
++        string base;
++        string name;
++        any a;
++        string description;
++    } Param;
++
++    class Params {
++        public:
++        //              Base                 Name
++        unordered_map<string, unordered_map<string, Param>> v;
++
++        any operator[](string str) {
++            return this->get(str).a;
++        }
++
++        void set(string base, string name, any value, string description="")
++        {
++            Param p = {base, name, value, description};
++            v[base][name] = p;
++        }
++
++        void set(string base, string name, Param& p)
++        {
++            v[base][name] = p;
++        }
++
++        Param get(string base, string name)
++        {
++            auto it = v.find(base);
++            if (it != this->v.end())
++            {
++                auto it2 = it->second.find(name);
++                if (it2 != it->second.end())
++                    return v[base][name];
++                throw std::invalid_argument("The param does not exist");
++            }
++            return Param();
++        }
++
++        Param get(string str)
++        {
++            string base, name;
++            std::size_t n_base = str.find_last_of("/");
++            if (n_base != std::string::npos)
++            {
++                base = str.substr(0, n_base + 1);
++                name = str.substr(n_base + 1, str.length());
++                return this->get(base, name);
++            }
++            return Param();
++
++        }
++
++    };
++
++    void ParseParams(string base, Params& baseParams, Params& newParams);
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+new file mode 100644
+index 00000000..6ecc4b80
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -0,0 +1,108 @@
++#include "Proc.h"
++#include "disasm.h"
++
++namespace openhw
++{
++    st_rvfi Processor::step(size_t n, st_rvfi reference)
++    {
++        st_rvfi rvfi;
++        memset(&rvfi, 0, sizeof(st_rvfi));
++
++        this->taken_trap = false;
++
++        rvfi.pc_rdata = this->get_state()->pc;
++        processor_t::step(n);
++        rvfi.mode = this->get_state()->last_inst_priv;
++        rvfi.insn = (uint32_t) (this->get_state()->last_inst_fetched.bits() & 0xffffffffULL);
++
++        // TODO FIXME Handle multiple/zero writes in a single insn.
++        auto& reg_commits = this->get_state()->log_reg_write;
++        int xlen = this->get_state()->last_inst_xlen;
++        int flen = this->get_state()->last_inst_flen;
++
++        rvfi.rs1_addr = this->get_state()->last_inst_fetched.rs1();
++        // TODO add rs1_value
++        rvfi.rs2_addr = this->get_state()->last_inst_fetched.rs2();
++        // TODO add rs2_value
++
++        bool got_commit = false;
++        for (auto& reg : reg_commits) {
++
++            if (!got_commit) {
++                rvfi.rd1_addr = reg.first >> 4;
++                if (rvfi.rd1_addr > 32) continue;
++                // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
++                rvfi.rd1_wdata = reg.second.v[0];
++                // TODO FIXME Handle multiple register commits per cycle.
++                // TODO FIXME This must be handled on the RVFI side as well.
++                got_commit = true; // FORNOW Latch only the first commit.
++            }
++        }
++
++        // Remove sign extension applied by Spike in 32b mode.
++        if (this->get_xlen() == 32) {
++            rvfi.pc_rdata &= 0xffffffffULL;
++            rvfi.rd1_wdata &= 0xffffffffULL;
++        }
++
++        // TODO FIXME There's no direct access to the exception status anymore.
++        //commit_log.was_exception = this->get_state()->was_exception;
++        rvfi.trap = this->taken_trap;
++        rvfi.cause = this->which_trap;
++
++        return rvfi;
++    }
++
++    Processor::Processor(const isa_parser_t *isa, const cfg_t* cfg,
++        simif_t* sim, uint32_t id, bool halt_on_reset,
++        FILE *log_file, std::ostream& sout_,
++        Params& params) // because of command line option --log and -s we need both
++      :  processor_t::processor_t(isa, cfg, sim, id, halt_on_reset, log_file, sout_)
++    {
++
++        this->params.set("/top/core/0/", "isa", any(std::string("RV32GC")));
++        this->params.set("/top/core/0/", "boot_addr", any(0x80000000UL));
++        this->params.set("/top/core/0/", "mmu_mode", any(std::string("sv39")));
++        this->params.set("/top/core/0/", "misa", any(""));
++        this->params.set("/top/core/0/", "pmpaddr0", any(0x0UL));
++        this->params.set("/top/core/0/", "pmpcfg0", any(0x0UL));
++        this->params.set("/top/core/0/", "marchid", any(0x3UL));
++        this->params.set("/top/core/0/", "mvendorid", any(0x00000602UL));
++
++        // Process User Params
++        ParseParams("/top/core/0/", this->params, params);
++
++        string isa_str = std::any_cast<string>(this->params["/top/core/0/isa"]);
++        string priv_str = std::any_cast<string>(this->params["/top/core/0/priv"]);
++        std::cout << "[SPIKE] Proc 0 | isa: " << isa_str << " priv: " << priv_str << std::endl;
++        this->isa = (const isa_parser_t*) new isa_parser_t (isa_str.c_str(), priv_str.c_str());
++
++        disassembler = new disassembler_t(isa);
++        for (auto e : isa->get_extensions())
++            register_extension(e.second);
++
++        this->reset();
++
++        uint64_t new_pc = std::any_cast<uint64_t>(this->params["/top/core/0/boot_addr"]);
++        this->state.pc = new_pc;
++
++        this->put_csr(CSR_PMPADDR0, std::any_cast<uint64_t>(this->params["/top/core/0/pmpaddr0"]));
++        this->put_csr(CSR_PMPCFG0, std::any_cast<uint64_t>(this->params["/top/core/0/pmpcfg0"]));
++
++        this->put_csr(CSR_MVENDORID, std::any_cast<uint64_t>(this->params["/top/core/0/mvendorid"]));
++        this->put_csr(CSR_MARCHID, std::any_cast<uint64_t>(this->params["/top/core/0/marchid"]));
++    }
++
++    void Processor::take_trap(trap_t& t, reg_t epc)
++    {
++        this->taken_trap = true;
++        this->which_trap = t.cause();
++        processor_t::take_trap(t, epc);
++    }
++
++    Processor::~Processor()
++    {
++        delete this->isa;
++    }
++
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+new file mode 100644
+index 00000000..917d2ea9
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -0,0 +1,23 @@
++
++#include "Types.h"
++#include "processor.h"
++
++namespace openhw
++{
++    class Processor : public processor_t
++    {
++        public:
++            Processor(const isa_parser_t *isa, const cfg_t* cfg,
++                simif_t* sim, uint32_t id, bool halt_on_reset,
++                FILE *log_file, std::ostream& sout_, Params& params); // because of command line option --log and -s we need both
++            ~Processor();
++            st_rvfi step(size_t n, st_rvfi reference);
++            void initParams();
++        protected:
++            bool taken_trap;
++            uint8_t which_trap;
++            virtual void take_trap(trap_t& t, reg_t epc); // take an exception
++
++    };
++
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/SimJTAG.cc b/vendor/riscv/riscv-isa-sim/riscv/SimJTAG.cc
+new file mode 100644
+index 00000000..80cdc219
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/SimJTAG.cc
+@@ -0,0 +1,25 @@
++// See LICENSE.SiFive for license details.
++
++#include <cstdlib>
++#include "remote_bitbang.h"
++
++remote_bitbang_t* jtag;
++extern "C" int jtag_tick
++(
++ unsigned char * jtag_TCK,
++ unsigned char * jtag_TMS,
++ unsigned char * jtag_TDI,
++ unsigned char * jtag_TRSTn,
++ unsigned char jtag_TDO
++)
++{
++  if (!jtag) {
++    // TODO: Pass in real port number
++    jtag = new remote_bitbang_t(0, NULL);
++  }
++
++  jtag->tick(jtag_TCK, jtag_TMS, jtag_TDI, jtag_TRSTn, jtag_TDO);
++
++  return jtag->done() ? (jtag->exit_code() << 1 | 1) : 0;
++
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+new file mode 100644
+index 00000000..79d0e1c6
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+@@ -0,0 +1,265 @@
++// See LICENSE for license details.
++
++#include "Simulation.h"
++#include "mmu.h"
++#include <map>
++#include <iostream>
++#include <sstream>
++#include <climits>
++#include <cstdlib>
++#include <cassert>
++#include <signal.h>
++#include <unistd.h>
++#include <sys/wait.h>
++#include <sys/types.h>
++#include <inttypes.h>
++#include <stdio.h>
++#include "Simulation.h"
++
++using namespace openhw;
++
++std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devs;
++
++void sim_thread_main(void* arg)
++{
++      ((sim_t*)arg)->run();
++      ((sim_t*)arg)->switch_to_host(); // To get the first point
++}
++
++// FIXME TODO Review settings of dm_config below.
++debug_module_config_t dm_config = {
++  .progbufsize = 2,
++  .max_sba_data_width = 0,
++  .require_authentication = false,
++  .abstract_rti = 0,
++  .support_hasel = true,
++  .support_abstract_csr_access = true,
++  .support_abstract_fpr_access = true,
++  .support_haltgroups = true,
++  .support_impebreak = true
++};
++
++Simulation::Simulation(const cfg_t *cfg, bool halted,
++        std::vector<std::pair<reg_t, mem_t*>> mems,
++        std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devices,
++        const std::vector<std::string>& args,
++        const debug_module_config_t &dm_config, const char *log_path,
++        bool dtb_enabled, const char *dtb_file,
++        bool socket_enabled,
++        FILE *cmd_file, // needed for command line option --cmd
++        openhw::Params& params)
++    : sim_t(cfg, halted, mems, plugin_devices, args, dm_config, log_path,
++            dtb_enabled, dtb_file, socket_enabled, cmd_file, params)
++{
++  // It seems mandatory to set cache block size for MMU.
++  // FIXME TODO: Use actual cache configuration (on/off, # of ways/sets).
++  // FIXME TODO: Support multiple cores.
++  get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
++
++  this->params.set("/top/", "isa", any(std::string("RV32GC")));
++  this->params.set("/top/", "priv", any(std::string(DEFAULT_PRIV)));
++
++  this->params.set("/top/", "bootrom", std::any(true));
++  this->params.set("/top/", "bootrom_base", std::any(0x10000UL));
++  this->params.set("/top/", "bootrom_size", std::any(0x1000UL));
++
++  this->params.set("/top/", "dram", std::any(true));
++  this->params.set("/top/", "dram_base", std::any(0x80000000UL));
++  this->params.set("/top/", "dram_size", std::any(0x40000000UL));
++
++  this->params.set("/top/", "log_commits", std::any(true));
++
++  this->params.set("/top/", "max_steps_enabled", std::any(false));
++  this->params.set("/top/", "max_steps", std::any(200000UL));
++
++  ParseParams("/top/", this->params, params);
++
++  const std::vector<mem_cfg_t> layout;
++
++  this->make_mems(layout);
++
++  for (auto& x : this->mems)
++    bus.add_device(x.first, x.second);
++
++  string isa_str = std::any_cast<string>(this->params["/top/isa"]);
++  string priv_str = std::any_cast<string>(this->params["/top/priv"]);
++  this->isa = isa_parser_t (isa_str.c_str(), priv_str.c_str());
++
++  this->reset();
++
++  bool commitlog = std::any_cast<bool>(this->params["/top/log_commits"]);
++  this->configure_log(commitlog, commitlog);
++
++  this->max_steps = std::any_cast<uint64_t>(this->params["/top/max_steps"]);
++  this->max_steps_enabled = std::any_cast<bool>(this->params["/top/max_steps_enabled"]);
++
++  target.init(sim_thread_main, this);
++  host = context_t::current();
++  target.switch_to(); // To get the first point
++
++}
++
++Simulation::Simulation(const cfg_t *cfg, string elf_path,
++             Params& params)
++    : Simulation(cfg,   // cfg
++          false,  // halted
++          std::vector<std::pair<reg_t, mem_t*>>(),  // mems
++          plugin_devs,
++          std::vector<std::string>() = {elf_path},
++          dm_config,
++          "tandem.log",  // log_path
++          true, // dtb_enabled
++          nullptr,  // dtb_file
++          false, // socket_enabled
++          NULL,  // cmd_file
++          params)
++{
++}
++
++Simulation::~Simulation()
++{
++}
++
++int Simulation::run()
++{
++    try
++    {
++        while(!sim_t::done())
++        {
++            st_rvfi reference;
++            std::vector<st_rvfi> vreference, vspike;
++            vreference.push_back(reference);
++            vspike = this->step(1, vreference);
++        }
++    }
++    catch (std::ios_base::failure e)
++    {
++        std::cout << "[SPIKE] Max steps exceed" << std::endl;
++    }
++    return sim_t::exit_code();
++}
++
++void Simulation::make_mems(const std::vector<mem_cfg_t> &layout)
++{
++  for (const auto &cfg : layout)
++    mems.push_back(std::make_pair(cfg.get_base(), new mem_t(cfg.get_size())));
++
++  bool bootrom = std::any_cast<bool>(this->params["/top/bootrom"]);
++  uint64_t bootrom_base = std::any_cast<uint64_t>(this->params["/top/bootrom_base"]);
++  uint64_t bootrom_size = std::any_cast<uint64_t>(this->params["/top/bootrom_size"]);
++  if (bootrom) {
++    auto bootrom_device = std::make_pair(bootrom_base, new mem_t(bootrom_size));
++
++    std::cerr << "[SPIKE] Initializing memories...\n";
++    uint8_t rom_check_buffer[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
++  // Populate the ROM.  Reset vector size is in 32-bit words and must be scaled.
++#include "bootrom.h"
++    if (!bootrom_device.second->store(reg_t(0), reset_vec_size << 2, (const uint8_t *) reset_vec))
++    {
++        std::cerr << "[SPIKE] *** ERROR: Failed to initialize ROM!\n";
++        bootrom_device.second->load(reg_t(0), 8, rom_check_buffer);
++    fprintf(stderr, "[SPIKE] ROM content head(8) = %02x %02x %02x %02x %02x %02x %02x %02x\n",
++        rom_check_buffer[0], rom_check_buffer[1], rom_check_buffer[2], rom_check_buffer[3],
++        rom_check_buffer[4], rom_check_buffer[5], rom_check_buffer[6], rom_check_buffer[7]);
++    }
++
++    this->mems.push_back(bootrom_device);
++  }
++
++  bool dram = std::any_cast<bool>(this->params["/top/dram"]);
++  uint64_t dram_base = std::any_cast<uint64_t>(this->params["/top/dram_base"]);
++  uint64_t dram_size = std::any_cast<uint64_t>(this->params["/top/dram_size"]);
++  if (dram)
++    this->mems.push_back(std::make_pair(dram_base, new mem_t(dram_size)));
++
++}
++
++std::vector<st_rvfi> Simulation::step(size_t n, std::vector<st_rvfi>& vreference)
++{
++
++  // The state PC is the *next* insn fetch address.
++  // Catch it before exec which yields a new value.
++  std::vector<st_rvfi> vspike (n);
++  for (size_t i = 0; i < n; i++)
++  {
++    if (i >= procs.size())
++        continue;
++
++    vspike[i] = ((Processor*)procs[i])->step(1, vreference[i]);
++
++    host = context_t::current();
++    if (!sim_t::done())
++    {
++        if (this->max_steps_enabled && (this->max_steps < this->total_steps))
++        {
++            throw std::ios_base::failure("Max steps exceeded");
++        }
++
++        ++total_steps;
++        target.switch_to();
++    }
++
++  }
++  return vspike;
++}
++
++
++#if 0 // FORNOW Unused code, disable until needed.
++void Simulation::set_debug(bool value)
++{
++  debug = value;
++}
++
++void Simulation::set_log(bool value)
++{
++  log = value;
++}
++
++void Simulation::set_histogram(bool value)
++{
++  histogram_enabled = value;
++  for (size_t i = 0; i < procs.size(); i++) {
++    procs[i]->set_histogram(histogram_enabled);
++  }
++}
++
++void Simulation::set_procs_debug(bool value)
++{
++  for (size_t i=0; i< procs.size(); i++)
++    procs[i]->set_debug(value);
++}
++
++bool Simulation::mmio_load(reg_t addr, size_t len, uint8_t* bytes)
++{
++  if (addr + len < addr)
++    return false;
++  return bus.load(addr, len, bytes);
++}
++
++bool Simulation::mmio_store(reg_t addr, size_t len, const uint8_t* bytes)
++{
++  if (addr + len < addr)
++    return false;
++  return bus.store(addr, len, bytes);
++}
++
++void Simulation::make_bootrom()
++{
++  start_pc = 0x80000000;
++
++  #include "bootrom.h"
++
++  std::vector<char> rom((char*)reset_vec, (char*)reset_vec + sizeof(reset_vec));
++
++  boot_rom.reset(new rom_device_t(rom));
++  bus.add_device(DEFAULT_RSTVEC, boot_rom.get());
++}
++
++char* Simulation::addr_to_mem(reg_t addr) {
++  auto desc = bus.find_device(addr);
++  if (auto mem = dynamic_cast<mem_t*>(desc.second))
++    if (addr - desc.first < mem->size())
++      return mem->contents() + (addr - desc.first);
++  return NULL;
++}
++#endif
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+new file mode 100644
+index 00000000..5471abfb
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+@@ -0,0 +1,80 @@
++// See LICENSE for license details.
++
++#ifndef _SIM_SPIKE_H
++#define _SIM_SPIKE_H
++
++#include "Types.h"
++#include "cfg.h"
++#include "debug_module.h"
++#include "devices.h"
++#include "log_file.h"
++#include "processor.h"
++#include "sim.h"
++
++#include <fesvr/htif.h>
++#include <fesvr/context.h>
++#include <vector>
++#include <map>
++#include <string>
++#include <memory>
++#include <thread>
++#include <sys/types.h>
++
++class mmu_t;
++class remote_bitbang_t;
++class socketif_t;
++
++namespace openhw
++{
++    // this class encapsulates the processors in a RISC-V machine.
++    class Simulation : public sim_t
++    {
++    protected:
++    public:
++        bool standalone_mode;
++
++        Simulation(const cfg_t *cfg, bool halted,
++                std::vector<std::pair<reg_t, mem_t*>> mems,
++                std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devices,
++                const std::vector<std::string>& args,
++                const debug_module_config_t &dm_config, const char *log_path,
++                bool dtb_enabled, const char *dtb_file,
++                bool socket_enabled,
++                FILE *cmd_file, // needed for command line option --cmd
++                openhw::Params& params);
++        Simulation(const cfg_t *cfg, string elf_path, Params& params);
++        ~Simulation();
++
++        void make_mems(const std::vector<mem_cfg_t> &layout);
++
++        /*
++        * Run function that runs the whole program while in standalone mode
++        * */
++        int run();
++
++        /*
++        * Step function
++        * *
++        * * @param n:  Number of instructions to be finished
++        * *
++        * */
++        std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi>& vreference);
++
++        /*
++        * Proposed consturctor for the Simulation class
++        * *
++        * * @param params: parameters to configure the simulation behaviour
++        * *
++        * */
++        Simulation(Params& params);
++
++    private:
++        uint64_t total_steps = 0;
++        uint64_t max_steps;
++        bool max_steps_enabled;
++
++    };
++}
++
++
++#endif
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Types.h b/vendor/riscv/riscv-isa-sim/riscv/Types.h
+new file mode 100644
+index 00000000..55ece7df
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/Types.h
+@@ -0,0 +1,59 @@
++#pragma once
++
++#include <fesvr/htif.h>
++#include <vector>
++#include <map>
++#include <string>
++#include <memory>
++#include <thread>
++#include <sys/types.h>
++#include "Params.h"
++
++
++typedef struct  {
++   uint64_t                 nret_id;
++   uint64_t                 cycle_cnt;
++   uint64_t                 order;
++   uint64_t                 insn;
++   uint64_t                 trap;
++   uint64_t                 cause;
++   uint64_t                 halt;
++   uint64_t                 intr;
++   uint64_t                 mode;
++   uint64_t                 ixl;
++   uint64_t                 dbg;
++   uint64_t                 dbg_mode;
++   uint64_t                 nmip;
++
++   uint64_t                 insn_interrupt;
++   uint64_t                 insn_interrupt_id;
++   uint64_t                 insn_bus_fault;
++   uint64_t                 insn_nmi_store_fault;
++   uint64_t                 insn_nmi_load_fault;
++
++   uint64_t                 pc_rdata;
++   uint64_t                 pc_wdata;
++
++   uint64_t                 rs1_addr;
++   uint64_t                 rs1_rdata;
++
++   uint64_t                 rs2_addr;
++   uint64_t                 rs2_rdata;
++
++   uint64_t                 rs3_addr;
++   uint64_t                 rs3_rdata;
++
++   uint64_t                 rd1_addr;
++   uint64_t                 rd1_wdata;
++
++   uint64_t                 rd2_addr;
++   uint64_t                 rd2_wdata;
++
++   uint64_t                 mem_addr;
++   uint64_t                 mem_rdata;
++   uint64_t                 mem_rmask;
++   uint64_t                 mem_wdata;
++   uint64_t                 mem_wmask;
++
++} st_rvfi;
++
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/bootrom.h b/vendor/riscv/riscv-isa-sim/riscv/bootrom.h
+new file mode 100644
+index 00000000..5b3031f3
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/bootrom.h
+@@ -0,0 +1,377 @@
++
++const int reset_vec_size = 372;
++
++uint32_t reset_vec[reset_vec_size] = {
++    0x00100413,
++    0x01f41413,
++    0xf1402573,
++    0x00000597,
++    0x07458593,
++    0x00040067,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0xf1402573,
++    0x00000597,
++    0x03c58593,
++    0x10500073,
++    0xffdff06f,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0xedfe0dd0,
++    0x4a050000,
++    0x38000000,
++    0x44040000,
++    0x28000000,
++    0x11000000,
++    0x10000000,
++    0x00000000,
++    0x06010000,
++    0x0c040000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x00000000,
++    0x01000000,
++    0x00000000,
++    0x03000000,
++    0x04000000,
++    0x00000000,
++    0x02000000,
++    0x03000000,
++    0x04000000,
++    0x0f000000,
++    0x02000000,
++    0x03000000,
++    0x14000000,
++    0x1b000000,
++    0x2c687465,
++    0x61697261,
++    0x622d656e,
++    0x2d657261,
++    0x00766564,
++    0x03000000,
++    0x10000000,
++    0x26000000,
++    0x2c687465,
++    0x61697261,
++    0x622d656e,
++    0x00657261,
++    0x01000000,
++    0x73757063,
++    0x00000000,
++    0x03000000,
++    0x04000000,
++    0x00000000,
++    0x01000000,
++    0x03000000,
++    0x04000000,
++    0x0f000000,
++    0x00000000,
++    0x03000000,
++    0x04000000,
++    0x2c000000,
++    0x00800000,
++    0x01000000,
++    0x40757063,
++    0x00000030,
++    0x03000000,
++    0x04000000,
++    0x3f000000,
++    0x80f0fa02,
++    0x03000000,
++    0x04000000,
++    0x4f000000,
++    0x00757063,
++    0x03000000,
++    0x04000000,
++    0x5b000000,
++    0x00000000,
++    0x03000000,
++    0x05000000,
++    0x5f000000,
++    0x79616b6f,
++    0x00000000,
++    0x03000000,
++    0x12000000,
++    0x1b000000,
++    0x2c687465,
++    0x69726120,
++    0x00656e61,
++    0x63736972,
++    0x00000076,
++    0x03000000,
++    0x0b000000,
++    0x66000000,
++    0x34367672,
++    0x66616d69,
++    0x00006364,
++    0x03000000,
++    0x0b000000,
++    0x70000000,
++    0x63736972,
++    0x76732c76,
++    0x00003933,
++    0x03000000,
++    0x00000000,
++    0x79000000,
++    0x01000000,
++    0x65746e69,
++    0x70757272,
++    0x6f632d74,
++    0x6f72746e,
++    0x72656c6c,
++    0x00000000,
++    0x03000000,
++    0x04000000,
++    0x83000000,
++    0x01000000,
++    0x03000000,
++    0x00000000,
++    0x94000000,
++    0x03000000,
++    0x0f000000,
++    0x1b000000,
++    0x63736972,
++    0x70632c76,
++    0x6e692d75,
++    0x00006374,
++    0x03000000,
++    0x04000000,
++    0xa9000000,
++    0x01000000,
++    0x02000000,
++    0x02000000,
++    0x02000000,
++    0x01000000,
++    0x6f6d656d,
++    0x38407972,
++    0x30303030,
++    0x00303030,
++    0x03000000,
++    0x07000000,
++    0x4f000000,
++    0x6f6d656d,
++    0x00007972,
++    0x03000000,
++    0x10000000,
++    0x5b000000,
++    0x00000000,
++    0x00000080,
++    0x00000000,
++    0x00000010,
++    0x02000000,
++    0x01000000,
++    0x00636f73,
++    0x03000000,
++    0x04000000,
++    0x00000000,
++    0x02000000,
++    0x03000000,
++    0x04000000,
++    0x0f000000,
++    0x02000000,
++    0x03000000,
++    0x1f000000,
++    0x1b000000,
++    0x2c687465,
++    0x61697261,
++    0x622d656e,
++    0x2d657261,
++    0x00636f73,
++    0x706d6973,
++    0x622d656c,
++    0x00007375,
++    0x03000000,
++    0x00000000,
++    0xb1000000,
++    0x01000000,
++    0x6e696c63,
++    0x30324074,
++    0x30303030,
++    0x00000030,
++    0x03000000,
++    0x0d000000,
++    0x1b000000,
++    0x63736972,
++    0x6c632c76,
++    0x30746e69,
++    0x00000000,
++    0x03000000,
++    0x10000000,
++    0xb8000000,
++    0x01000000,
++    0x03000000,
++    0x01000000,
++    0x07000000,
++    0x03000000,
++    0x10000000,
++    0x5b000000,
++    0x00000000,
++    0x00000002,
++    0x00000000,
++    0x00000c00,
++    0x03000000,
++    0x08000000,
++    0xcc000000,
++    0x746e6f63,
++    0x006c6f72,
++    0x02000000,
++    0x01000000,
++    0x74726175,
++    0x30303140,
++    0x30303030,
++    0x00000030,
++    0x03000000,
++    0x09000000,
++    0x1b000000,
++    0x3631736e,
++    0x61303535,
++    0x00000000,
++    0x03000000,
++    0x10000000,
++    0x5b000000,
++    0x00000000,
++    0x00000010,
++    0x00000000,
++    0x00100000,
++    0x03000000,
++    0x04000000,
++    0x3f000000,
++    0x80f0fa02,
++    0x03000000,
++    0x04000000,
++    0xd6000000,
++    0x00c20100,
++    0x03000000,
++    0x04000000,
++    0xe4000000,
++    0x01000000,
++    0x03000000,
++    0x04000000,
++    0xef000000,
++    0x02000000,
++    0x03000000,
++    0x04000000,
++    0xf9000000,
++    0x04000000,
++    0x02000000,
++    0x01000000,
++    0x656d6974,
++    0x38314072,
++    0x30303030,
++    0x00003030,
++    0x03000000,
++    0x0f000000,
++    0x1b000000,
++    0x706c7570,
++    0x6270612c,
++    0x6d69745f,
++    0x00007265,
++    0x03000000,
++    0x10000000,
++    0xe4000000,
++    0x04000000,
++    0x05000000,
++    0x06000000,
++    0x07000000,
++    0x03000000,
++    0x10000000,
++    0x5b000000,
++    0x00000000,
++    0x00000018,
++    0x00000000,
++    0x00100000,
++    0x03000000,
++    0x08000000,
++    0xcc000000,
++    0x746e6f63,
++    0x006c6f72,
++    0x02000000,
++    0x02000000,
++    0x02000000,
++    0x09000000,
++    0x64646123,
++    0x73736572,
++    0x6c65632d,
++    0x2300736c,
++    0x657a6973,
++    0x6c65632d,
++    0x6300736c,
++    0x61706d6f,
++    0x6c626974,
++    0x6f6d0065,
++    0x006c6564,
++    0x656d6974,
++    0x65736162,
++    0x6572662d,
++    0x6e657571,
++    0x63007963,
++    0x6b636f6c,
++    0x6572662d,
++    0x6e657571,
++    0x64007963,
++    0x63697665,
++    0x79745f65,
++    0x72006570,
++    0x73006765,
++    0x75746174,
++    0x69720073,
++    0x2c766373,
++    0x00617369,
++    0x2d756d6d,
++    0x65707974,
++    0x626c7400,
++    0x6c70732d,
++    0x23007469,
++    0x65746e69,
++    0x70757272,
++    0x65632d74,
++    0x00736c6c,
++    0x65746e69,
++    0x70757272,
++    0x6f632d74,
++    0x6f72746e,
++    0x72656c6c,
++    0x61687000,
++    0x656c646e,
++    0x6e617200,
++    0x00736567,
++    0x65746e69,
++    0x70757272,
++    0x652d7374,
++    0x6e657478,
++    0x00646564,
++    0x2d676572,
++    0x656d616e,
++    0x75630073,
++    0x6e657272,
++    0x70732d74,
++    0x00646565,
++    0x65746e69,
++    0x70757272,
++    0x72007374,
++    0x732d6765,
++    0x74666968,
++    0x67657200,
++    0x2d6f692d,
++    0x74646977,
++    0x00000068,
++    0x00000000
++};
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
+index 2e01983b..417802bf 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
+@@ -876,7 +876,7 @@ bool medeleg_csr_t::unlogged_write(const reg_t val) noexcept {
+     | (1 << CAUSE_BREAKPOINT)
+     | (1 << CAUSE_MISALIGNED_LOAD)
+     | (1 << CAUSE_LOAD_ACCESS)
+-    | (1 << CAUSE_MISALIGNED_STORE) 
++    | (1 << CAUSE_MISALIGNED_STORE)
+     | (1 << CAUSE_STORE_ACCESS)
+     | (1 << CAUSE_USER_ECALL)
+     | (1 << CAUSE_SUPERVISOR_ECALL)
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/dts.cc b/vendor/riscv/riscv-isa-sim/riscv/dts.cc
+index 200288ef..9acf329a 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/dts.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/dts.cc
+@@ -154,11 +154,13 @@ std::string dts_compile(const std::string& dts)
+       step = write(dts_pipe[1], buf+done, len-done);
+       if (step == -1) {
+         std::cerr << "Failed to write dts: " << strerror(errno) << std::endl;
+-        exit(1);
++        // Verilator fix | exit -> _exit
++        _exit(1);
+       }
+     }
+     close(dts_pipe[1]);
+-    exit(0);
++    // Verilator fix | exit -> _exit
++    _exit(0);
+   }
+ 
+   pid_t dtb_pid;
+@@ -178,7 +180,8 @@ std::string dts_compile(const std::string& dts)
+     close(dtb_pipe[1]);
+     execlp(DTC, DTC, "-O", "dtb", (char *)0);
+     std::cerr << "Failed to run " DTC ": " << strerror(errno) << std::endl;
+-    exit(1);
++    // Verilator fix | exit -> _exit
++    _exit(1);
+   }
+ 
+   close(dts_pipe[1]);
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/execute.cc b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
+index acf0e908..02b27c50 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/execute.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
+@@ -278,6 +278,7 @@ void processor_t::step(size_t n)
+ 
+           in_wfi = false;
+           insn_fetch_t fetch = mmu->load_insn(pc);
++          state.last_inst_fetched = fetch.insn;
+           if (debug && !state.serialized)
+             disasm(fetch.insn);
+           pc = execute_insn_logged(this, pc, fetch);
+@@ -289,6 +290,7 @@ void processor_t::step(size_t n)
+         // Main simulation loop, fast path.
+         for (auto ic_entry = _mmu->access_icache(pc); ; ) {
+           auto fetch = ic_entry->data;
++          state.last_inst_fetched = fetch.insn.bits();
+           pc = execute_insn_fast(this, pc, fetch);
+           ic_entry = ic_entry->next;
+           if (unlikely(ic_entry->tag != pc))
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.h b/vendor/riscv/riscv-isa-sim/riscv/processor.h
+index 2f7b8bbf..618c4d56 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.h
+@@ -17,6 +17,7 @@
+ #include "triggers.h"
+ #include "../fesvr/memif.h"
+ #include "vector_unit.h"
++#include "Types.h"
+ 
+ #define N_HPMCOUNTERS 29
+ 
+@@ -175,6 +176,7 @@ struct state_t
+   reg_t last_inst_priv;
+   int last_inst_xlen;
+   int last_inst_flen;
++  insn_t last_inst_fetched;
+ };
+ 
+ // this class represents one processor in a RISC-V machine.
+@@ -299,9 +301,9 @@ public:
+   void set_nb_register_source(uint8_t new_number) {nb_register_src = new_number;}
+   uint8_t get_nb_register_source() {return nb_register_src;}
+ 
+-private:
++protected:
+   uint8_t nb_register_src = 2;
+-  const isa_parser_t * const isa;
++  const isa_parser_t * isa;
+   const cfg_t * const cfg;
+ 
+   simif_t* sim;
+@@ -319,6 +321,7 @@ private:
+   bool in_wfi;
+   bool check_triggers_icount;
+   std::vector<bool> impl_table;
++  openhw::Params params;
+ 
+   // Note: does not include single-letter extensions in misa
+   std::bitset<NUM_ISA_EXTENSIONS> extension_enable_table;
+@@ -333,7 +336,7 @@ private:
+ 
+   void take_pending_interrupt() { take_interrupt(state.mip->read() & state.mie->read()); }
+   void take_interrupt(reg_t mask); // take first enabled interrupt in mask
+-  void take_trap(trap_t& t, reg_t epc); // take an exception
++  virtual void take_trap(trap_t& t, reg_t epc); // take an exception
+   void take_trigger_action(triggers::action_t action, reg_t breakpoint_tval, reg_t epc);
+   void disasm(insn_t insn); // disassemble and print an instruction
+   int paddr_bits();
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc
+index 8453e85a..908bcb2b 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc
+@@ -104,6 +104,30 @@ void remote_bitbang_t::tick()
+   }
+ }
+ 
++void remote_bitbang_t::tick(
++                            unsigned char * jtag_tck,
++                            unsigned char * jtag_tms,
++                            unsigned char * jtag_tdi,
++                            unsigned char * jtag_trstn,
++                            unsigned char jtag_tdo
++                            )
++{
++  this->tick();
++
++  * jtag_tck = tck;
++  * jtag_tms = tms;
++  * jtag_tdi = tdi;
++  * jtag_trstn = trstn;
++
++}
++
++void remote_bitbang_t::set_pins(char _tck, char _tms, char _tdi){
++  tck = _tck;
++  tms = _tms;
++  tdi = _tdi;
++  tap->set_pins(_tck, _tms, _tdi);
++}
++
+ void remote_bitbang_t::execute_commands()
+ {
+   static char send_buf[buf_size];
+@@ -121,14 +145,14 @@ void remote_bitbang_t::execute_commands()
+           case 'B': /* fprintf(stderr, "*BLINK*\n"); */ break;
+           case 'b': /* fprintf(stderr, "_______\n"); */ break;
+           case 'r': tap->reset(); break;
+-          case '0': tap->set_pins(0, 0, 0); break;
+-          case '1': tap->set_pins(0, 0, 1); break;
+-          case '2': tap->set_pins(0, 1, 0); break;
+-          case '3': tap->set_pins(0, 1, 1); break;
+-          case '4': tap->set_pins(1, 0, 0); break;
+-          case '5': tap->set_pins(1, 0, 1); break;
+-          case '6': tap->set_pins(1, 1, 0); break;
+-          case '7': tap->set_pins(1, 1, 1); break;
++          case '0': this->set_pins(0, 0, 0); break;
++          case '1': this->set_pins(0, 0, 1); break;
++          case '2': this->set_pins(0, 1, 0); break;
++          case '3': this->set_pins(0, 1, 1); break;
++          case '4': this->set_pins(1, 0, 0); break;
++          case '5': this->set_pins(1, 0, 1); break;
++          case '6': this->set_pins(1, 1, 0); break;
++          case '7': this->set_pins(1, 1, 1); break;
+           case 'R': send_buf[send_offset++] = tap->tdo() ? '1' : '0'; break;
+           case 'Q': quit = true; break;
+           default:
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h
+index 1db4d550..8cca28d4 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h
+@@ -2,6 +2,7 @@
+ #define REMOTE_BITBANG_H
+ 
+ #include <stdint.h>
++#include <errno.h>
+ 
+ #include "jtag_dtm.h"
+ 
+@@ -15,8 +16,25 @@ public:
+   // Do a bit of work.
+   void tick();
+ 
++  void tick(unsigned char * jtag_tck,
++            unsigned char * jtag_tms,
++            unsigned char * jtag_tdi,
++            unsigned char * jtag_trstn,
++            unsigned char jtag_tdo);
++
++  unsigned char done() {return quit;}
++
++  int exit_code() {return errno;}
++
++
+ private:
+   jtag_dtm_t *tap;
++  unsigned char tck;
++  unsigned char tms;
++  unsigned char tdi;
++  unsigned char trstn;
++  unsigned char tdo;
++  unsigned char quit;
+ 
+   int socket_fd;
+   int client_fd;
+@@ -29,6 +47,8 @@ private:
+   void accept();
+   // Execute any commands the client has for us.
+   void execute_commands();
++
++  void set_pins(char _tck, char _tms, char _tdi);
+ };
+ 
+ #endif
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+index 5765a91f..baebaee1 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+@@ -14,6 +14,8 @@ riscv_install_shared_lib = yes
+ riscv_install_prog_srcs = \
+ 
+ riscv_install_hdrs = \
++	Params.h \
++	Types.h \
+ 	abstract_device.h \
+ 	abstract_interrupt_controller.h \
+ 	cachesim.h \
+@@ -37,8 +39,10 @@ riscv_install_hdrs = \
+ 	mmu.h \
+ 	platform.h \
+ 	processor.h \
++	Proc.h \
+ 	rocc.h \
+ 	sim.h \
++	Simulation.h \
+ 	simif.h \
+ 	trap.h \
+ 	triggers.h \
+@@ -48,11 +52,14 @@ riscv_precompiled_hdrs = \
+ 	insn_template.h \
+ 
+ riscv_srcs = \
++	Params.cc \
+ 	isa_parser.cc \
+ 	processor.cc \
++	Proc.cc \
+ 	execute.cc \
+ 	dts.cc \
+ 	sim.cc \
++	Simulation.cc \
+ 	interactive.cc \
+ 	cachesim.cc \
+ 	mmu.cc \
+@@ -73,6 +80,8 @@ riscv_srcs = \
+ 	vector_unit.cc \
+ 	socketif.cc \
+ 	cfg.cc \
++	riscv_dpi.cc \
++	SimJTAG.cc \
+ 	$(riscv_gen_srcs) \
+ 
+ riscv_test_srcs =
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+new file mode 100644
+index 00000000..ea3093cb
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -0,0 +1,146 @@
++#include <fesvr/elf.h>
++#include <fesvr/memif.h>
++
++#include "riscv/mmu.h"
++#include "Types.h"
++#include "Simulation.h"
++
++#include <vpi_user.h>
++#include "svdpi.h"
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <vector>
++#include <string>
++#include <memory>
++#include <sys/mman.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++
++#include <assert.h>
++#include <unistd.h>
++#include <map>
++#include <iostream>
++
++using namespace openhw;
++
++Simulation* sim;
++std::vector<std::pair<reg_t, mem_t*>> mem_cuts;
++
++#define SHT_PROGBITS 0x1
++#define SHT_GROUP 0x11
++
++#define BOOTROM_BASE 0x10000
++#define BOOTROM_SIZE 0x1000
++
++std::vector<mem_cfg_t> memory_map;
++Params params;
++
++extern "C" void spike_set_default_params(const char* profile)
++{
++    if (strcmp(profile, "cva6") == 0)
++    {
++        params.set("/top/", "isa", std::any(std::string("RV64GC")));
++        params.set("/top/", "bootrom", std::any(true));
++        params.set("/top/", "dram_base", std::any(0x80000000UL));
++        params.set("/top/", "dram_size", std::any(0x64UL * 1024 * 1024));
++        params.set("/top/", "max_steps_enabled", std::any(false));
++        params.set("/top/", "max_steps", std::any(2000000UL));
++
++        params.set("/top/core/0/", "name", std::any(std::string("cva6")));
++        params.set("/top/core/0/", "isa", std::any(std::string("RV64GC")));
++    }
++}
++
++extern "C" void spike_set_param_uint64_t(const char* base, const char* name, uint64_t value) { params.set(base, name, value); }
++extern "C" void spike_set_param_str(const char* base, const char* name, const char* value) { params.set(base, name, std::string(value)); }
++
++extern "C" void spike_create(const char* filename)
++{
++  std::cerr << "[SPIKE] Starting 'spike_create'...\n" ;
++
++  // TODO parse params from yaml
++  string isa_str = std::any_cast<string>(params["/top/isa"]);
++
++  cfg_t *config = new
++      cfg_t(/*default_initrd_bounds=*/std::make_pair((reg_t)0, (reg_t)0),
++            /*default_bootargs=*/nullptr,
++            /*default_isa=*/isa_str.c_str(),  // Built from the RTL configuration
++            /*default_priv=*/DEFAULT_PRIV,   // TODO FIXME Ditto
++            /*default_varch=*/DEFAULT_VARCH, // TODO FIXME Ditto
++            /*default_misaligned=*/false,
++            /*default_endianness*/endianness_little,
++            /*default_pmpregions=*/16,
++            /*default_mem_layout=*/memory_map,
++            /*default_hartids=*/std::vector<size_t>(),
++            /*default_real_time_clint=*/false,
++            /*default_trigger_count=*/4);
++
++
++  // Define the default set of harts with their associated IDs.
++  // If there are multiple IDs, the vector must be sorted in ascending
++  // order and w/o duplicates, see 'parse_hartids' in spike_main/spike.cc.
++
++  // FIXME FORNOW only a single hart with ID 0.
++  std::vector<size_t> default_hartids;
++  default_hartids.reserve(1); // Reserve nprocs() slots.
++  default_hartids.push_back(0);
++  config->hartids = default_hartids;
++
++
++  if (!sim) {
++    std::vector<std::string> htif_args;
++    htif_args.push_back(std::string(filename));
++
++    std::cerr << "[SPIKE] htif_args = {\n";
++    for (auto s : htif_args)
++      std::cerr << "  " << s << ",\n";
++    std::cerr << "}\n";
++
++    sim = new Simulation((const cfg_t *)config, filename, params);
++
++    // Disable the debug mode.
++    sim->sim_t::set_debug(false);
++  }
++}
++
++// Convert svOpenArrayHandle -> st_rvfi
++void sv2rvfi(st_rvfi& rvfi, svOpenArrayHandle svOpen)
++{
++    size_t size = svSize(svOpen, 1);
++    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
++    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
++
++    for(size_t i = 0; i < size; i++) {
++        rvfi_ptr[i] = array_ptr[size-i-1];
++    }
++}
++
++// Convert st_rvfi -> svOpenArrayHandle
++void rvfi2sv(st_rvfi& rvfi, svOpenArrayHandle svOpen)
++{
++    size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
++    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
++    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
++
++    for(size_t i = 0; i < size; i++) {
++        array_ptr[size-i-1] = rvfi_ptr[i];
++    }
++}
++
++extern "C" void spike_step_struct(st_rvfi& reference, st_rvfi& spike)
++{
++  std::vector<st_rvfi> vreference, vspike;
++  vreference.push_back(reference);
++  vspike = sim->step(1, vreference);
++  spike = vspike[0];
++}
++
++extern "C" void spike_step_svOpenArray(svOpenArrayHandle reference, svOpenArrayHandle spike)
++{
++  st_rvfi reference_rvfi, spike_rvfi;
++
++  sv2rvfi(reference_rvfi, reference);
++  spike_step_struct(reference_rvfi, spike_rvfi);
++  rvfi2sv(spike_rvfi, spike);
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.cc b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+index 9179ee4e..713b0e00 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+@@ -41,7 +41,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+              bool dtb_enabled, const char *dtb_file,
+              bool socket_enabled,
+              FILE *cmd_file, // needed for command line option --cmd
+-             size_t max_steps)
++             openhw::Params& params)
+   : htif_t(args),
+     isa(cfg->isa(), cfg->priv()),
+     cfg(cfg),
+@@ -53,8 +53,6 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+     cmd_file(cmd_file),
+     sout_(nullptr),
+     current_step(0),
+-    total_steps(0),
+-    max_steps(max_steps),
+     current_proc(0),
+     debug(false),
+     histogram_enabled(false),
+@@ -102,8 +100,8 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+   debug_mmu = new mmu_t(this, cfg->endianness, NULL);
+ 
+   for (size_t i = 0; i < cfg->nprocs(); i++) {
+-    procs[i] = new processor_t(&isa, cfg, this, cfg->hartids()[i], halted,
+-                               log_file.get(), sout_);
++    procs[i] = new openhw::Processor(&isa, cfg, this, cfg->hartids()[i], halted,
++                               log_file.get(), sout_, params);
+     harts[cfg->hartids()[i]] = procs[i];
+   }
+ 
+@@ -236,24 +234,11 @@ void sim_t::step(size_t n)
+   for (size_t i = 0, steps = 0; i < n; i += steps)
+   {
+     steps = std::min(n - i, INTERLEAVE - current_step);
+-    procs[current_proc]->step(steps);
+ 
+-    current_step += steps;
+-    total_steps += steps;
+-
+-    // max_steps must be non-zero to act as an execution limit.
+-    if (max_steps && total_steps >= max_steps)
+-    {
+-      // "Stepout": max step count reached/exceeded.
+-      std::cerr << "*** Maximum step count reached (total_steps = "
+-                << std::dec << total_steps << ", max_steps = "
+-                << max_steps << "), exiting!" << std::endl;
+-      // TODO FIXME: Determine the best method of terminating.
+-      // FORNOW: Exit successfully and let the caller of Spike
+-      // decide how to proceed in view of simulation results.
+-      exit(0);
+-    }
++    // The processor Step has been substituted by context switching
++    host->switch_to();
+ 
++    current_step += steps;
+     if (current_step == INTERLEAVE)
+     {
+       current_step = 0;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.h b/vendor/riscv/riscv-isa-sim/riscv/sim.h
+index 377e9651..06bed908 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.h
+@@ -7,10 +7,12 @@
+ #include "debug_module.h"
+ #include "devices.h"
+ #include "log_file.h"
+-#include "processor.h"
++#include "Proc.h"
+ #include "simif.h"
++#include "Types.h"
+ 
+ #include <fesvr/htif.h>
++#include <fesvr/context.h>
+ #include <vector>
+ #include <map>
+ #include <string>
+@@ -33,7 +35,7 @@ public:
+         bool dtb_enabled, const char *dtb_file,
+         bool socket_enabled,
+         FILE *cmd_file, // needed for command line option --cmd
+-        size_t max_steps);
++        openhw::Params& params);
+   ~sim_t();
+ 
+   // run the simulation to completion
+@@ -60,7 +62,10 @@ public:
+   // Callback for processors to let the simulation know they were reset.
+   virtual void proc_reset(unsigned id) override;
+ 
+-private:
++  void switch_to_target() { this->target.switch_to();}
++  void switch_to_host() { this->host->switch_to();}
++
++protected:
+   isa_parser_t isa;
+   const cfg_t * const cfg;
+   std::vector<std::pair<reg_t, mem_t*>> mems;
+@@ -77,12 +82,16 @@ private:
+   std::unique_ptr<ns16550_t> ns16550;
+   bus_t bus;
+   log_file_t log_file;
++  openhw::Params params;
+ 
+   FILE *cmd_file; // pointer to debug command input file
+ 
+   socketif_t *socketif;
+   std::ostream sout_; // used for socket and terminal interface
+ 
++  context_t* host;
++  context_t  target;
++
+   processor_t* get_core(const std::string& i);
+   void step(size_t n); // step through simulation
+   static const size_t INTERLEAVE = 5000;
+@@ -90,7 +99,6 @@ private:
+   static const size_t CPU_HZ = 1000000000; // 1GHz CPU
+   size_t current_step;
+   size_t total_steps;
+-  size_t max_steps;
+   size_t current_proc;
+   bool debug;
+   bool histogram_enabled; // provide a histogram of PCs
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+index dc3fc348..89e93cb7 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+@@ -3,6 +3,7 @@
+ #include "config.h"
+ #include "cfg.h"
+ #include "sim.h"
++#include "Simulation.h"
+ #include "mmu.h"
+ #include "arith.h"
+ #include "remote_bitbang.h"
+@@ -20,6 +21,12 @@
+ #include <cinttypes>
+ #include "../VERSION"
+ 
++static void version(int exit_code = 1)
++{
++  fprintf(stderr, SPIKE_VERSION " %x\n", SPIKE_HASH_VERSION);
++  exit(exit_code);
++}
++
+ static void help(int exit_code = 1)
+ {
+   fprintf(stderr, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
+@@ -29,6 +36,7 @@ static void help(int exit_code = 1)
+   fprintf(stderr, "  -m<n>                 Provide <n> MiB of target memory [default 2048]\n");
+   fprintf(stderr, "  -m<a:m,b:n,...>       Provide memory regions of size m and n bytes\n");
+   fprintf(stderr, "                          at base addresses a and b (with 4 KiB alignment)\n");
++  fprintf(stderr, "  -v                    Print Spike version\n");
+   fprintf(stderr, "  -d                    Interactive debug mode\n");
+   fprintf(stderr, "  -g                    Track histogram of PCs\n");
+   fprintf(stderr, "  -l                    Generate a log of execution\n");
+@@ -427,6 +435,7 @@ int main(int argc, char** argv)
+   option_parser_t parser;
+   parser.help(&suggest_help);
+   parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
++  parser.option('v', "version", 0, [&](const char UNUSED *s){version(0);});
+   parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
+   parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
+   parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});
+@@ -571,11 +580,25 @@ int main(int argc, char** argv)
+     }
+     cfg.hartids = default_hartids;
+   }
++  openhw::Params params;
++
++  params.set("/top/", "isa", std::string(cfg.isa()));
++
++  if (max_steps != 0) {
++    params.set("/top/", "max_steps", max_steps);
++    params.set("/top/", "max_steps_enabled", bool(true));
++    std::cout << "[SPIKE-TANDEM] Max simulation steps: " << max_steps << std::endl;
++  }
++
++  params.set("/top/core/0/", "boot_addr", 0x10000UL);
++  params.set("/top/core/0/", "isa", std::string(cfg.isa()));
++  params.set("/top/core/0/", "priv", std::string(cfg.priv()));
+ 
+-  sim_t s(&cfg, halted,
++  openhw::Simulation s(&cfg, halted,
+           mems, plugin_devices, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
+           socket,
+-          cmd_file, max_steps);
++          cmd_file, params);
++  s.standalone_mode = 1;
+   std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
+   std::unique_ptr<jtag_dtm_t> jtag_dtm(
+       new jtag_dtm_t(&s.debug_module, dmi_rti));

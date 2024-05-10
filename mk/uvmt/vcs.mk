@@ -147,8 +147,26 @@ endif
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
-VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+VCS_RUN_FLAGS ?=
+
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    ifeq ($(ISS),IMPERAS)
+        VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+    endif
+    ifeq ($(ISS),SPIKE)
+        VCS_RUN_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+        VCS_RUN_FLAGS += -sv_lib $(SPIKE_DISASM_LIB)
+        LIBS = spike_lib
+    endif
+endif
+
+ifeq ($(call IS_YES,$(COMPILE_SPIKE)),YES)
+    VCS_RUN_FLAGS += -sv_lib $(SPIKE_FESVR_LIB)
+    LIBS = spike_lib
+endif
+
+VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION +define+$(CORE_DEFINES)
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_PLUSARGS += +USE_ISS
 else
@@ -158,11 +176,10 @@ endif
 VCS_RUN_BASE_FLAGS   ?= $(VCS_GUI) \
                         $(VCS_PLUSARGS) +ntb_random_seed=$(RNDSEED) \
                         -sv_lib $(VCS_OVP_MODEL_DPI) \
-                        -sv_lib $(DPI_DASM_LIB) \
                         -sv_lib $(abspath $(SVLIB_LIB))
 
 # Simulate using latest elab
-VCS_RUN_FLAGS         = -assert nopostproc
+VCS_RUN_FLAGS        += -assert nopostproc
 VCS_RUN_FLAGS        += $(VCS_RUN_BASE_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_WAVES_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_COV_FLAGS)
@@ -197,7 +214,7 @@ VCS_COMP = $(VCS_COMP_FLAGS) \
 		$(VCS_FILE_LIST) \
 		$(UVM_PLUSARGS)
 
-comp: mk_vcs_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
+comp: mk_vcs_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI) $(LIBS)
 	@echo "$(BANNER)"
 	@echo "* $(SIMULATOR) compile"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vcs.log"

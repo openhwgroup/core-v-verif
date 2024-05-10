@@ -32,11 +32,10 @@ class uvma_rvfi_agent_c#(int ILEN=DEFAULT_ILEN,
    uvma_rvfi_cntxt_c#(ILEN,XLEN)  cntxt;
 
    // Components
-   uvma_rvfi_instr_mon_c#(ILEN,XLEN)               instr_monitor[];
+   uvma_rvfi_instr_mon_c#(ILEN,XLEN)               instr_monitor;
    uvma_rvfi_mon_trn_logger_c#(ILEN,XLEN)          mon_trn_logger;
 
-   // TLM
-   uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN)) instr_mon_ap[];
+   uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN)) rvfi_core_ap;
 
    `uvm_component_param_utils_begin(uvma_rvfi_agent_c)
       `uvm_field_object(cfg  , UVM_DEFAULT)
@@ -133,6 +132,7 @@ function void uvma_rvfi_agent_c::connect_phase(uvm_phase phase);
    if (cfg.cov_model_enabled) begin
       connect_cov_model();
    end
+
    if (cfg.trn_log_enabled) begin
       connect_trn_loggers();
    end
@@ -151,7 +151,6 @@ function void uvma_rvfi_agent_c::get_and_set_cfg();
       uvm_config_db#(uvma_rvfi_cfg_c#(ILEN,XLEN))::set(this, "*", "cfg", cfg);
    end
 
-   instr_mon_ap = new[cfg.nret];
 endfunction : get_and_set_cfg
 
 
@@ -183,24 +182,37 @@ function void uvma_rvfi_agent_c::retrieve_vif();
    end
 
    // Create virtual interface and fetch virtual interface for each supported CSR
-   begin
+   if (!cfg.core_cfg.disable_all_csr_checks) begin
       string csrs[$];
 
-      cfg.core_cfg.get_supported_csrs(csrs);
+      cfg.core_cfg.get_supported_csrs_names(csrs);
+      if (!cfg.unified_csr_vif) begin
+        foreach (csrs[c]) begin
+            string csr = csrs[c].tolower();
+            cntxt.csr_vif[csr] = new[cfg.nret];
 
-      foreach (csrs[c]) begin
-         string csr = csrs[c].tolower();;
-         cntxt.csr_vif[csr] = new[cfg.nret];
-
-         for (int i = 0; i < cfg.nret; i++) begin
-            if (!uvm_config_db#(virtual uvma_rvfi_csr_if_t#(XLEN))::get(this, "", $sformatf("csr_%s_vif%0d", csr, i), cntxt.csr_vif[csr][i])) begin
-               `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s, csr [%s] in uvm_config_db",
-                                           $typename(cntxt.csr_vif[csr][i]), csr))
-            end else begin
-               `uvm_info("VIF", $sformatf("Found vif handle of type %s, csr [%s] in uvm_config_db",
-                                          $typename(cntxt.csr_vif[csr][i]), csr), UVM_DEBUG)
+            for (int i = 0; i < cfg.nret; i++) begin
+                if (!uvm_config_db#(virtual uvma_rvfi_csr_if_t#(XLEN))::get(this, "", $sformatf("csr_%s_vif%0d", csr, i), cntxt.csr_vif[csr][i])) begin
+                `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s, csr [%s] in uvm_config_db",
+                                            $typename(cntxt.csr_vif[csr][i]), csr))
+                end else begin
+                `uvm_info("VIF", $sformatf("Found vif handle of type %s, csr [%s] in uvm_config_db",
+                                            $typename(cntxt.csr_vif[csr][i]), csr), UVM_DEBUG)
+                end
             end
-         end
+        end
+      end
+      else begin
+        cntxt.csr_unified_vif = new[cfg.nret];
+        for (int i = 0; i < cfg.nret; i++) begin
+            if (!uvm_config_db#(virtual uvma_rvfi_unified_csr_if_t#(4096, XLEN))::get(this, "", $sformatf("csr_vif%0d", i), cntxt.csr_unified_vif[i])) begin
+            `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s, csr_vif in uvm_config_db",
+                                        $typename(cntxt.csr_unified_vif[i])))
+            end else begin
+            `uvm_info("VIF", $sformatf("Found vif handle of type %s, csr_vif in uvm_config_db",
+                                        $typename(cntxt.csr_unified_vif[i])), UVM_DEBUG)
+            end
+        end
       end
    end
 
@@ -209,12 +221,8 @@ endfunction : retrieve_vif
 
 function void uvma_rvfi_agent_c::create_components();
 
-   instr_monitor = new[cfg.nret];
-   for (int i = 0; i < cfg.nret; i++) begin
-      instr_monitor[i] = uvma_rvfi_instr_mon_c#(ILEN,XLEN)::type_id::create($sformatf("instr_monitor%0d", i), this);
-      instr_monitor[i].nret_id = i;
-   end
-   mon_trn_logger         = uvma_rvfi_mon_trn_logger_c#(ILEN,XLEN)::type_id::create("mon_trn_logger" , this);
+    instr_monitor = uvma_rvfi_instr_mon_c#(ILEN,XLEN)::type_id::create("instr_monitor", this);
+    mon_trn_logger = uvma_rvfi_mon_trn_logger_c#(ILEN,XLEN)::type_id::create("mon_trn_logger" , this);
 
 endfunction : create_components
 
@@ -226,9 +234,7 @@ endfunction : connect_sequencer_and_driver
 
 function void uvma_rvfi_agent_c::connect_analysis_ports();
 
-   for (int i = 0; i < cfg.nret; i++) begin
-      instr_mon_ap[i] = instr_monitor[i].ap;
-   end
+    rvfi_core_ap = instr_monitor.ap;
 
 endfunction : connect_analysis_ports
 
@@ -242,9 +248,7 @@ endfunction : connect_cov_model
 
 function void uvma_rvfi_agent_c::connect_trn_loggers();
 
-   for (int i = 0; i < cfg.nret; i++) begin
-      instr_mon_ap[i].connect(mon_trn_logger.instr_export);
-   end
+    rvfi_core_ap.connect(mon_trn_logger.instr_export);
 
 endfunction : connect_trn_loggers
 

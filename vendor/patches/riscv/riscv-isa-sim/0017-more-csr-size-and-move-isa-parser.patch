@@ -1,0 +1,88 @@
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
+index 4ef09a29..340590af 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
+@@ -1,5 +1,6 @@
+ disasm_srcs = \
+   disasm.cc \
++  isa_parser.cc \
+   regnames.cc \
+   dpi_dasm.cc
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/isa_parser.cc b/vendor/riscv/riscv-isa-sim/disasm/isa_parser.cc
+similarity index 100%
+rename from vendor/riscv/riscv-isa-sim/riscv/isa_parser.cc
+rename to vendor/riscv/riscv-isa-sim/disasm/isa_parser.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Types.h b/vendor/riscv/riscv-isa-sim/riscv/Types.h
+index 90bbff61..d0b953fd 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Types.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Types.h
+@@ -9,7 +9,7 @@
+ #include <sys/types.h>
+ #include "Params.h"
+ 
+-#define CSR_SIZE 10
++#define CSR_SIZE 250
+ 
+ typedef struct {
+    uint64_t                 nret_id;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+index 3144c77a..c5d62639 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+@@ -54,7 +54,6 @@ riscv_precompiled_hdrs = \
+ 
+ riscv_srcs = \
+ 	Params.cc \
+-	isa_parser.cc \
+ 	processor.cc \
+ 	Proc.cc \
+ 	execute.cc \
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+index 2654f427..8e93d5bf 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -146,24 +146,24 @@ extern "C" void spike_create(const char *filename) {
+ }
+ 
+ // Convert svOpenArrayHandle -> st_rvfi
+-void sv2rvfi(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
+-  size_t size = svSize(svOpen, 1);
++void sv2rvfi(st_rvfi &rvfi, svLogicVecVal* svOpen) {
++  size_t size = sizeof(st_rvfi) / 8;
++  uint64_t *array_ptr = (uint64_t *)(svOpen);
+   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
+ 
+   for (size_t i = 0; i < size; i++) {
+-    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
+-    rvfi_ptr[i] = array_ptr[0];
++    rvfi_ptr[i] = array_ptr[size - i - 1];
+   }
+ }
+ 
+ // Convert st_rvfi -> svOpenArrayHandle
+-void rvfi2sv(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
+-  size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
++void rvfi2sv(st_rvfi &rvfi, svLogicVecVal* svOpen) {
++  size_t size = sizeof(st_rvfi) / 8;
++  uint64_t *array_ptr = (uint64_t *)(svOpen);
+   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
+ 
+   for (size_t i = 0; i < size; i++) {
+-    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
+-    array_ptr[0] = rvfi_ptr[i];
++      array_ptr[size - i - 1] = rvfi_ptr[i];
+   }
+ }
+ 
+@@ -174,8 +174,8 @@ extern "C" void spike_step_struct(st_rvfi &reference, st_rvfi &spike) {
+   spike = vspike[0];
+ }
+ 
+-extern "C" void spike_step_svOpenArray(svOpenArrayHandle reference,
+-                                       svOpenArrayHandle spike) {
++extern "C" void spike_step_svLogic(svLogicVecVal* reference,
++                                       svLogicVecVal* spike) {
+   st_rvfi reference_rvfi, spike_rvfi;
+ 
+   sv2rvfi(reference_rvfi, reference);

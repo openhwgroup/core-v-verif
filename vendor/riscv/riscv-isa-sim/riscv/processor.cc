@@ -39,6 +39,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
   impl_table(256, false), extension_enable_table(isa->get_extension_table()),
   last_pc(1), executions(1), TM(cfg->trigger_count)
 {
+
   VU.p = this;
   TM.proc = this;
 

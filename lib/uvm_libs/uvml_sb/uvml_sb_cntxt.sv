@@ -54,13 +54,13 @@ class uvml_sb_cntxt_c#(
 
    // Events
    // FIXME: why doesn't Questa like parameterized uvm_events?
-`ifndef QUESTA_VSIM
-   uvm_event #(T_TRN) exp_observed_e;
-   uvm_event #(T_TRN) act_observed_e;
-`else
-   uvm_event          exp_observed_e;
-   uvm_event          act_observed_e;
-`endif // QUESTA_VSIM
+   `ifndef QUESTA_VSIM
+      uvm_event #(T_TRN) exp_observed_e;
+      uvm_event #(T_TRN) act_observed_e;
+   `else
+      uvm_event          exp_observed_e;
+      uvm_event          act_observed_e;
+   `endif // QUESTA_VSIM
 
 
    `uvm_object_param_utils_begin(uvml_sb_cntxt_c#(T_TRN))

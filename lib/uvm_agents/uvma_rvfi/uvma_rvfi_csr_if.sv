@@ -79,5 +79,60 @@ interface uvma_rvfi_csr_if_t
 
 endinterface : uvma_rvfi_csr_if_t
 
+interface uvma_rvfi_unified_csr_if
+  import uvma_rvfi_pkg::*;
+  #(  int MAX_CSR=4096,
+      int XLEN=DEFAULT_XLEN)
+  (
+    input                      clk,
+    input                      reset_n,
+
+    input [MAX_CSR-1:0][XLEN-1:0]   rvfi_named_csr_rmask,
+    input [MAX_CSR-1:0][XLEN-1:0]   rvfi_named_csr_wmask,
+    input [MAX_CSR-1:0][XLEN-1:0]   rvfi_named_csr_rdata,
+    input [MAX_CSR-1:0][XLEN-1:0]   rvfi_named_csr_wdata,
+
+    // Generic READ/WRITE values
+    input              [XLEN-1:0]   rvfi_csr_addr,
+    input              [XLEN-1:0]   rvfi_csr_rmask,
+    input              [XLEN-1:0]   rvfi_csr_wmask,
+    input              [XLEN-1:0]   rvfi_csr_rdata,
+    input              [XLEN-1:0]   rvfi_csr_wdata
+  );
+
+  // -------------------------------------------------------------------
+  // Local variables
+  // -------------------------------------------------------------------
+
+  // -------------------------------------------------------------------
+  // Begin module code
+  // -------------------------------------------------------------------
+
+  /**
+      * Used by target DUT.
+  */
+  clocking dut_cb @(posedge clk or reset_n);
+  endclocking : dut_cb
+
+  /**
+      * Used by uvma_rvfi_csr_mon_c.
+  */
+  clocking mon_cb @(posedge clk or reset_n);
+      input #1step
+        rvfi_csr_addr,
+        rvfi_csr_rmask,
+        rvfi_csr_wmask,
+        rvfi_csr_rdata,
+        rvfi_csr_wdata,
+        rvfi_named_csr_rmask,
+        rvfi_named_csr_wmask,
+        rvfi_named_csr_rdata,
+        rvfi_named_csr_wdata;
+  endclocking : mon_cb
+
+  modport passive_mp    (clocking mon_cb);
+
+endinterface : uvma_rvfi_unified_csr_if
+
 
 `endif // __UVMA_RVFI_CSR_IF_SV__

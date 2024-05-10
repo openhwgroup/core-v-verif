@@ -11,6 +11,12 @@
 `ifndef __UVMA_CVXIF_COV_MODEL_SV__
 `define __UVMA_CVXIF_COV_MODEL_SV__
 
+`ifdef UNSUPPORTED_WITH //TODO - Remove ifdef when the issue in VCS simulator is fixed
+  `define WITH iff
+`else
+   `define WITH with
+`endif
+
 
    /*
    * Covergroups
@@ -19,7 +25,9 @@
    //covergroup instances
 
 covergroup cg_request(
-    string name
+    string name,
+    bit mode_s_supported,
+    bit mode_u_supported
     ) with function sample(uvma_cvxif_req_item_c req_item);
 
     option.per_instance = 1;
@@ -42,6 +50,8 @@ covergroup cg_request(
    }
 
    cp_mode : coverpoint req_item.issue_req.mode {
+    ignore_bins IGN_S_MODE = {PRIV_LVL_S} iff (!mode_s_supported);
+    ignore_bins IGN_U_MODE = {PRIV_LVL_U} iff (!mode_u_supported);
     bins MODE [] = {[0:$]};
    }
 
@@ -83,17 +93,17 @@ covergroup cg_response(
    }
 
    cp_dualwrite : coverpoint resp_item.issue_resp.dualwrite {
-    ignore_bins IGN_BINS = cp_dualwrite iff(!dual_read_write_support);
+    ignore_bins IGN_BINS = cp_dualwrite `WITH(!dual_read_write_support);
     bins DUALWRITE [] = {[0:$]};
    }
 
    cp_dualread : coverpoint resp_item.issue_resp.dualread {
-    ignore_bins IGN_BINS = cp_dualread iff(!dual_read_write_support);
+    ignore_bins IGN_BINS = cp_dualread `WITH(!dual_read_write_support);
     bins DUALREAD [] = {[0:$]};
    }
 
    cp_loadstore : coverpoint resp_item.issue_resp.loadstore {
-    ignore_bins IGN_BINS = cp_loadstore iff(!load_store_support);
+    ignore_bins IGN_BINS = cp_loadstore `WITH(!load_store_support);
     bins LOADSTORE [] = {[0:$]};
    }
 
@@ -108,7 +118,7 @@ covergroup cg_response(
                                binsof(cp_dualread) intersect{1}  ||
                                binsof(cp_loadstore) intersect{1} ||
                                binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp0 iff(!dual_read_write_support || !load_store_support);
+   ignore_bins IGN_CROSS = cross_resp0 `WITH(!dual_read_write_support || !load_store_support);
    }
 
    cross_resp1 : cross cp_accept, cp_writeback, cp_dualwrite, cp_dualread, cp_exc {
@@ -117,7 +127,7 @@ covergroup cg_response(
                                binsof(cp_dualwrite) intersect{1} ||
                                binsof(cp_dualread) intersect{1}  ||
                                binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp1 iff(!dual_read_write_support && load_store_support);
+   ignore_bins IGN_CROSS = cross_resp1 `WITH(!dual_read_write_support && load_store_support);
    }
 
    cross_resp2 : cross cp_accept, cp_writeback, cp_loadstore, cp_exc {
@@ -125,13 +135,13 @@ covergroup cg_response(
                               (binsof(cp_writeback) intersect{1} ||
                                binsof(cp_loadstore) intersect{1} ||
                                binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp2 iff(dual_read_write_support && !load_store_support);
+   ignore_bins IGN_CROSS = cross_resp2 `WITH(dual_read_write_support && !load_store_support);
    }
 
    cross_resp3 : cross cp_accept, cp_writeback, cp_exc {
    illegal_bins ILLEGAL_BINS = binsof(cp_accept) intersect{0} &&
                               (binsof(cp_writeback) intersect{1} || binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp3 iff(dual_read_write_support || load_store_support);
+   ignore_bins IGN_CROSS = cross_resp3 `WITH(dual_read_write_support || load_store_support);
    }
 
 endgroup: cg_response
@@ -249,7 +259,9 @@ function void uvma_cvxif_cov_model_c::build_phase(uvm_phase phase);
       `uvm_fatal("CNTXT", "Context handle is null")
    end
 
-   request_cg  = new("request_cg");
+   request_cg  = new("request_cg",
+                     .mode_s_supported(cfg.mode_s_supported),
+                     .mode_u_supported(cfg.mode_u_supported));
    response_cg = new("response_cg",
                     .dual_read_write_support(cfg.dual_read_write_support_x),
                     .load_store_support(cfg.load_store_support_x));
