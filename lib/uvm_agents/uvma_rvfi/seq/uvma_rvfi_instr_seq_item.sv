@@ -408,8 +408,7 @@ function st_rvfi uvma_rvfi_instr_seq_item_c::seq2rvfi();
     rvfi.insn_interrupt = insn_interrupt;
     rvfi.insn_interrupt_id = insn_interrupt_id;
     rvfi.insn_bus_fault = insn_bus_fault;
-    rvfi.insn_nmi_store_fault = insn_nmi_store_fault;
-    rvfi.insn_nmi_load_fault = insn_nmi_load_fault;
+    rvfi.insn_nmi_cause = insn_nmi_cause;
 
     rvfi.pc_rdata = pc_rdata;
     rvfi.pc_wdata = pc_wdata;
@@ -479,8 +478,7 @@ function void uvma_rvfi_instr_seq_item_c::rvfi2seq(st_rvfi rvfi);
     insn_interrupt = rvfi.insn_interrupt;
     insn_interrupt_id = rvfi.insn_interrupt_id;
     insn_bus_fault = rvfi.insn_bus_fault;
-    insn_nmi_store_fault = rvfi.insn_nmi_store_fault;
-    insn_nmi_load_fault = rvfi.insn_nmi_load_fault;
+    insn_nmi_cause = rvfi.insn_nmi_cause;
 
     pc_rdata = rvfi.pc_rdata;
     pc_wdata = rvfi.pc_wdata;

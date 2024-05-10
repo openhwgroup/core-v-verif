@@ -236,11 +236,11 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                       if (csr_mcause[31]) begin
                       // NMI - Load fault
                           if (cfg.nmi_load_fault_enabled && csr_mcause[XLEN-2:0] == cfg.nmi_load_fault_cause) begin
-                              mon_trn.insn_nmi_load_fault = 1;
+                              mon_trn.insn_nmi_cause = 1024;  //TODO:WARNING:silabs-robin NMI_LOAD_FAULT
                           end
                           // NMI - Store fault
                           else if (cfg.nmi_store_fault_enabled && csr_mcause[XLEN-2:0] == cfg.nmi_store_fault_cause) begin
-                              mon_trn.insn_nmi_store_fault = 1;
+                              mon_trn.insn_nmi_cause = 1025;  //TODO:WARNING:silabs-robin NMI_STORE_FAULT
                           end
                           // External interrupt
                           else begin
@@ -261,9 +261,9 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                       `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW);
 
                       if (mon_trn.nmip[1] == 0) begin
-                      mon_trn.insn_nmi_load_fault = 1;
+                          mon_trn.insn_nmi_cause = 1024;  //TODO:WARNING:silabs-robin NMI_LOAD_FAULT
                       end else begin
-                      mon_trn.insn_nmi_store_fault = 1;
+                          mon_trn.insn_nmi_cause = 1025;  //TODO:WARNING:silabs-robin NMI_STORE_FAULT
                       end
                   end
 

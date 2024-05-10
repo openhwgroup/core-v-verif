@@ -912,7 +912,7 @@ endfunction : to_struct
 
 function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
     enabled = st.enabled;
-    is_active = st.is_active;
+    is_active = uvm_active_passive_enum'(st.is_active);
     scoreboard_enabled = st.scoreboard_enabled;
     disable_all_csr_checks = st.disable_all_csr_checks;
     disable_csr_check_mask = st.disable_csr_check_mask;

@@ -59,8 +59,7 @@ typedef struct packed {
    bit [MAX_XLEN-1:0]         insn_interrupt;
    bit [MAX_XLEN-1:0]         insn_interrupt_id;
    bit [MAX_XLEN-1:0]         insn_bus_fault;
-   bit [MAX_XLEN-1:0]         insn_nmi_store_fault;
-   bit [MAX_XLEN-1:0]         insn_nmi_load_fault;
+   bit [MAX_XLEN-1:0]         insn_nmi_cause;
 
    bit [MAX_XLEN-1:0]         pc_rdata;
    bit [MAX_XLEN-1:0]         pc_wdata;

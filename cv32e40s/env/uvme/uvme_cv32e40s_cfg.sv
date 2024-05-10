@@ -99,7 +99,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    constraint defaults_cons {
       soft enabled                         == 0;
       soft is_active                       == UVM_PASSIVE;
-      soft scoreboarding_enabled           == 1;
+      soft scoreboard_enabled              == 1;
       soft cov_model_enabled               == 1;
       soft trn_log_enabled                 == 1;
       soft sys_clk_period                  == uvme_cv32e40s_sys_default_clk_period; // see uvme_cv32e40s_constants.sv
@@ -307,7 +307,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_data_cfg.cov_model_enabled   == 1;
       }
 
-      if (!scoreboarding_enabled) {
+      if (!scoreboard_enabled) {
          buserr_scoreboarding_enabled == 0;
          pma_cfg.scoreboard_enabled   == 0;
       }

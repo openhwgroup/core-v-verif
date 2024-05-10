@@ -76,10 +76,11 @@ interface uvma_rvfi_csr_if_t
     post_state = (rvfi_csr_rdata & rvfi_csr_rmask & ~rvfi_csr_wmask) | (rvfi_csr_wdata & rvfi_csr_wmask);
   endfunction : post_state
 
-
 endinterface : uvma_rvfi_csr_if_t
 
-interface uvma_rvfi_unified_csr_if
+
+interface uvma_rvfi_unified_csr_if_t
+
   import uvma_rvfi_pkg::*;
   #(  int MAX_CSR=4096,
       int XLEN=DEFAULT_XLEN)
@@ -132,7 +133,7 @@ interface uvma_rvfi_unified_csr_if
 
   modport passive_mp    (clocking mon_cb);
 
-endinterface : uvma_rvfi_unified_csr_if
+endinterface : uvma_rvfi_unified_csr_if_t
 
 
 `endif // __UVMA_RVFI_CSR_IF_SV__
