@@ -25,6 +25,7 @@ import uvm_pkg::*;
 `define DUT_PATH dut_wrap.cv32e40s_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if
 `define INTERRUPT_IF dut_wrap.interrupt_if
+`define DEBUG_IF debug_if
 `define CLKNRST_IF dut_wrap.clknrst_if
 
 `define CORE_I `DUT_PATH.core_i
@@ -143,6 +144,7 @@ module uvmt_cv32e40s_reference_model_wrap
        .clknrst_if(clknrst_if_rm),
        .rvfi_i(`RVFI_IF),
        .interrupt_if_i(`INTERRUPT_IF),
+       .debug_req_i(debug_if.debug_req),
        .rvfi_o(rvfi_rm)
     );
 
@@ -212,7 +214,12 @@ module uvmt_cv32e40s_reference_model_wrap
               reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata,
               reference_model_i.pipeline_shell_i.ex_wb_pipe.valid,
               rvfi_rm.pc_rdata, rvfi_rm.valid);
-      $sformat(pipelineLine, "%s| irq %x| ia %x / %x | it %x | ie %x | mie %x / %x | INTR %x %d / %x %d |",pipelineLine,
+      $sformat(pipelineLine, "%s| dbg %x | dbg t %x | dbg m %x | da %x | ada %x | irq %x| ia %x / %x | it %x | ie %x | mie %x / %x | INTR %x %d / %x %d |",pipelineLine,
+              debug_if.debug_req,
+              reference_model_i.pipeline_shell_i.controller_i.debug_taken,
+              reference_model_i.pipeline_shell_i.controller_i.debug_mode,
+              `CORE_I.controller_i.controller_fsm_i.sync_debug_allowed,
+              `CORE_I.controller_i.controller_fsm_i.async_debug_allowed,
               `INTERRUPT_IF.irq,
               `CORE_I.controller_i.controller_fsm_i.interrupt_allowed,
               reference_model_i.pipeline_shell_i.controller_i.interrupt_allowed,

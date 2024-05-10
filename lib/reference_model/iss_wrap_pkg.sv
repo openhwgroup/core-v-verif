@@ -19,7 +19,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 import "DPI-C" function bit  spike_interrupt(int unsigned mip, int unsigned mie, int unsigned revert_steps, bit interrupt_allowed);
 import "DPI-C" function void spike_revert_state(int num_steps);
 
-
+import "DPI-C" function bit spike_set_debug(bit debug_req, int unsigned revert_steps, bit debug_allowed);
 
 
     function automatic void iss_init(string binary);
@@ -67,6 +67,11 @@ import "DPI-C" function void spike_revert_state(int num_steps);
         return interrupt_taken;
     endfunction
 
+    function automatic logic iss_set_debug(bit debug_req, int revert_steps, bit debug_allowed);
+        logic debug_taken;
+        debug_taken =  spike_set_debug(debug_req, revert_steps, debug_allowed);
+        return debug_taken;
+    endfunction
 
     function automatic void iss_revert_state(int num_steps);
         spike_revert_state(num_steps);

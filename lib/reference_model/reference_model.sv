@@ -9,6 +9,7 @@ module reference_model
         uvma_clknrst_if_t clknrst_if,
         uvma_rvfi_instr_if_t rvfi_i,
         uvma_interrupt_if_t interrupt_if_i,
+        logic debug_req_i,
         rvfi_if_t rvfi_o
     );
 
@@ -27,6 +28,7 @@ module reference_model
         .clknrst_if(clknrst_if),
         .rvfi_i(rvfi_i),
         .interrupt_if_i(interrupt_if_i),
+        .debug_req_i(debug_req_i),
         .rvfi_o(rvfi_o)
     );
 

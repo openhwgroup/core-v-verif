@@ -126,6 +126,7 @@ module controller
         input logic rst_n,
         input logic valid,
         input logic [31:0] irq_i,
+        input logic debug_req_i,
 
         input pipe_stage_t if_id_pipe_i,
         input pipe_stage_t id_ex_pipe_i,
@@ -158,6 +159,7 @@ module controller
     logic mem_in_lsu;
 
     int     pipe_count; // Count the number of filled pipeline stages
+    logic   pipeline_full;
     logic   flush_pipeline;
     logic   flush_pipeline_q;
     logic   step;
@@ -172,10 +174,13 @@ module controller
     logic   wb_mstatus_mie;
     logic   [MAX_XLEN-1:0] wb_mie, mie;
 
+    logic   debug_taken, debug_taken_q;
+    logic   debug_mode;
     ////////////////////////////////////////////////////////////////////////////
     // STEP CONTROL
     ////////////////////////////////////////////////////////////////////////////
 
+    assign pipeline_full = pipe_count >= (PIPELINE_DEPTH - 1);
 
     // Count the amount of filled pipeline stages at the start or after a flush 
     always_ff @(posedge clk) begin
@@ -206,9 +211,9 @@ module controller
     end
 
     always_comb begin
-        if_step_o <= step;
-        id_step_o <= step;
-        ex_step_o <= step;
+        if_step_o <= step && !debug_taken;
+        id_step_o <= step && !debug_taken;
+        ex_step_o <= step && !debug_taken;
         wb_step_o <= step;
     end
 
@@ -216,7 +221,7 @@ module controller
     // FLUSH CONTROL
     ////////////////////////////////////////////////////////////////////////////
 
-    assign flush_pipeline = interrupt_taken;
+    assign flush_pipeline = interrupt_taken || debug_taken_q;
 
     always_comb begin
         if_flush_o <= flush_pipeline;
@@ -382,6 +387,71 @@ module controller
 
     assign lsu_interruptible = (lsu_cnt_q == '0);
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    // DEBUG
+    ////////////////////////////////////////////////////////////////////////////
+
+    // TODO: Set to 0 when insn is dret
+    //assign debug_mode = wb_pipe_i.rvfi.dbg_mode;
+
+    always_comb begin
+        if (wb_pipe_i.rvfi.insn == 32'h7b200073) begin
+            debug_mode <= 1'b0;
+        end else begin
+            debug_mode <= wb_pipe_i.rvfi.dbg_mode;
+        end
+    end
+
+
+    //always_ff @(posedge clk, negedge rst_n) begin
+    //    if (rst_n == 1'b0) begin
+    //        debug_mode <= 1'b0;
+    //    end else if (wb_pipe_i.rvfi.dbg_mode) begin
+    //        debug_mode <= 1'b1;
+    //    end else begin
+    //        debug_mode <= debug_mode;
+    //    end
+    //end
+
+    logic debug_req_q; 
+    always_ff @(posedge clk, negedge rst_n) begin
+        if(rst_n == 1'b0) begin
+            debug_req_q <= 1'b0; 
+        end else begin 
+            debug_req_q <= debug_req_i;
+        end
+    end
+
+    int rollback_steps;
+    `define WFI_MATCH 32'h10500073
+    `define WFI_MASK 32'hffffffff
+    always_comb begin
+        // if the insn in the ex_wb_pipe_i is a wfi instruction, set rollback_steps to 1
+        if ((ex_wb_pipe_i.rvfi.insn & `WFI_MASK) == `WFI_MATCH) begin
+            rollback_steps = 2;
+        end else begin
+            rollback_steps = 2;
+        end
+    end
+
+    always_ff @(posedge clk, negedge rst_n) begin
+        if(rst_n == 1'b0) begin
+            debug_taken <= 1'b0;
+        //end else if(debug_req_i != debug_req_q) begin
+        end else begin
+            debug_taken <= iss_set_debug(debug_req_q, rollback_steps, !debug_mode && pipeline_full);
+        end
+    end
+
+    always_ff @(posedge clk, negedge rst_n) begin
+        if(rst_n == 1'b0) begin
+            debug_taken_q <= 1'b0;
+        end else begin
+            debug_taken_q <= debug_taken;
+        end
+    end
+
 endmodule
 
 module pipeline_shell 
@@ -391,6 +461,7 @@ module pipeline_shell
         uvma_clknrst_if_t clknrst_if,
         uvma_rvfi_instr_if_t rvfi_i,
         uvma_interrupt_if_t interrupt_if_i,
+        logic debug_req_i,
         rvfi_if_t rvfi_o
     );
 
@@ -414,6 +485,7 @@ module pipeline_shell
         .rst_n                  (clknrst_if.reset_n ),
         .valid                  (                   ),
         .irq_i                  (interrupt_if_i.irq ),
+        .debug_req_i            (debug_req_i        ),
         .if_id_pipe_i           (if_id_pipe         ),
         .id_ex_pipe_i           (id_ex_pipe         ),
         .ex_wb_pipe_i           (ex_wb_pipe         ),
