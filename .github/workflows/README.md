@@ -1,7 +1,11 @@
 # Github CI Regressions
-The directory contains YAML files that specify the functional regressions for core-v-verif projects.  The regressions use the Github Actions YAML
-to specify and implement regressions.  This README will specify usage and intention of the YAML files in this directory with a brief introduction to 
-the YAML.  For more documentation on Github YAML refer to: https://docs.github.com/en/actions
+The directory **_typically_** contains YAML files that specify the functional regressions for core-v-verif projects.
+We are currently transitioning to a new CI flow and so for now this directory is empty.
+
+<!--
+The regressions use the Github Actions YAML to specify and implement regressions.
+This README will specify usage and intention of the YAML files in this directory with a brief introduction to the YAML.
+For more documentation on Github YAML refer to: https://docs.github.com/en/actions
 
 Two general types of regressions are specified:
 | Type       | Starting Event | Goal           |
@@ -81,5 +85,6 @@ on:
     - cron: '0 5 * * *'
 ```
 
-
+-->
+####end
 

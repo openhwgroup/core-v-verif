@@ -46,7 +46,7 @@ An easy way to get the Python plug-ins installed on your machine is::
 
 Once the above is in place type the following::
 
-    $ cd $CORE-V-VERIF/cv32e40p/sim/core
+    $ cd $CORE_V_VERIF/cv32e40p/sim/core
     $ make
 
 **Note:** Check the required shell environment variables (`variables <https://github.com/openhwgroup/core-v-verif/tree/master/mk#required-corev-environment-variables>`_).
