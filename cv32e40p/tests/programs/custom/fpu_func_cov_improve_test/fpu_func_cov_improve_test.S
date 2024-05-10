@@ -1511,6 +1511,72 @@ _jrsw31:fsw     f31, -8(x31)
         cv.lbu      x31, (x1), 4
         fcvt.s.wu   f31, x31
 
+        # 20
+        auipc   x0, 0x40000
+        flw     f0, 0(x0)
+        auipc   x1, 0x40000
+        flw     f1, 0(x1)
+        auipc   x2, 0x40000
+        flw     f2, 0(x2)
+        auipc   x3, 0x40000
+        flw     f3, 0(x3)
+        auipc   x4, 0x40000
+        flw     f4, 0(x4)
+        auipc   x5, 0x40000
+        flw     f5, 0(x5)
+        auipc   x6, 0x40000
+        flw     f6, 0(x6)
+        auipc   x7, 0x40000
+        flw     f7, 0(x7)
+        auipc   x8, 0x40000
+        flw     f8, 0(x8)
+        auipc   x9, 0x40000
+        flw     f9, 0(x9)
+        auipc   x10, 0x40000
+        flw     f10, 0(x10)
+        auipc   x11, 0x40000
+        flw     f11, 0(x11)
+        auipc   x12, 0x40000
+        flw     f12, 0(x12)
+        auipc   x13, 0x40000
+        flw     f13, 0(x13)
+        auipc   x14, 0x40000
+        flw     f14, 0(x14)
+        auipc   x15, 0x40000
+        flw     f15, 0(x15)
+        auipc   x16, 0x40000
+        flw     f16, 0(x16)
+        auipc   x17, 0x40000
+        flw     f17, 0(x17)
+        auipc   x18, 0x40000
+        flw     f18, 0(x18)
+        auipc   x19, 0x40000
+        flw     f19, 0(x19)
+        auipc   x20, 0x40000
+        flw     f20, 0(x20)
+        auipc   x21, 0x40000
+        flw     f21, 0(x21)
+        auipc   x22, 0x40000
+        flw     f22, 0(x22)
+        auipc   x23, 0x40000
+        flw     f23, 0(x23)
+        auipc   x24, 0x40000
+        flw     f24, 0(x24)
+        auipc   x25, 0x40000
+        flw     f25, 0(x25)
+        auipc   x26, 0x40000
+        flw     f26, 0(x26)
+        auipc   x27, 0x40000
+        flw     f27, 0(x27)
+        auipc   x28, 0x40000
+        flw     f28, 0(x28)
+        auipc   x29, 0x40000
+        flw     f29, 0(x29)
+        auipc   x30, 0x40000
+        flw     f30, 0(x30)
+        auipc   x31, 0x40000
+        flw     f31, 0(x31)
+
       # for uvme_cv32e40p_fp_instr_covg/cg_f_inst_reg/cr_non_rv32f_rd_rv32f_rs1 - end
     ######### FOR PULP_FPU CFG - END   #########
 
