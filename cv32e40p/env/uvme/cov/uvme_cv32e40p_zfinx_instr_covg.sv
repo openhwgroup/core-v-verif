@@ -65,7 +65,7 @@ class uvme_cv32e40p_zfinx_instr_covg extends uvm_component;
      ignore_bins cur_fpu_wo_rs3 = !binsof(cp_cur_is_fpu_instr) intersect {`RV32ZFINX_INSTR_W_RS3};
 
     `define IGNORE_BINS_NON_RS1_CV32E40P_INSTR \
-     ignore_bins non_rs1_rv32_instr = binsof(cp_id_stage_non_rv32fc_inst) intersect {TB_OPCODE_LUI,TB_OPCODE_AUIPC,TB_OPCODE_JAL};
+     ignore_bins non_rs1_rv32_instr = binsof(cp_id_stage_non_rv32fc_inst) intersect {`RV32_OPCODE_WITH_NO_RS1};
 
     `define IGNORE_BINS_NON_RS2_CV32E40P_INSTR \
      ignore_bins non_rs2_rv32_instr = binsof(cp_id_stage_non_rv32fc_inst) intersect {`RV32_OPCODE_WITH_NO_RS2};
