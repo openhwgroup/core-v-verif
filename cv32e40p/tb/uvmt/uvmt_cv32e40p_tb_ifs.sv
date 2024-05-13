@@ -541,6 +541,7 @@ interface uvmt_cv32e40p_cov_if
   `else
   parameter int FPU_LAT_1_CYC = 0;
   `endif
+  parameter int MAX_FP_XACT_CYCLE = 19;
 
   logic [4:0]       clk_cycle_window;
   logic [5:0]       curr_fpu_apu_op_if;
@@ -598,25 +599,34 @@ interface uvmt_cv32e40p_cov_if
   // bhv_logic_1
   // calculate each APU operation's current clock cycle number during execution for functional coverage use
   // input(s): apu_op, 
+  bit detect_apu_rvalid = 1;
   always @(posedge clk_i or negedge rst_ni) begin
-      if(!rst_ni) begin
-          clk_cycle_window = 0;
-          curr_fpu_apu_op_if = 0;
+      if (!rst_ni) begin
+        clk_cycle_window    = 0;
+        curr_fpu_apu_op_if  = 0;
+        detect_apu_rvalid   = 1;
       end
       else begin
-          if((clk_cycle_window == 0) && (apu_req == 1)) begin
-              clk_cycle_window = 1;
-              curr_fpu_apu_op_if = apu_op;
+          assert (clk_cycle_window <= MAX_FP_XACT_CYCLE); 
+          if (apu_req && apu_gnt && apu_rvalid_i && detect_apu_rvalid) begin : IS_0_CYC_FPU
+            clk_cycle_window  = 0;
+            detect_apu_rvalid = 0;
+            curr_fpu_apu_op_if = apu_op;
           end
-          else if((clk_cycle_window != 0) && (apu_req == 1)) begin
-              clk_cycle_window = 1;
-              curr_fpu_apu_op_if = apu_op;
+          else if (apu_req && apu_gnt && !apu_rvalid_i && detect_apu_rvalid) begin : NOT_0_CYC_FPU
+            clk_cycle_window  = 1;
+            detect_apu_rvalid = 0;
+            curr_fpu_apu_op_if = apu_op;
           end
-          else if((clk_cycle_window != 0) && (apu_busy == 1)) begin
-              clk_cycle_window += 1;
+          else if (apu_busy && !apu_rvalid_i && !detect_apu_rvalid) begin : FPU_MULT_CYC
+            // fpu write delay should not increase the cyc cnt
+            clk_cycle_window += 1;
           end
-          else begin
-              clk_cycle_window = 0;
+          else if (apu_busy && apu_rvalid_i && !detect_apu_rvalid) begin : DONE_FPU_CYCLE
+            detect_apu_rvalid = 1;
+          end
+          else if (!apu_busy) begin
+            clk_cycle_window  = 0;
           end
       end
   end
