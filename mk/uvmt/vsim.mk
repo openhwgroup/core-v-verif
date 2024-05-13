@@ -181,10 +181,14 @@ GCC_PATH			= $(HOME)/opt/gcc-11.4.0/bin/gcc
 VSIM_FLAGS        	+= -dpicpppath $(GCC_PATH)
 VSIM_FLAGS 			+= -noautoldlibpath
 
+# This must currently always be exported, since the reference_model_wrap is used in uvmt_cv32e40s_tb.sv
+# TODO: Make a "dummy" reference model, that is loaded when it is disabled, like ImperasDV. 
+# Or find another solution to handle swapping different ISSs
+export FILE_LIST_RM      ?= -f $(DV_UVMT_PATH)/reference_model.flist
+
 ifeq ($(call IS_YES,$(USE_RM)),YES)
-  export FILE_LIST_RM      ?= -f $(DV_UVMT_PATH)/reference_model.flist
-  SIM_FLAGS += +USE_RM
-  SIM_FLAGS += +define+USE_RM
+  VSIM_FLAGS += +USE_RM
+  VSIM_FLAGS += +define+USE_RM
   VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
   VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
   VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/reference_model.flist
@@ -539,7 +543,7 @@ lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
 	fi
 
 # Target to run vlog over SystemVerilog source in $(VSIM_RESULTS)/
-vlog: lib spike_build #make shure spike is built before running vlog (possibly not the best solution)
+vlog: lib 
 	@echo "$(BANNER)"
 	@echo "* Running vlog in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
@@ -610,6 +614,9 @@ test: VSIM_TEST=$(TEST_PROGRAM)
 test: VSIM_FLAGS += +firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex
 test: VSIM_FLAGS += +elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf
 test: VSIM_FLAGS += +itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
+ifeq ($(call IS_YES,$(USE_RM)),YES)
+test: spike_build # Only build spike if we use the reference model
+endif
 test: hex run
 
 ################################################################################

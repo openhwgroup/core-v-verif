@@ -264,7 +264,7 @@ endtask : run_phase
 
 task uvmt_cv32e40s_base_test_c::reset_phase(uvm_phase phase);
 
-   //virtual uvmt_imperas_dv_if_t imperas_dv_if;
+   virtual uvmt_imperas_dv_if_t imperas_dv_if;
    super.reset_phase(phase);
 
    phase.raise_objection(this);
@@ -275,6 +275,12 @@ task uvmt_cv32e40s_base_test_c::reset_phase(uvm_phase phase);
    reset_vseq.start(vsequencer);
    `uvm_info("BASE TEST", $sformatf("Finished reset virtual sequence:\n%s", reset_vseq.sprint()), UVM_NONE)
 
+   if(!(uvm_config_db#(virtual uvmt_imperas_dv_if_t)::get(.cntxt(null), .inst_name("uvm_test_top"), .field_name("idv_support_vif"), .value(imperas_dv_if)))) begin
+     `uvm_error("BASE TEST", "imperas_dv_if instance not found in uvm_config_db");
+   end
+   if ($test$plusargs("USE_ISS")) begin
+     imperas_dv_if.ref_init();
+   end
 
    phase.drop_objection(this);
 

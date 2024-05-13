@@ -1765,7 +1765,6 @@ module uvmt_cv32e40s_tb;
     `endif
 
     `ifdef USE_RM
-      `uvm_info("RM", "Using reference model", UVM_NONE);
       uvmt_cv32e40s_reference_model_wrap reference_model ();
     `endif
 

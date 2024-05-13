@@ -31,7 +31,6 @@
 // Imperas dv dependencies (rvvi, idv) or dummy package goes here (later packages depend on this)
 ${FILE_LIST_IDV_DEPS}
 
-
 // Agents
 -f ${DV_UVMA_CORE_CNTRL_PATH}/uvma_core_cntrl_pkg.flist
 -f ${DV_UVMA_OBI_MEMORY_PATH}/src/uvma_obi_memory_pkg.flist

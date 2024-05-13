@@ -1,5 +1,5 @@
 //
-// Copyright 2022 OpenHW Group
+// Copyright 2024 Torje Nygaard Eikenes
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,10 +30,11 @@ import uvm_pkg::*;
 
 `define CORE_I `DUT_PATH.core_i
 
-//`define STRINGIFY(x) `"x`"
 
-//`ifdef USE_RM 
-
+/**
+ * Compare the RVFI interface of the core and the reference model.
+ * Use assertions to support potentially support formal verification
+ */
 module rvfi_compare(
   rvfi_if_t rvfi_core,
   rvfi_if_t rvfi_rm
@@ -77,6 +78,7 @@ module rvfi_compare(
     rvfi_rm.valid && rvfi_rm.rd1_addr |-> (rvfi_rm.rd1_wdata == rvfi_core.rd1_wdata))
     else `uvm_error("RVFI_RD1_WDATA", $sformatf("PC: %8h rvfi_rm.rd1_wdata=%0h rvfi_core.rd1_wdata=%0h",$sampled(rvfi_core.pc_rdata),$sampled(rvfi_rm.rd1_wdata), $sampled(rvfi_core.rd1_wdata)));
 
+  // TODO: Add support for multiple memory writes to check all of mem_xmask, not only 4 bytes 
   `ASSERT_EQUAL_RANGE(mem_rmask, "RVFI_MEM_RMASK", 3,0)
   `ASSERT_EQUAL_RANGE(mem_wmask, "RVFI_MEM_WMASK",3,0)
 
@@ -124,7 +126,6 @@ endmodule
 
 
 
-//`include "reference_model.sv"
 module uvmt_cv32e40s_reference_model_wrap
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
@@ -189,6 +190,7 @@ module uvmt_cv32e40s_reference_model_wrap
 
   assign clknrst_if_rm.reset_n = `CLKNRST_IF.reset_n;
 
+  // Temporary logging to compare core functionality to RM   
     always_ff @(posedge rvfi_core.clk) begin
       $sformat(line, "");
       irq_drv_ff <= `INTERRUPT_IF.irq_drv;
@@ -287,7 +289,5 @@ module uvmt_cv32e40s_reference_model_wrap
 
 
 endmodule : uvmt_cv32e40s_reference_model_wrap
-
-//`endif // USE_RM
 
 `endif // __UVMT_CV32E40S_REFERENCE_MODEL_WRAP_SV__
