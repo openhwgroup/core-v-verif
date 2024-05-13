@@ -67,7 +67,7 @@ function int uvma_axi_ext_synchronizer_c::w_select_id(int tab[]);
    int ind_slct;
    case (cfg.ordering_write_mode)
       UVMA_AXI_ORDERING_MODE_RANDOM : begin
-         if(tab.size() == cfg.max_outstanding_write_trs) begin
+         if(tab.size() >= cfg.max_outstanding_write_trs) begin
             ind_slct = $urandom_range(0, tab.size() - 1);
             selected = tab[ind_slct];
             outstanding_write_call_times = 0;
@@ -84,7 +84,7 @@ function int uvma_axi_ext_synchronizer_c::w_select_id(int tab[]);
       end
       UVMA_AXI_OUTSTANDING_MODE : begin
 
-         if(tab.size() == cfg.max_outstanding_write_trs) begin
+         if(tab.size() >= cfg.max_outstanding_write_trs) begin
 
             `uvm_info(get_type_name(), $sformatf("double transaction ready"), UVM_HIGH)
             outstanding_write_call_times = 0;
@@ -123,7 +123,7 @@ function int uvma_axi_ext_synchronizer_c::r_select_id(int tab[]);
    int ind_slct;
    case (cfg.ordering_read_mode)
       UVMA_AXI_ORDERING_MODE_RANDOM : begin
-         if(tab.size() == cfg.max_outstanding_read_trs) begin
+         if(tab.size() >= cfg.max_outstanding_read_trs) begin
             ind_slct = $urandom_range(0, tab.size() - 1);
             selected = tab[ind_slct];
             outstanding_read_call_times = 0;
@@ -141,7 +141,7 @@ function int uvma_axi_ext_synchronizer_c::r_select_id(int tab[]);
 
       UVMA_AXI_OUTSTANDING_MODE : begin
 
-         if(tab.size() == cfg.max_outstanding_read_trs) begin
+         if(tab.size() >= cfg.max_outstanding_read_trs) begin
 
             `uvm_info(get_type_name(), $sformatf("double transaction ready"), UVM_HIGH)
             outstanding_read_call_times = 0;
