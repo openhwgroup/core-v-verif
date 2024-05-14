@@ -192,6 +192,8 @@ ifeq ($(call IS_YES,$(USE_RM)),YES)
   VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
   VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
   VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/reference_model.flist
+  # Some IDV files must be included because IDV support is hard-hard coded multiple places (for ex in uvme_cv32e40s_vp_fencei_tamper_seq.sv)
+  export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
 else ifeq ($(call IS_YES,$(USE_ISS)),YES)
   ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist

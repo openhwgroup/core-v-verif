@@ -26,6 +26,7 @@
 `define CSR_MSTATUS_ADDR    32'h300
 `define CSR_MIE_ADDR        32'h304
 
+`define INSN_DRET           32'h7b200073
 
 typedef struct packed {
     st_rvfi rvfi;
@@ -165,6 +166,7 @@ module controller
     localparam LSU_DEPTH = 2;
     localparam LSU_CNT_WIDTH = $clog2(LSU_DEPTH+1);
     localparam PIPELINE_DEPTH = 4;
+    localparam ROLLBACK_STEPS = 2;
 
 
     logic lsu_interruptible;
@@ -228,6 +230,7 @@ module controller
 
     end
 
+    // Halt the the pipeline when a debug is taken
     always_comb begin
         if_step_o <= step && !debug_taken;
         id_step_o <= step && !debug_taken;
@@ -300,6 +303,9 @@ module controller
         end
     end
 
+    ////////////////////////////////////////////////////////////////////////////
+    // INTERRUPTS
+    ////////////////////////////////////////////////////////////////////////////
 
     // interrupt_enabled only enabled interrupts when the mstatus.mie bit is set 
     // in WB and it is disabled the cycle after an interrupt is taken.
@@ -317,16 +323,11 @@ module controller
 
 
     // Temporarily inject the interrupt allowed signal directly from the core
-    // TODO: Use the content of the pipeline stages to recreate the interrupt_allowed 
-    //       signal independently of the core
     assign interrupt_allowed = `CONTROLLER_FSM.interrupt_allowed && interrupt_enabled; 
-    // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
-    //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
-
-
-    ////////////////////////////////////////////////////////////////////////////
-    // INTERRUPT TAKING
-    ////////////////////////////////////////////////////////////////////////////
+    // TODO: Use the content of the pipeline stages to recreate the interrupt_allowed signal
+    // signal independently of the core
+    //assign interrupt_allowed = lsu_interruptible && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
+    //                           sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
 
     // Delay the irq 2 cycles take the correct irq after the flush
     always_ff @(posedge clk, negedge rst_n) begin
@@ -342,7 +343,7 @@ module controller
     // Call iss_intr every cycle to inform the ISS changes in irq and mie, and 
     // determine if an interrupt can be taken
     always_ff @(posedge clk) begin
-        interrupt_taken <= iss_intr(irq_qq, mie, interrupt_allowed, 2);
+        interrupt_taken <= iss_intr(irq_qq, mie, interrupt_allowed, ROLLBACK_STEPS);
     end
 
     // Delay interrupt_taken to properly time the interrupt_enabled signal
@@ -357,6 +358,7 @@ module controller
     ////////////////////////////////////////////////////////////////////////////
     // LSU INTERRUPTIBLE
     ////////////////////////////////////////////////////////////////////////////
+    // NOTE: Not currently used, but required when not directly injecting interrupt_allowed from the core
 
     // lsu_cnt holds the amount of memory requests without a response in the LSU
 
@@ -410,27 +412,15 @@ module controller
     // DEBUG
     ////////////////////////////////////////////////////////////////////////////
 
-    // TODO: Set to 0 when insn is dret
-    //assign debug_mode = wb_pipe_i.rvfi.dbg_mode;
-
+    // RVFI has dbg_mode high during dret, but we want to disable debug_mode at 
+    // dret and not the next instruction, so we check if insn is dret
     always_comb begin
-        if (wb_pipe_i.rvfi.insn == 32'h7b200073) begin
+        if (wb_pipe_i.rvfi.insn == `INSN_DRET) begin
             debug_mode <= 1'b0;
         end else begin
             debug_mode <= wb_pipe_i.rvfi.dbg_mode;
         end
     end
-
-
-    //always_ff @(posedge clk, negedge rst_n) begin
-    //    if (rst_n == 1'b0) begin
-    //        debug_mode <= 1'b0;
-    //    end else if (wb_pipe_i.rvfi.dbg_mode) begin
-    //        debug_mode <= 1'b1;
-    //    end else begin
-    //        debug_mode <= debug_mode;
-    //    end
-    //end
 
     logic debug_req_q; 
     always_ff @(posedge clk, negedge rst_n) begin
@@ -441,24 +431,12 @@ module controller
         end
     end
 
-    int rollback_steps;
-    `define WFI_MATCH 32'h10500073
-    `define WFI_MASK 32'hffffffff
-    always_comb begin
-        // if the insn in the ex_wb_pipe_i is a wfi instruction, set rollback_steps to 1
-        if ((ex_wb_pipe_i.rvfi.insn & `WFI_MASK) == `WFI_MATCH) begin
-            rollback_steps = 2;
-        end else begin
-            rollback_steps = 2;
-        end
-    end
-
     always_ff @(posedge clk, negedge rst_n) begin
         if(rst_n == 1'b0) begin
             debug_taken <= 1'b0;
-        //end else if(debug_req_i != debug_req_q) begin
         end else begin
-            debug_taken <= iss_set_debug(debug_req_q, rollback_steps, !debug_mode && pipeline_full);
+            // Only allow debug if we are not in debug mode, and the pipeline is not being filled up(e.g. at very beginning of the simulation)
+            debug_taken <= iss_set_debug(debug_req_q, ROLLBACK_STEPS, !debug_mode && pipeline_full); 
         end
     end
 
