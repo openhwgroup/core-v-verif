@@ -3685,6 +3685,8 @@ _fsgnjx_jr31:   fsgnjx.s      x31, x31, x31
         flt.s     x1, x15, x15
         cv.lbu    x7, (x1), 4
         fle.s     x1, x7, x7
+        cv.lbu    x6, (x1), 4
+        fdiv.s    x1, x6, x6
         cv.lbu    x9, (x1), 4
         fdiv.s    x1, x9, x9
         cv.lbu    x22, (x1), 4
