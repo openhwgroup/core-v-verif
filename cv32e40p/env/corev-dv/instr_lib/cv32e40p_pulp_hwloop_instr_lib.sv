@@ -990,6 +990,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       if(no_fence)
           riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
 
+      if(cfg.sp != SP) begin // prevent corruption due to sw(sp)
+        riscv_exclude_instr = {riscv_exclude_instr, C_SWSP, C_FSWSP};
+      end
+
       `uvm_info("cv32e40p_xpulp_hwloop_base_stream",
                  $sformatf("insert_rand_instr- Number of Random instr to generate= %0d",num_rand_instr),
                  UVM_HIGH)
