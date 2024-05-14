@@ -607,7 +607,8 @@ interface uvmt_cv32e40p_cov_if
         detect_apu_rvalid   = 1;
       end
       else begin
-          assert (clk_cycle_window <= MAX_FP_XACT_CYCLE); 
+          assert (clk_cycle_window <= MAX_FP_XACT_CYCLE)
+            else `uvm_error("uvmt_cv32e40p_cov_if", $sformatf("clk_cycle_window (%0d) > MAX_FP_XACT_CYCLE (%0d)", clk_cycle_window, MAX_FP_XACT_CYCLE));
           if (apu_req && apu_gnt && apu_rvalid_i && detect_apu_rvalid) begin : IS_0_CYC_FPU
             clk_cycle_window  = 0;
             detect_apu_rvalid = 0;
