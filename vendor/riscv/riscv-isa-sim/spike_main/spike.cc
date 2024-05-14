@@ -21,9 +21,13 @@
 #include <cinttypes>
 #include "../VERSION"
 
+#define stringify(s) tostr(s)
+#define tostr(s) #s
+
 static void version(int exit_code = 1)
 {
-  fprintf(stderr, SPIKE_VERSION " %x\n", SPIKE_HASH_VERSION);
+  // Stringify hash to preserve the exact value returned by 'git'.
+  fprintf(stderr, SPIKE_VERSION " %s\n", stringify(SPIKE_HASH_VERSION));
   exit(exit_code);
 }
 
