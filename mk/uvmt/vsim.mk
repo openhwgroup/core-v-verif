@@ -184,14 +184,14 @@ VSIM_FLAGS 			+= -noautoldlibpath
 # This must currently always be exported, since the reference_model_wrap is used in uvmt_cv32e40s_tb.sv
 # TODO: Make a "dummy" reference model, that is loaded when it is disabled, like ImperasDV. 
 # Or find another solution to handle swapping different ISSs
-export FILE_LIST_RM      ?= -f $(DV_UVMT_PATH)/reference_model.flist
+export FILE_LIST_RM      ?= -f $(RM_HOME)/reference_model.flist
 
 ifeq ($(call IS_YES,$(USE_RM)),YES)
   VSIM_FLAGS += +USE_RM
   VSIM_FLAGS += +define+USE_RM
   VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
   VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
-  VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/reference_model.flist
+  VLOG_FILE_LIST += -f $(RM_HOME)/reference_model.flist
   # Some IDV files must be included because IDV support is hard-hard coded multiple places (for ex in uvme_cv32e40s_vp_fencei_tamper_seq.sv)
   export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
 else ifeq ($(call IS_YES,$(USE_ISS)),YES)
