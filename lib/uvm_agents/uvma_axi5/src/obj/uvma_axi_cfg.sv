@@ -76,7 +76,7 @@ class uvma_axi_cfg_c extends uvm_object;
       soft axi_lock_enabled            == 1;
       soft randomization_enabled       == 0;
       soft cov_model_enabled           == 1;
-      soft ordering_read_mode          == UVMA_AXI_ORDERING_MODE_RANDOM;
+      soft ordering_read_mode          == UVMA_AXI_OUTSTANDING_MODE;
       soft ordering_write_mode         == UVMA_AXI_OUTSTANDING_MODE;
       soft max_outstanding_write_trs   == 2;
       soft max_outstanding_read_trs    == 2;
