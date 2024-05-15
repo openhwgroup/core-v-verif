@@ -43,12 +43,12 @@ module uvmt_cv32e40s_reference_model_wrap
            rvviTrace rvvi // RVVI SystemVerilog Interface
    );
 
-    uvma_rvfi_instr_if_t#(ILEN,XLEN) rvfi_o();  
+    //uvma_rvfi_instr_if_t#(ILEN,XLEN) rvfi_o;  
 
     reference_model reference_model_i(
        .clk_i(`RVFI_IF.clk),
-       .rvfi_i(`RVFI_IF),
-       .rvfi_o(rvfi_o)
+       .rvfi_i(`RVFI_IF)
+       //.rvfi_o()
     );
 
    string info_tag = "RM_wrap";
