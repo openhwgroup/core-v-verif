@@ -65,6 +65,13 @@ typedef struct packed {
 
 } st_rvfi;
 
+`define ST_NUM_WORDS (($size(st_rvfi)/$size(longint unsigned)))
+
+typedef union {
+    st_rvfi rvfi;
+    bit [63:0] array [`ST_NUM_WORDS-1:0] ;
+} union_rvfi;
+
 typedef enum bit[MODE_WL-1:0] {
    UVMA_RVFI_U_MODE        = 0,
    UVMA_RVFI_S_MODE        = 1,

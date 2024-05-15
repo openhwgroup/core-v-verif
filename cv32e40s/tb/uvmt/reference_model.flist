@@ -18,5 +18,6 @@
 ${TBSRC_HOME}/uvmt/uvmt_cv32e40s_reference_model_wrap.sv
 
 //+incdir+${RM_HOME}
+${RM_HOME}/iss_wrap_pkg.sv
 ${RM_HOME}/reference_model.sv
 ${RM_HOME}/pipeline_shell.sv
