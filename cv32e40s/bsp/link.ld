@@ -22,7 +22,7 @@ MEMORY
        allowing initialized sections to be placed there). Infact we dump all
        sections to ram. */
 
-  ram (rwxai) : ORIGIN = 0x00000000, LENGTH = 0x400000
+  ram (rwxai) : ORIGIN = 0x08000000, LENGTH = 0x400000
   dbg (rwxai) : ORIGIN = 0x1A110800, LENGTH = 0x1000
 }
 
@@ -47,7 +47,7 @@ SECTIONS
   } >dbg
 
   /* CORE-V: we want a fixed entry point */
-  PROVIDE(__boot_address = 0x80);
+  PROVIDE(__boot_address = 0x08000080);
 
   /* CORE-V: interrupt vectors */
   .vectors (ORIGIN(ram)):
