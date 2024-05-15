@@ -18,7 +18,7 @@
 `ifndef __UVME_CV32E40S_VP_FENCEI_TAMPER_SEQ_SV__
 `define __UVME_CV32E40S_VP_FENCEI_TAMPER_SEQ_SV__
 
-import rvviApiPkg::*;
+//import rvviApiPkg::*; //TODO: conditionally include this?
 
 class uvme_cv32e40s_vp_fencei_tamper_seq_c#(
    parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
@@ -143,7 +143,7 @@ endfunction : write_rtl_mem
 function void uvme_cv32e40s_vp_fencei_tamper_seq_c::write_iss_mem();
 
   if ($test$plusargs("USE_ISS")) begin
-    rvviRefMemoryWrite(0, addr, data, 4);
+    //rvviRefMemoryWrite(0, addr, data, 4); // TODO: conditionally include this
   end
 
 endfunction : write_iss_mem

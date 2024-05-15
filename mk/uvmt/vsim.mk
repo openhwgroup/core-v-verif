@@ -185,17 +185,15 @@ GCC_PATH			= $(HOME)/opt/gcc-11.4.0/bin/gcc
 VSIM_FLAGS        	+= -dpicpppath $(GCC_PATH)
 VSIM_FLAGS 			+= -noautoldlibpath
 
-ifeq ($(call IS_YES,$(USE_ISS)),YES)
-  ifeq ($(call IS_YES,$(USE_RM)),YES)
-    #VSIM_FLAGS += -sv_lib $(RM_MODEL).cc
+ifeq ($(call IS_YES,$(USE_RM)),YES)
     export FILE_LIST_RM      ?= -f $(DV_UVMT_PATH)/reference_model.flist
-    export FILE_LIST_RM_DEPS ?= -f $(DV_UVMT_PATH)/reference_model_deps.flist
   	VSIM_FLAGS += +USE_RM
   	VSIM_FLAGS += +define+USE_RM
 	VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
 	VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
 
-  else ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
+else ifeq ($(call IS_YES,$(USE_ISS)),YES)
+  ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
     export FILE_LIST_IDV        ?=
   else
@@ -550,7 +548,6 @@ vlog: lib spike_build
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
 	@echo "* FILE_LIST_IDV_DEPS = $(FILE_LIST_IDV_DEPS)"
 	@echo "* FILE_LIST_IDV      = $(FILE_LIST_IDVS)"
-	@echo "* FILE_LIST_RM_DEPS = $(FILE_LIST_RM_DEPS)"
 	@echo "* FILE_LIST_RM      = $(FILE_LIST_RM)"
 	@echo "* RM_HOME      = $(RM_HOME)"
 	@echo "$(BANNER)"

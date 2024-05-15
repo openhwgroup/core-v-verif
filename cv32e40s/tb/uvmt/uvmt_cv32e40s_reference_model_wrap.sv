@@ -35,20 +35,20 @@ module uvmt_cv32e40s_reference_model_wrap
   import uvme_cv32e40s_pkg::*;
   import uvma_rvfi_pkg::*;
 
-  import rvviApiPkg::*;
+  //import rvviApiPkg::*;
   #(
    )
 
    (
-           rvviTrace rvvi // RVVI SystemVerilog Interface
    );
 
     //uvma_rvfi_instr_if_t#(ILEN,XLEN) rvfi_o;  
+    st_rvfi rvfi_o;
 
     reference_model reference_model_i(
        .clk_i(`RVFI_IF.clk),
-       .rvfi_i(`RVFI_IF)
-       //.rvfi_o()
+       .rvfi_i(`RVFI_IF),
+       .rvfi_o(rvfi_o)
     );
 
    string info_tag = "RM_wrap";
@@ -56,7 +56,7 @@ module uvmt_cv32e40s_reference_model_wrap
    uvme_cv32e40s_cfg_c  uvm_env_cfg;
 
    initial begin
-     @(rvvi.clk);
+     @(`RVFI_IF.clk);
      void'(uvm_config_db#(uvme_cv32e40s_cfg_c)::get(null, "uvm_test_top.env", "cfg", uvm_env_cfg));
      if (!uvm_env_cfg) begin
       `uvm_fatal(info_tag, "Configuration handle is null")
@@ -66,6 +66,7 @@ module uvmt_cv32e40s_reference_model_wrap
      end
    end
 
+    /*
    assign rvvi.clk            = `RVFI_IF.clk;
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
@@ -105,7 +106,7 @@ module uvmt_cv32e40s_reference_model_wrap
    end
 
    assign rvvi.x_wb[0][0] = `RVFI_IF.rvfi_gpr_wmask;
-
+*/
 
 endmodule : uvmt_cv32e40s_reference_model_wrap
 
@@ -114,7 +115,7 @@ interface uvmt_reference_model_if_t;
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_base_test_pkg::*;
   import uvme_cv32e40s_pkg::*;
-  import rvviApiPkg::*;
+  //import rvviApiPkg::*;
 
   string info_tag = "reference_model_if";
 
