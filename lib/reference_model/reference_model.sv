@@ -3,14 +3,22 @@
 
 
 module reference_model
+    import iss_wrap_pkg::*;
     import uvma_rvfi_pkg::*;
     (
         input logic clk_i,
         uvma_rvfi_instr_if_t rvfi_i,
-        st_rvfi rvfi_o
+        rvfi_if_t rvfi_o
     );
 
+    string binary;
+
     initial begin
+        if ($value$plusargs("elf_file=%s", binary))
+            $display("Setting up ISS with binary %s...", binary);
+        
+        iss_init(binary);
+
         $display("Reference Model: Starting");
     end
 

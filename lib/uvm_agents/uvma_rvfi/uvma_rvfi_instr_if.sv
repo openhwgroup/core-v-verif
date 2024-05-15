@@ -1211,4 +1211,105 @@ endfunction
 
 endinterface : uvma_rvfi_instr_if_t
 
+// Simplified rvfi interface for use with the reference module
+interface rvfi_if_t
+  import uvma_rvfi_pkg::*;
+  (
+  );
+
+  // RVFI field widths
+  localparam ORDER_WL         = 64;
+  localparam MODE_WL          = 2;
+  localparam IXL_WL           = 2;
+  localparam TRAP_WL          = 14;
+  localparam GPR_ADDR_WL      = 5;
+  localparam RVFI_DBG_WL      = 3;
+  localparam RVFI_NMIP_WL     = 2;
+  localparam CYCLE_CNT_WL     = 32;
+  localparam NMEM             = 128;
+
+  // Fields within TRAP
+  localparam TRAP_EXCP_LSB         = 0;
+  localparam TRAP_EXCP_WL          = 1;
+  localparam TRAP_NONDBG_ENTRY_LSB = 1;
+  localparam TRAP_NONDBG_ENTRY_WL  = 1;
+  localparam TRAP_DBG_ENTRY_LSB    = 2;
+  localparam TRAP_DBG_ENTRY_WL     = 1;
+  localparam TRAP_CAUSE_LSB        = 3;
+  localparam TRAP_CAUSE_WL         = 6;
+  localparam TRAP_DBG_CAUSE_LSB    = 9;
+  localparam TRAP_DBG_CAUSE_WL     = 3;
+
+  // Lengths & Sizes
+  localparam DEFAULT_ILEN     = 32;
+  localparam DEFAULT_XLEN     = 32;
+  localparam DEFAULT_NRET     = 1;
+  localparam ILEN     = 32;
+  localparam XLEN     = 32;
+  localparam NRET     = 1;
+
+
+
+
+     logic                      clk;
+     logic                      reset_n;
+
+     logic                      valid;
+     logic [ORDER_WL-1:0]       order;
+     logic [ILEN-1:0]           insn;
+     rvfi_trap_t                trap;
+     logic                      halt;
+     logic [RVFI_DBG_WL-1:0]    dbg;
+     logic                      dbg_mode;
+     logic [RVFI_NMIP_WL-1:0]   nmip;
+     rvfi_intr_t                intr;
+     logic [MODE_WL-1:0]        mode;
+     logic [IXL_WL-1:0]         ixl;
+     logic [XLEN-1:0]           pc_rdata;
+     logic [XLEN-1:0]           pc_wdata;
+
+     logic [GPR_ADDR_WL-1:0]    rs1_addr;
+     logic [XLEN-1:0]           rs1_rdata;
+
+     logic [GPR_ADDR_WL-1:0]    rs2_addr;
+     logic [XLEN-1:0]           rs2_rdata;
+
+     logic [GPR_ADDR_WL-1:0]    rs3_addr;
+     logic [XLEN-1:0]           rs3_rdata;
+
+     logic [GPR_ADDR_WL-1:0]    rd1_addr;
+     logic [XLEN-1:0]           rd1_wdata;
+
+     logic [GPR_ADDR_WL-1:0]    rd2_addr;
+     logic [XLEN-1:0]           rd2_wdata;
+/*
+     logic [(32*XLEN)-1:0]      gpr_rdata;
+     logic [(32)-1:0]           gpr_rmask;
+     logic [(32*XLEN)-1:0]      gpr_wdata;
+     logic [(32)-1:0]           gpr_wmask;
+     */
+
+     logic [(NMEM*XLEN)-1:0]    mem_addr;
+     logic [(NMEM*XLEN)-1:0]    mem_rdata;
+     logic [(NMEM*XLEN/8)-1:0]  mem_rmask;
+     logic [(NMEM*XLEN)-1:0]    mem_wdata;
+     logic [(NMEM*XLEN/8)-1:0]  mem_wmask;
+    
+    /*
+     logic [2:0]                instr_prot;
+     logic [1:0]                instr_memtype;
+     logic                      instr_dbg;
+     logic [ NMEM*3-1:0]        mem_prot;
+     logic [ 1*NMEM-1:0]        mem_exokay;
+     logic [ 1*NMEM-1:0]        mem_err;
+     logic [ 6*NMEM-1:0]        mem_atop;
+     logic [ 2*NMEM-1:0]        mem_memtype;
+     logic [ NMEM-1  :0]        mem_db;
+ 
+*/
+
+
+endinterface : rvfi_if_t
+
+
 `endif // __UVMA_RVFI_INSTR_IF_SV__

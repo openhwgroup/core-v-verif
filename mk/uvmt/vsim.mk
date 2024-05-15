@@ -542,7 +542,7 @@ lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
 	fi
 
 # Target to run vlog over SystemVerilog source in $(VSIM_RESULTS)/
-vlog: lib spike_build
+vlog: lib spike_build #make shure spike is built before running vlog (possibly not the best solution)
 	@echo "$(BANNER)"
 	@echo "* Running vlog in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"

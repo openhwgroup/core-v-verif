@@ -27,23 +27,19 @@
 //`ifdef USE_RM 
 
 //`include "reference_model.sv"
-
 module uvmt_cv32e40s_reference_model_wrap
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_base_test_pkg::*;
   import uvme_cv32e40s_pkg::*;
   import uvma_rvfi_pkg::*;
-
+  ();
   //import rvviApiPkg::*;
-  #(
-   )
 
-   (
-   );
+    //uvma_rvfi_instr_if_t#(ILEN,XLEN) rvfi_o();  
+    //st_rvfi rvfi_o;
 
-    //uvma_rvfi_instr_if_t#(ILEN,XLEN) rvfi_o;  
-    st_rvfi rvfi_o;
+    rvfi_if_t rvfi_o();
 
     reference_model reference_model_i(
        .clk_i(`RVFI_IF.clk),
@@ -65,6 +61,40 @@ module uvmt_cv32e40s_reference_model_wrap
       `uvm_info(info_tag, $sformatf("Found UVM environment configuration handle:\n%s", uvm_env_cfg.sprint()), UVM_DEBUG)
      end
    end
+
+
+    always_ff @(posedge `RVFI_IF.clk) begin
+     if (rvfi_o.valid) begin
+       `uvm_info(info_tag, $sformatf("insn: %x", rvfi_o.insn), UVM_LOW)
+       `uvm_info(info_tag, $sformatf("pc: %x", rvfi_o.pc_rdata), UVM_LOW)
+       `uvm_info(info_tag, $sformatf("trap: %x", rvfi_o.trap), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("halt: %x", rvfi_o.halt), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("dbg: %x", rvfi_o.dbg), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("dbg_mode: %x", rvfi_o.dbg_mode), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("nmip: %x", rvfi_o.nmip), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("intr: %x", rvfi_o.intr), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("mode: %x", rvfi_o.mode), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("ixl: %x", rvfi_o.ixl), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("pc_rdata: %x", rvfi_o.pc_rdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("pc_wdata: %x", rvfi_o.pc_wdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rs1_addr: %x", rvfi_o.rs1_addr), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rs1_rdata: %x", rvfi_o.rs1_rdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rs2_addr: %x", rvfi_o.rs2_addr), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rs2_rdata: %x", rvfi_o.rs2_rdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rs3_addr: %x", rvfi_o.rs3_addr), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rs3_rdata: %x", rvfi_o.rs3_rdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rd1_addr: %x", rvfi_o.rd1_addr), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rd1_wdata: %x", rvfi_o.rd1_wdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rd2_addr: %x", rvfi_o.rd2_addr), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("rd2_wdata: %x", rvfi_o.rd2_wdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("mem_addr: %x", rvfi_o.mem_addr), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("mem_rdata: %x", rvfi_o.mem_rdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("mem_rmask: %x", rvfi_o.mem_rmask), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("mem_wdata: %x", rvfi_o.mem_wdata), UVM_LOW)
+        `uvm_info(info_tag, $sformatf("mem_wmask: %x", rvfi_o.mem_wmask), UVM_LOW)
+        
+     end
+    end
 
     /*
    assign rvvi.clk            = `RVFI_IF.clk;
