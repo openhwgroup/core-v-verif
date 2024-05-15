@@ -20,16 +20,12 @@ Introduction
 ============
 
 This document captures the methods, verification environment
-architectures and tools used to verify the first two members CORE-V
-family of RISC-V cores, the CV32E and CVA6.
+architectures and tools used to verify the first multiple members CORE-V
+family of RISC-V cores.
 
-The OpenHW Group will, together with its Member Companies, execute a
-complete, industrial grade pre-silicon verification of the first
-generation of CORE-V IP, the CV32E and CVA6 cores, including their
-execution environment [1]_. Experience has shown that “complete”
-verification requires the application of both dynamic (simulation, FPGA
-prototyping, emulation) and static (formal) verification techniques. All
-of these techniques will be applied to both CV32E and CVA6.
+Together with its Member Companies, the OpenHW Group executes a
+complete, industrial grade pre-silicon verification of CORE-V IP,
+primarily CORE-V cores, including their execution environment [1]_.
 
 License
 -------
