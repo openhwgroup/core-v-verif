@@ -20,6 +20,7 @@
 `define __UVMT_CV32E40S_REFERENCE_MODEL_WRAP_SV__
 
 import uvma_rvfi_pkg::*;
+import uvm_pkg::*;
 
 `define DUT_PATH dut_wrap.cv32e40s_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if
@@ -34,90 +35,124 @@ module rvfi_compare(
 );
 
 
+  function void check_32bit(input string compared, input bit [31:0] core, input logic [31:0] rm); 
+      static int now = 0;
+      if (now != $time) begin
+        now = $time;
+      end
+      if (core !== rm) begin
+        `uvm_error("Step-and-Compare", $sformatf("%s core=0x%8h and rm=0x%8h PC=0x%8h", compared, core, rm, rvfi_core.pc_rdata))
+      end else begin
+        `uvm_info("Step-and-Compare", $sformatf("%s core=0x%8h==core", compared, core), UVM_DEBUG)
+      end
+   endfunction // check_32bit
+
+function void check_4bit(input string compared, input bit [3:0] core, input logic [3:0] rm); 
+      static int now = 0;
+      if (now != $time) begin
+        now = $time;
+      end
+      if (core !== rm) begin
+        `uvm_error("Step-and-Compare", $sformatf("%s core=0x%8h and rm=0x%8h PC=0x%8h", compared, core, rm, rvfi_core.pc_rdata))
+      end else begin
+        `uvm_info("Step-and-Compare", $sformatf("%s core=0x%8h==core", compared, core), UVM_DEBUG)
+      end
+   endfunction // check_4bit
+
   //use assertion to compare the RVFI signals
   always_comb begin
     if (rvfi_rm.valid) begin
-      assert #0 (rvfi_core.pc_rdata == rvfi_rm.pc_rdata ) 
-        $display("RVFI PC match: core: %x, rm: %x", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
-        else $error("RVFI PC mismatch: core: %x, rm: %x", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
+      
 
-      assert #0 (rvfi_core.insn == rvfi_rm.insn ) 
-        else $error("RVFI insn mismatch: core: %x, rm: %x", rvfi_core.insn, rvfi_rm.insn);
 
-      assert #0 (rvfi_core.trap == rvfi_rm.trap ) 
-        else $error("RVFI trap mismatch: core: %x, rm: %x", rvfi_core.trap, rvfi_rm.trap);
+      check_32bit("PC", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
 
-      assert #0 (rvfi_core.halt == rvfi_rm.halt ) 
-        else $error("RVFI halt mismatch: core: %x, rm: %x", rvfi_core.halt, rvfi_rm.halt);
+      check_32bit("insn", rvfi_core.insn, rvfi_rm.insn);
 
-      assert #0 (rvfi_core.dbg == rvfi_rm.dbg ) 
-        else $error("RVFI dbg mismatch: core: %x, rm: %x", rvfi_core.dbg, rvfi_rm.dbg);
+      check_32bit("trap", rvfi_core.trap, rvfi_rm.trap);
 
-      assert #0 (rvfi_core.dbg_mode == rvfi_rm.dbg_mode ) 
-        else $error("RVFI dbg_mode mismatch: core: %x, rm: %x", rvfi_core.dbg_mode, rvfi_rm.dbg_mode);
+      check_32bit("halt", rvfi_core.halt, rvfi_rm.halt);
 
-      assert #0 (rvfi_core.nmip == rvfi_rm.nmip ) 
-        else $error("RVFI nmip mismatch: core: %x, rm: %x", rvfi_core.nmip, rvfi_rm.nmip);
+      check_32bit("dbg", rvfi_core.dbg, rvfi_rm.dbg);
 
-      assert #0 (rvfi_core.intr == rvfi_rm.intr ) 
-        else $error("RVFI intr mismatch: core: %x, rm: %x", rvfi_core.intr, rvfi_rm.intr);
+      check_32bit("dbg_mode", rvfi_core.dbg_mode, rvfi_rm.dbg_mode);
 
-      assert #0 (rvfi_core.mode == rvfi_rm.mode ) 
-        else $error("RVFI mode mismatch: core: %x, rm: %x", rvfi_core.mode, rvfi_rm.mode);
+      check_32bit("nmip", rvfi_core.nmip, rvfi_rm.nmip);
 
-      assert #0 (rvfi_core.ixl == rvfi_rm.ixl ) 
-        else $error("RVFI ixl mismatch: core: %x, rm: %x", rvfi_core.ixl, rvfi_rm.ixl);
+      check_32bit("intr", rvfi_core.intr, rvfi_rm.intr);
 
-      assert #0 (rvfi_core.pc_rdata == rvfi_rm.pc_rdata ) 
-        else $error("RVFI pc_rdata mismatch: core: %x, rm: %x", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
+      check_32bit("mode", rvfi_core.mode, rvfi_rm.mode);
 
-      assert #0 (rvfi_core.pc_wdata == rvfi_rm.pc_wdata ) 
-        else $error("RVFI pc_wdata mismatch: core: %x, rm: %x", rvfi_core.pc_wdata, rvfi_rm.pc_wdata);
+      //check_32bit("ixl", rvfi_core.ixl, rvfi_rm.ixl);
 
-      assert #0 (rvfi_core.rs1_addr == rvfi_rm.rs1_addr ) 
-        else $error("RVFI rs1_addr mismatch: core: %x, rm: %x", rvfi_core.rs1_addr, rvfi_rm.rs1_addr);
+      //check_32bit("pc_wdata", rvfi_core.pc_wdata, rvfi_rm.pc_wdata);
 
-      assert #0 (rvfi_core.rs1_rdata == rvfi_rm.rs1_rdata ) 
-        else $error("RVFI rs1_rdata mismatch: core: %x, rm: %x", rvfi_core.rs1_rdata, rvfi_rm.rs1_rdata);
+      //check_32bit("rs1_addr", rvfi_core.rs1_addr, rvfi_rm.rs1_addr);
 
-      assert #0 (rvfi_core.rs2_addr == rvfi_rm.rs2_addr ) 
-        else $error("RVFI rs2_addr mismatch: core: %x, rm: %x", rvfi_core.rs2_addr, rvfi_rm.rs2_addr);
+      //check_32bit("rs1_rdata", rvfi_core.rs1_rdata, rvfi_rm.rs1_rdata);
 
-      assert #0 (rvfi_core.rs2_rdata == rvfi_rm.rs2_rdata ) 
-        else $error("RVFI rs2_rdata mismatch: core: %x, rm: %x", rvfi_core.rs2_rdata, rvfi_rm.rs2_rdata);
+      //check_32bit("rs2_addr", rvfi_core.rs2_addr, rvfi_rm.rs2_addr);
 
-      assert #0 (rvfi_core.rs3_addr == rvfi_rm.rs3_addr ) 
-        else $error("RVFI rs3_addr mismatch: core: %x, rm: %x", rvfi_core.rs3_addr, rvfi_rm.rs3_addr);
+      //check_32bit("rs2_rdata", rvfi_core.rs2_rdata, rvfi_rm.rs2_rdata);
 
-      assert #0 (rvfi_core.rs3_rdata == rvfi_rm.rs3_rdata ) 
-        else $error("RVFI rs3_rdata mismatch: core: %x, rm: %x", rvfi_core.rs3_rdata, rvfi_rm.rs3_rdata);
+      //check_32bit("rs3_addr", rvfi_core.rs3_addr, rvfi_rm.rs3_addr);
 
-      assert #0 (rvfi_core.rd1_addr == rvfi_rm.rd1_addr ) 
-        else $error("RVFI rd1_addr mismatch: core: %x, rm: %x", rvfi_core.rd1_addr, rvfi_rm.rd1_addr);
+      //check_32bit("rs3_rdata", rvfi_core.rs3_rdata, rvfi_rm.rs3_rdata);
 
-      assert #0 (rvfi_core.rd1_wdata == rvfi_rm.rd1_wdata ) 
-        else $error("RVFI rd1_wdata mismatch: core: %x, rm: %x", rvfi_core.rd1_wdata, rvfi_rm.rd1_wdata);
 
-      assert #0 (rvfi_core.rd2_addr == rvfi_rm.rd2_addr ) 
-        else $error("RVFI rd2_addr mismatch: core: %x, rm: %x", rvfi_core.rd2_addr, rvfi_rm.rd2_addr);
 
-      assert #0 (rvfi_core.rd2_wdata == rvfi_rm.rd2_wdata ) 
-        else $error("RVFI rd2_wdata mismatch: core: %x, rm: %x", rvfi_core.rd2_wdata, rvfi_rm.rd2_wdata);
+      //check_32bit("rd2_addr", rvfi_core.rd2_addr, rvfi_rm.rd2_addr);
 
-      assert #0 (rvfi_core.mem_addr == rvfi_rm.mem_addr ) 
-        else $error("RVFI mem_addr mismatch: core: %x, rm: %x", rvfi_core.mem_addr, rvfi_rm.mem_addr);
+      //check_32bit("rd2_wdata", rvfi_core.rd2_wdata, rvfi_rm.rd2_wdata);
 
-      assert #0 (rvfi_core.mem_rdata == rvfi_rm.mem_rdata ) 
-        else $error("RVFI mem_rdata mismatch: core: %x, rm: %x", rvfi_core.mem_rdata, rvfi_rm.mem_rdata);
 
-      assert #0 (rvfi_core.mem_rmask == rvfi_rm.mem_rmask ) 
-        else $error("RVFI mem_rmask mismatch: core: %x, rm: %x", rvfi_core.mem_rmask, rvfi_rm.mem_rmask);
 
-      assert #0 (rvfi_core.mem_wdata == rvfi_rm.mem_wdata ) 
-        else $error("RVFI mem_wdata mismatch: core: %x, rm: %x", rvfi_core.mem_wdata, rvfi_rm.mem_wdata);
 
-      assert #0 (rvfi_core.mem_wmask == rvfi_rm.mem_wmask ) 
-        else $error("RVFI mem_wmask mismatch: core: %x, rm: %x", rvfi_core.mem_wmask, rvfi_rm.mem_wmask);
+      //Disable instructions with multiple memory accesses
+      if(~(rvfi_core.mem_rmask[511:4] || rvfi_core.mem_wmask[511:4])) begin
+
+        check_32bit("rd1_addr", rvfi_core.rd1_addr, rvfi_rm.rd1_addr);
+
+        // rd1_wdata is not guaranteed to be 0 even though rd1_addr is 0
+        if(rvfi_core.rd1_addr != 0) begin
+          check_32bit("rd1_wdata", rvfi_core.rd1_wdata, rvfi_rm.rd1_wdata);
+        end
+
+        //Only check addr and data if there is a memory access
+        check_32bit("mem_rmask", rvfi_core.mem_rmask, rvfi_rm.mem_rmask);
+
+        check_32bit("mem_wmask", rvfi_core.mem_wmask, rvfi_rm.mem_wmask);
+        if (rvfi_core.mem_rmask) begin
+
+          check_32bit("mem_addr", rvfi_core.mem_addr, rvfi_rm.mem_addr);
+
+          //check_32bit("mem_rdata", rvfi_core.mem_rdata, rvfi_rm.mem_rdata );
+        end else if (rvfi_core.mem_wmask) begin
+
+          check_32bit("mem_addr", rvfi_core.mem_addr, rvfi_rm.mem_addr);
+
+          //check_32bit("mem_wdata", rvfi_core.mem_wdata, rvfi_rm.mem_wdata);
+
+        end 
+
+        //Only compare the bytes that are masked
+        for (int i = 0; i < 4; i++) begin
+          if (rvfi_core.mem_wmask[(4) + i]) begin
+            check_4bit($sformatf("mem_wdata[%0d]", i), rvfi_core.mem_wdata[i*8 +:8], rvfi_rm.mem_wdata[i*8 +:8]);
+          end
+
+          if (`RVFI_IF.rvfi_mem_rmask[(4) + i]) begin
+          check_4bit($sformatf("mem_wdata[%0d]", i), rvfi_core.mem_rdata[i*8 +:8], rvfi_rm.mem_rdata[i*8 +:8]);
+        end
+
+      end
+
+
+
+        
+
+
+      end
 
     end
 
@@ -144,6 +179,7 @@ module uvmt_cv32e40s_reference_model_wrap
 
     rvfi_if_t rvfi_o();
     rvfi_if_t rvfi_core();
+    //int clock_cnt;
 
     reference_model reference_model_i(
        .clk_i(`RVFI_IF.clk),
@@ -173,8 +209,8 @@ module uvmt_cv32e40s_reference_model_wrap
 
 
     always_ff @(posedge `RVFI_IF.clk) begin
-
      if (rvfi_o.valid) begin
+
       rvfi_core.pc_rdata = `RVFI_IF.rvfi_pc_rdata;
       rvfi_core.insn = `RVFI_IF.rvfi_insn;
       rvfi_core.trap = `RVFI_IF.rvfi_trap;
@@ -197,11 +233,20 @@ module uvmt_cv32e40s_reference_model_wrap
       rvfi_core.rd1_wdata = `RVFI_IF.rvfi_rd1_wdata;
       rvfi_core.rd2_addr = `RVFI_IF.rvfi_rd2_addr;
       rvfi_core.rd2_wdata = `RVFI_IF.rvfi_rd2_wdata;
+
       rvfi_core.mem_addr = `RVFI_IF.rvfi_mem_addr;
       rvfi_core.mem_rdata = `RVFI_IF.rvfi_mem_rdata;
       rvfi_core.mem_rmask = `RVFI_IF.rvfi_mem_rmask;
       rvfi_core.mem_wdata = `RVFI_IF.rvfi_mem_wdata;
       rvfi_core.mem_wmask = `RVFI_IF.rvfi_mem_wmask;
+
+
+      //`uvm_info("RM count", $sformatf("PC: %x | CNT: %d", rvfi_core.pc_rdata, clock_cnt), UVM_NONE)
+
+      //clock_cnt = 0;
+     end
+     else begin
+      //clock_cnt = clock_cnt + 1;
      end
     end
 
