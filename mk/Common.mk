@@ -194,6 +194,13 @@ OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
 # Imperas OVPsim Instruction Set Simulator
 IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
 
+
+###############################################################################
+# Reference Model
+export RM_HOME = $(CORE_V_VERIF)/lib/reference_model
+
+
+
 ###############################################################################
 # Run the yaml2make scripts
 

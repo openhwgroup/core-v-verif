@@ -29,7 +29,10 @@
 
 
 // Imperas dv dependencies (rvvi, idv) or dummy package goes here (later packages depend on this)
-${FILE_LIST_IDV_DEPS}
+//${FILE_LIST_IDV_DEPS}
+
+// Reference model dependencies
+${FILE_LIST_RM_DEPS}
 
 // Agents
 -f ${DV_UVMA_CORE_CNTRL_PATH}/uvma_core_cntrl_pkg.flist
@@ -64,6 +67,9 @@ ${DV_UVMT_PATH}/uvmt_cv32e40s_pkg.sv
 // ImperasDV wrapper files (this env var is not set if not using idv)
 // Depends on env
 ${FILE_LIST_IDV}
+
+// Reference model wrapper files
+${FILE_LIST_RM}
 
 // CV32E40S test bench files
 -f ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_files.flist

@@ -134,7 +134,10 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 # Add the ISS to compilation
-VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
+#VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
+VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/reference_model.flist
+#VLOG_FILE_LIST += -dpiheader $(RM_HOME)/sv_dpi.h #$(SPIKE_HOME)/riscv/spike_dpi.cc
+
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+UVM"
 
@@ -177,9 +180,22 @@ VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 #  endif
 #endif
 
+GCC_PATH			= $(HOME)/opt/gcc-11.4.0/bin/gcc
+
+VSIM_FLAGS        	+= -dpicpppath $(GCC_PATH)
+VSIM_FLAGS 			+= -noautoldlibpath
 
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-  ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
+  ifeq ($(call IS_YES,$(USE_RM)),YES)
+    #VSIM_FLAGS += -sv_lib $(RM_MODEL).cc
+    export FILE_LIST_RM      ?= -f $(DV_UVMT_PATH)/reference_model.flist
+    export FILE_LIST_RM_DEPS ?= -f $(DV_UVMT_PATH)/reference_model_deps.flist
+  	VSIM_FLAGS += +USE_RM
+  	VSIM_FLAGS += +define+USE_RM
+	VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
+	VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
+  
+  else ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
     export FILE_LIST_IDV        ?=
   else
@@ -534,6 +550,9 @@ vlog: lib
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
 	@echo "* FILE_LIST_IDV_DEPS = $(FILE_LIST_IDV_DEPS)"
 	@echo "* FILE_LIST_IDV      = $(FILE_LIST_IDVS)"
+	@echo "* FILE_LIST_RM_DEPS = $(FILE_LIST_RM_DEPS)"
+	@echo "* FILE_LIST_RM      = $(FILE_LIST_RM)"
+	@echo "* RM_HOME      = $(RM_HOME)"
 	@echo "$(BANNER)"
 	cd $(SIM_CFG_RESULTS) && \
 		$(VLOG) \
@@ -629,5 +648,5 @@ clean:
 	rm -rf $(SIM_RESULTS)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_spike
 	rm -rf $(CV_CORE_PKG)

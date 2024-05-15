@@ -126,6 +126,13 @@ export DV_ISA_DECODER_PATH      = $(CORE_V_VERIF)/lib/isa_decoder
 # ImperasDV
 export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
 
+
+# Reference Model
+export RM_HOME 					= $(CORE_V_VERIF)/lib/reference_model
+SPIKE_HOME 						= $(CORE_V_VERIF)/vendor/riscv/riscv-isa-sim
+SPIKE_INSTALL_DIR 				= $(CORE_V_VERIF)/tools/spike
+
+
 # Verilab SVlib
 export DV_SVLIB_PATH            = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab
 
@@ -399,6 +406,15 @@ endif
 endif
 endif
 
+
+$(SPIKE_HOME)/build:
+	cd $(SPIKE_HOME) && mkdir build && cd build && \
+		../configure --prefix=$(SPIKE_INSTALL_DIR) --without-boost --without-boost-asio --without-boost-regex	
+
+spike_build: $(SPIKE_HOME)/build
+	cd $(SPIKE_HOME)/build && make -j 16 && make install
+
+
 ###############################################################################
 # Clean up your mess!
 #   1. Clean all generated files of the C and assembler tests
@@ -432,3 +448,7 @@ clean_dpi_dasm_spike:
 
 clean_svlib:
 	rm -rf $(SVLIB_PKG)
+
+clean_spike: 
+	rm -rf $(SPIKE_HOME)/build
+	rm -rf $(SPIKE_INSTALL_DIR)
