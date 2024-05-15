@@ -180,7 +180,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       (!mhartid_plusarg_valid)               -> (mhartid               == 'h0000_0000);
       (!mimpid_patch_plusarg_valid)          -> (mimpid_patch          == 'h0        );
       (!mimpid_plusarg_valid)                -> (mimpid                == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
-      (!boot_addr_plusarg_valid)             -> (boot_addr             == 'h0800_0080);
+      (!boot_addr_plusarg_valid)             -> (boot_addr             == 'h0000_0080);
       (!mtvec_addr_plusarg_valid)            -> (mtvec_addr            == 'h0000_0000);
       (!nmi_addr_plusarg_valid)              -> (nmi_addr              == 'h0010_0000);
       (!dm_halt_addr_plusarg_valid)          -> (dm_halt_addr          == 'h1a11_0800);

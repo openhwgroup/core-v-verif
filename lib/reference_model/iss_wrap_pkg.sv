@@ -26,7 +26,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         rtl_priv = "M";
         //spike_init(binary);
         void'(spike_set_default_params("cva6"));
-        void'(spike_set_param_uint64_t("/top/core/0/", "boot_addr", 'h08000080));
+        void'(spike_set_param_uint64_t("/top/core/0/", "boot_addr", 'h00000080));
         void'(spike_set_param_str("/top/", "isa", rtl_isa));
         void'(spike_set_param_str("/top/", "priv", rtl_priv));
         void'(spike_set_param_str("/top/core/0/", "isa", rtl_isa));
