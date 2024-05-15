@@ -8,6 +8,7 @@ module reference_model
     (
         input logic clk_i,
         uvma_rvfi_instr_if_t rvfi_i,
+        uvma_interrupt_if_t interrupt_if_i,
         rvfi_if_t rvfi_o
     );
 
@@ -25,6 +26,7 @@ module reference_model
     pipeline_shell pipeline_shell_i(
         .clk_i(clk_i),
         .rvfi_i(rvfi_i),
+        .interrupt_if_i(interrupt_if_i),
         .rvfi_o(rvfi_o)
     );
 

@@ -24,6 +24,7 @@ import uvm_pkg::*;
 
 `define DUT_PATH dut_wrap.cv32e40s_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if
+`define INTERRUPT_IF dut_wrap.interrupt_if
 
 //`define STRINGIFY(x) `"x`"
 
@@ -63,8 +64,6 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
   always_comb begin
     if (rvfi_rm.valid) begin
       
-
-
       check_32bit("PC", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
 
       check_32bit("insn", rvfi_core.insn, rvfi_rm.insn);
@@ -186,6 +185,7 @@ module uvmt_cv32e40s_reference_model_wrap
     reference_model reference_model_i(
        .clk_i(`RVFI_IF.clk),
        .rvfi_i(`RVFI_IF),
+       .interrupt_if_i(`INTERRUPT_IF),
        .rvfi_o(rvfi_o)
     );
 
@@ -211,7 +211,11 @@ module uvmt_cv32e40s_reference_model_wrap
 
 
     always_ff @(posedge `RVFI_IF.clk) begin
-     if (rvfi_o.valid) begin
+    assign rvfi_core.clk = `RVFI_IF.clk;
+    assign rvfi_core.valid = `RVFI_IF.rvfi_valid;
+
+    always_ff @(posedge rvfi_core.clk) begin
+     if (rvfi_core.valid) begin
 
       rvfi_core.pc_rdata = `RVFI_IF.rvfi_pc_rdata;
       rvfi_core.insn = `RVFI_IF.rvfi_insn;

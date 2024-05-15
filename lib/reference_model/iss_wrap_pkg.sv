@@ -16,14 +16,18 @@ import "DPI-C" function void spike_set_default_params(string profile);
 import "DPI-C" function void spike_step_svOpenArray(inout bit [63:0] core[], inout bit [63:0] reference_model[]);
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
 
+import "DPI-C" function void spike_set_mip(int unsigned mip);
+
+
+
 
     function automatic void iss_init(string binary);
 
         string rtl_isa;
         string rtl_priv;
 
-        rtl_isa = "rv32im_zicsr_zifencei_zca_zcb_zcmp_zcmt_zba_zbb_zbc_zbs";
-        rtl_priv = "M";
+        rtl_isa = "rv32imc_zicsr_zifencei_zca_zcb_zcmp_zcmt_zba_zbb_zbc_zbs";
+        rtl_priv = "MSU";
         //spike_init(binary);
         void'(spike_set_default_params("cva6"));
         void'(spike_set_param_uint64_t("/top/core/0/", "boot_addr", 'h00000080));
@@ -53,6 +57,13 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
             s_reference_model = u_reference_model.rvfi;
 
+    endfunction
+
+    //Sets mip in Spike and steps one time to apply the state changes
+    //This step does not step through an instruction, so iss_step() must be 
+    //called to step through the first instruction of the trap handler
+    function automatic void iss_intr(bit [31:0] irq);
+        spike_set_mip(irq);
     endfunction
 
 endpackage : iss_wrap_pkg

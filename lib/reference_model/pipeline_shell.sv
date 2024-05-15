@@ -7,6 +7,7 @@ module pipeline_shell
     (
         input logic clk_i,
         uvma_rvfi_instr_if_t rvfi_i,
+        uvma_interrupt_if_t interrupt_if_i,
         rvfi_if_t rvfi_o
     );
 
@@ -16,8 +17,39 @@ module pipeline_shell
         $display("Pipeline Shell: Starting");
     end
 
-    always_ff @( posedge clk_i ) begin
+    logic [31:0] irq_drv_ff;
+    logic irq_prev;
+
+    assign rvfi_o.clk = clk_i;
+
+    always_ff @(posedge clk_i) begin
         if(rvfi_i.rvfi_valid) begin
+            if(rvfi_i.rvfi_intr) begin
+                iss_intr(32'h00000008);
+                irq_prev = 1'b1;
+
+
+                rvfi_o.intr.intr = 1'b1;
+                rvfi_o.intr.exception = 1'b0;
+                rvfi_o.intr.interrupt = 1'b1;
+                rvfi_o.intr.cause = 11'h003;
+            end
+            else if(irq_prev) begin
+                iss_intr(32'h00000000);
+                irq_prev = 1'b0;
+
+                rvfi_o.intr.intr = 1'b0;
+                rvfi_o.intr.exception = 1'b0;
+                rvfi_o.intr.interrupt = 1'b0;
+                rvfi_o.intr.cause = 11'h000;
+            end
+            else begin
+                rvfi_o.intr.intr = 1'b0;
+                rvfi_o.intr.exception = 1'b0;
+                rvfi_o.intr.interrupt = 1'b0;
+                rvfi_o.intr.cause = 11'h000;
+            end
+
             iss_step(rvfi_iss);
             rvfi_o.valid = 1'b1;     
         end
@@ -32,7 +64,7 @@ module pipeline_shell
         rvfi_o.dbg = rvfi_iss.dbg;
         rvfi_o.dbg_mode = rvfi_iss.dbg_mode;
         rvfi_o.nmip = rvfi_iss.nmip;
-        rvfi_o.intr = rvfi_iss.intr;
+        //rvfi_o.intr = rvfi_iss.intr;
         rvfi_o.mode = rvfi_iss.mode;
         rvfi_o.ixl = rvfi_iss.ixl;
         rvfi_o.pc_rdata = rvfi_iss.pc_rdata;
