@@ -19,12 +19,115 @@
 `ifndef __UVMT_CV32E40S_REFERENCE_MODEL_WRAP_SV__
 `define __UVMT_CV32E40S_REFERENCE_MODEL_WRAP_SV__
 
+import uvma_rvfi_pkg::*;
+
 `define DUT_PATH dut_wrap.cv32e40s_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if
 
 //`define STRINGIFY(x) `"x`"
 
 //`ifdef USE_RM 
+
+module rvfi_compare(
+  rvfi_if_t rvfi_core,
+  rvfi_if_t rvfi_rm
+);
+
+
+  //use assertion to compare the RVFI signals
+  always_comb begin
+    if (rvfi_rm.valid) begin
+      assert #0 (rvfi_core.pc_rdata == rvfi_rm.pc_rdata ) 
+        $display("RVFI PC match: core: %x, rm: %x", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
+        else $error("RVFI PC mismatch: core: %x, rm: %x", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
+
+      assert #0 (rvfi_core.insn == rvfi_rm.insn ) 
+        else $error("RVFI insn mismatch: core: %x, rm: %x", rvfi_core.insn, rvfi_rm.insn);
+
+      assert #0 (rvfi_core.trap == rvfi_rm.trap ) 
+        else $error("RVFI trap mismatch: core: %x, rm: %x", rvfi_core.trap, rvfi_rm.trap);
+
+      assert #0 (rvfi_core.halt == rvfi_rm.halt ) 
+        else $error("RVFI halt mismatch: core: %x, rm: %x", rvfi_core.halt, rvfi_rm.halt);
+
+      assert #0 (rvfi_core.dbg == rvfi_rm.dbg ) 
+        else $error("RVFI dbg mismatch: core: %x, rm: %x", rvfi_core.dbg, rvfi_rm.dbg);
+
+      assert #0 (rvfi_core.dbg_mode == rvfi_rm.dbg_mode ) 
+        else $error("RVFI dbg_mode mismatch: core: %x, rm: %x", rvfi_core.dbg_mode, rvfi_rm.dbg_mode);
+
+      assert #0 (rvfi_core.nmip == rvfi_rm.nmip ) 
+        else $error("RVFI nmip mismatch: core: %x, rm: %x", rvfi_core.nmip, rvfi_rm.nmip);
+
+      assert #0 (rvfi_core.intr == rvfi_rm.intr ) 
+        else $error("RVFI intr mismatch: core: %x, rm: %x", rvfi_core.intr, rvfi_rm.intr);
+
+      assert #0 (rvfi_core.mode == rvfi_rm.mode ) 
+        else $error("RVFI mode mismatch: core: %x, rm: %x", rvfi_core.mode, rvfi_rm.mode);
+
+      assert #0 (rvfi_core.ixl == rvfi_rm.ixl ) 
+        else $error("RVFI ixl mismatch: core: %x, rm: %x", rvfi_core.ixl, rvfi_rm.ixl);
+
+      assert #0 (rvfi_core.pc_rdata == rvfi_rm.pc_rdata ) 
+        else $error("RVFI pc_rdata mismatch: core: %x, rm: %x", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
+
+      assert #0 (rvfi_core.pc_wdata == rvfi_rm.pc_wdata ) 
+        else $error("RVFI pc_wdata mismatch: core: %x, rm: %x", rvfi_core.pc_wdata, rvfi_rm.pc_wdata);
+
+      assert #0 (rvfi_core.rs1_addr == rvfi_rm.rs1_addr ) 
+        else $error("RVFI rs1_addr mismatch: core: %x, rm: %x", rvfi_core.rs1_addr, rvfi_rm.rs1_addr);
+
+      assert #0 (rvfi_core.rs1_rdata == rvfi_rm.rs1_rdata ) 
+        else $error("RVFI rs1_rdata mismatch: core: %x, rm: %x", rvfi_core.rs1_rdata, rvfi_rm.rs1_rdata);
+
+      assert #0 (rvfi_core.rs2_addr == rvfi_rm.rs2_addr ) 
+        else $error("RVFI rs2_addr mismatch: core: %x, rm: %x", rvfi_core.rs2_addr, rvfi_rm.rs2_addr);
+
+      assert #0 (rvfi_core.rs2_rdata == rvfi_rm.rs2_rdata ) 
+        else $error("RVFI rs2_rdata mismatch: core: %x, rm: %x", rvfi_core.rs2_rdata, rvfi_rm.rs2_rdata);
+
+      assert #0 (rvfi_core.rs3_addr == rvfi_rm.rs3_addr ) 
+        else $error("RVFI rs3_addr mismatch: core: %x, rm: %x", rvfi_core.rs3_addr, rvfi_rm.rs3_addr);
+
+      assert #0 (rvfi_core.rs3_rdata == rvfi_rm.rs3_rdata ) 
+        else $error("RVFI rs3_rdata mismatch: core: %x, rm: %x", rvfi_core.rs3_rdata, rvfi_rm.rs3_rdata);
+
+      assert #0 (rvfi_core.rd1_addr == rvfi_rm.rd1_addr ) 
+        else $error("RVFI rd1_addr mismatch: core: %x, rm: %x", rvfi_core.rd1_addr, rvfi_rm.rd1_addr);
+
+      assert #0 (rvfi_core.rd1_wdata == rvfi_rm.rd1_wdata ) 
+        else $error("RVFI rd1_wdata mismatch: core: %x, rm: %x", rvfi_core.rd1_wdata, rvfi_rm.rd1_wdata);
+
+      assert #0 (rvfi_core.rd2_addr == rvfi_rm.rd2_addr ) 
+        else $error("RVFI rd2_addr mismatch: core: %x, rm: %x", rvfi_core.rd2_addr, rvfi_rm.rd2_addr);
+
+      assert #0 (rvfi_core.rd2_wdata == rvfi_rm.rd2_wdata ) 
+        else $error("RVFI rd2_wdata mismatch: core: %x, rm: %x", rvfi_core.rd2_wdata, rvfi_rm.rd2_wdata);
+
+      assert #0 (rvfi_core.mem_addr == rvfi_rm.mem_addr ) 
+        else $error("RVFI mem_addr mismatch: core: %x, rm: %x", rvfi_core.mem_addr, rvfi_rm.mem_addr);
+
+      assert #0 (rvfi_core.mem_rdata == rvfi_rm.mem_rdata ) 
+        else $error("RVFI mem_rdata mismatch: core: %x, rm: %x", rvfi_core.mem_rdata, rvfi_rm.mem_rdata);
+
+      assert #0 (rvfi_core.mem_rmask == rvfi_rm.mem_rmask ) 
+        else $error("RVFI mem_rmask mismatch: core: %x, rm: %x", rvfi_core.mem_rmask, rvfi_rm.mem_rmask);
+
+      assert #0 (rvfi_core.mem_wdata == rvfi_rm.mem_wdata ) 
+        else $error("RVFI mem_wdata mismatch: core: %x, rm: %x", rvfi_core.mem_wdata, rvfi_rm.mem_wdata);
+
+      assert #0 (rvfi_core.mem_wmask == rvfi_rm.mem_wmask ) 
+        else $error("RVFI mem_wmask mismatch: core: %x, rm: %x", rvfi_core.mem_wmask, rvfi_rm.mem_wmask);
+
+    end
+
+  end
+  
+
+
+endmodule
+
+
 
 //`include "reference_model.sv"
 module uvmt_cv32e40s_reference_model_wrap
@@ -40,11 +143,17 @@ module uvmt_cv32e40s_reference_model_wrap
     //st_rvfi rvfi_o;
 
     rvfi_if_t rvfi_o();
+    rvfi_if_t rvfi_core();
 
     reference_model reference_model_i(
        .clk_i(`RVFI_IF.clk),
        .rvfi_i(`RVFI_IF),
        .rvfi_o(rvfi_o)
+    );
+
+    rvfi_compare rvfi_compare_i(
+      .rvfi_core(rvfi_core),
+      .rvfi_rm(rvfi_o)
     );
 
    string info_tag = "RM_wrap";
@@ -64,35 +173,35 @@ module uvmt_cv32e40s_reference_model_wrap
 
 
     always_ff @(posedge `RVFI_IF.clk) begin
+
      if (rvfi_o.valid) begin
-       `uvm_info(info_tag, $sformatf("insn: %x", rvfi_o.insn), UVM_LOW)
-       `uvm_info(info_tag, $sformatf("pc: %x", rvfi_o.pc_rdata), UVM_LOW)
-       `uvm_info(info_tag, $sformatf("trap: %x", rvfi_o.trap), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("halt: %x", rvfi_o.halt), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("dbg: %x", rvfi_o.dbg), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("dbg_mode: %x", rvfi_o.dbg_mode), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("nmip: %x", rvfi_o.nmip), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("intr: %x", rvfi_o.intr), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("mode: %x", rvfi_o.mode), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("ixl: %x", rvfi_o.ixl), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("pc_rdata: %x", rvfi_o.pc_rdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("pc_wdata: %x", rvfi_o.pc_wdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rs1_addr: %x", rvfi_o.rs1_addr), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rs1_rdata: %x", rvfi_o.rs1_rdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rs2_addr: %x", rvfi_o.rs2_addr), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rs2_rdata: %x", rvfi_o.rs2_rdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rs3_addr: %x", rvfi_o.rs3_addr), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rs3_rdata: %x", rvfi_o.rs3_rdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rd1_addr: %x", rvfi_o.rd1_addr), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rd1_wdata: %x", rvfi_o.rd1_wdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rd2_addr: %x", rvfi_o.rd2_addr), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("rd2_wdata: %x", rvfi_o.rd2_wdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("mem_addr: %x", rvfi_o.mem_addr), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("mem_rdata: %x", rvfi_o.mem_rdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("mem_rmask: %x", rvfi_o.mem_rmask), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("mem_wdata: %x", rvfi_o.mem_wdata), UVM_LOW)
-        `uvm_info(info_tag, $sformatf("mem_wmask: %x", rvfi_o.mem_wmask), UVM_LOW)
-        
+      rvfi_core.pc_rdata = `RVFI_IF.rvfi_pc_rdata;
+      rvfi_core.insn = `RVFI_IF.rvfi_insn;
+      rvfi_core.trap = `RVFI_IF.rvfi_trap;
+      rvfi_core.halt = `RVFI_IF.rvfi_halt;
+      rvfi_core.dbg = `RVFI_IF.rvfi_dbg;
+      rvfi_core.dbg_mode = `RVFI_IF.rvfi_dbg_mode;
+      rvfi_core.nmip = `RVFI_IF.rvfi_nmip;
+      rvfi_core.intr = `RVFI_IF.rvfi_intr;
+      rvfi_core.mode = `RVFI_IF.rvfi_mode;
+      rvfi_core.ixl = `RVFI_IF.rvfi_ixl;
+      rvfi_core.pc_rdata = `RVFI_IF.rvfi_pc_rdata;
+      rvfi_core.pc_wdata = `RVFI_IF.rvfi_pc_wdata;
+      rvfi_core.rs1_addr = `RVFI_IF.rvfi_rs1_addr;
+      rvfi_core.rs1_rdata = `RVFI_IF.rvfi_rs1_rdata;
+      rvfi_core.rs2_addr = `RVFI_IF.rvfi_rs2_addr;
+      rvfi_core.rs2_rdata = `RVFI_IF.rvfi_rs2_rdata;
+      rvfi_core.rs3_addr = `RVFI_IF.rvfi_rs3_addr;
+      rvfi_core.rs3_rdata = `RVFI_IF.rvfi_rs3_rdata;
+      rvfi_core.rd1_addr = `RVFI_IF.rvfi_rd1_addr;
+      rvfi_core.rd1_wdata = `RVFI_IF.rvfi_rd1_wdata;
+      rvfi_core.rd2_addr = `RVFI_IF.rvfi_rd2_addr;
+      rvfi_core.rd2_wdata = `RVFI_IF.rvfi_rd2_wdata;
+      rvfi_core.mem_addr = `RVFI_IF.rvfi_mem_addr;
+      rvfi_core.mem_rdata = `RVFI_IF.rvfi_mem_rdata;
+      rvfi_core.mem_rmask = `RVFI_IF.rvfi_mem_rmask;
+      rvfi_core.mem_wdata = `RVFI_IF.rvfi_mem_wdata;
+      rvfi_core.mem_wmask = `RVFI_IF.rvfi_mem_wmask;
      end
     end
 
