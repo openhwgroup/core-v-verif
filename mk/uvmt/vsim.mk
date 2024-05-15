@@ -194,7 +194,7 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
   	VSIM_FLAGS += +define+USE_RM
 	VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
 	VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
-  
+
   else ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
     export FILE_LIST_IDV        ?=
@@ -544,7 +544,7 @@ lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
 	fi
 
 # Target to run vlog over SystemVerilog source in $(VSIM_RESULTS)/
-vlog: lib
+vlog: lib spike_build
 	@echo "$(BANNER)"
 	@echo "* Running vlog in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"

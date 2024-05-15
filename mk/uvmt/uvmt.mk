@@ -129,7 +129,9 @@ export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
 
 # Reference Model
 export RM_HOME 					= $(CORE_V_VERIF)/lib/reference_model
-SPIKE_HOME 						= $(CORE_V_VERIF)/vendor/riscv/riscv-isa-sim
+SPIKE_HOME 						= $(RM_HOME)/riscv-isa-sim
+#SPIKE_HOME 						= $(HOME)/cva6/verif/core-v-verif/vendor/riscv/riscv-isa-sim
+
 SPIKE_INSTALL_DIR 				= $(CORE_V_VERIF)/tools/spike
 
 
@@ -409,10 +411,13 @@ endif
 
 $(SPIKE_HOME)/build:
 	cd $(SPIKE_HOME) && mkdir build && cd build && \
-		../configure --prefix=$(SPIKE_INSTALL_DIR) --without-boost --without-boost-asio --without-boost-regex	
+		../configure --prefix=$(SPIKE_INSTALL_DIR)\
+		--without-boost \
+		--without-boost-asio \
+		--without-boost-regex
 
 spike_build: $(SPIKE_HOME)/build
-	cd $(SPIKE_HOME)/build && make -j 16 && make install
+	(cd $(SPIKE_HOME)/build && make -j 16 && make install) | tee spikebuild.log
 
 
 ###############################################################################
