@@ -53,18 +53,20 @@ CORE-V Projects
 ---------------
 
 The `core-v-verif <https://github.com/openhwgroup/core-v-verif>`_ project is being
-developed to verify all CORE-V cores.  The cores themselves are in their own git
+developed to verify multiple CORE-V cores.  The cores themselves are in their own git
 repositories.  Below are links to the RTL sources and documentation for CORE-V
-cores currently in development:
+cores in development as of 2024-05-15:
 
 - `CV32E40P RTL source <https://github.com/openhwgroup/cv32e40p>`_
-- `CV32E40P user manual <https://cv32e40p.readthedocs.io/en/latest/>`_
+- `CV32E40P user manual <https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/>`_
 - `CV32E40X RTL source <https://github.com/openhwgroup/cv32e40x>`_
-- `CV32E40X user manual <https://cv32e40x.readthedocs.io/en/latest/>`_
+- `CV32E40X user manual <https://docs.openhwgroup.org/projects/cv32e40x-user-manual/en/latest/>`_
 - `CV32E40S RTL source <https://github.com/openhwgroup/cv32e40s>`_
-- `CV32E40S user manual <https://cv32e40s.readthedocs.io/en/latest/>`_
+- `CV32E40S user manual <https://docs.openhwgroup.org/projects/cv32e40s-user-manual/en/latest/>`_
+- `CV32E20  RTL source <https://github.com/openhwgroup/cve2>`_
+- `CV32E20  user manual <https://docs.openhwgroup.org/projects/cve2-user-manual/en/latest/>`_
 - `CVA6 RTL source <https://github.com/openhwgroup/cva6>`_
-- `CVA6 user manual <https://cva6.readthedocs.io/en/latest/intro.html>`_
+- `CVA6 user manual <https://docs.openhwgroup.org/projects/cva6-user-manual/>`_
 
 The OpenHW Group also maintains the following repositories for stand-alone verification components:
 
