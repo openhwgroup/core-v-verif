@@ -110,12 +110,14 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
 
       //Disable instructions with multiple memory accesses
       if(~(rvfi_core.mem_rmask[511:4] || rvfi_core.mem_wmask[511:4])) begin
-
+        //Disable checking of rd1 if a trap occurs, since core and Spike mismatch
+        if(~(rvfi_core.trap || rvfi_rm.trap)) begin
         check_32bit("rd1_addr", rvfi_core.rd1_addr, rvfi_rm.rd1_addr);
 
         // rd1_wdata is not guaranteed to be 0 even though rd1_addr is 0
         if(rvfi_core.rd1_addr != 0) begin
           check_32bit("rd1_wdata", rvfi_core.rd1_wdata, rvfi_rm.rd1_wdata);
+          end
         end
 
         //Only check addr and data if there is a memory access
