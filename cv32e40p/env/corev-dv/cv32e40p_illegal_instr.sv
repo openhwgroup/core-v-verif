@@ -85,8 +85,8 @@ class cv32e40p_illegal_instr extends riscv_illegal_instr;
     if (riscv_instr_pkg::RV32FC inside {riscv_instr_pkg::supported_isa}) begin
       if (!(3'b011 inside {legal_c00_opcode})) legal_c00_opcode = {legal_c00_opcode, 3'b011};
       if (!(3'b111 inside {legal_c00_opcode})) legal_c00_opcode = {legal_c00_opcode, 3'b111};
-      if (!(3'b011 inside {legal_c10_opcode})) legal_c00_opcode = {legal_c10_opcode, 3'b011};
-      if (!(3'b111 inside {legal_c10_opcode})) legal_c00_opcode = {legal_c10_opcode, 3'b111};
+      if (!(3'b011 inside {legal_c10_opcode})) legal_c10_opcode = {legal_c10_opcode, 3'b011};
+      if (!(3'b111 inside {legal_c10_opcode})) legal_c10_opcode = {legal_c10_opcode, 3'b111};
     end
     if (riscv_instr_pkg::RV32ZFINX inside {riscv_instr_pkg::supported_isa}) begin
       legal_opcode = {legal_opcode, 7'b1000011, 7'b1000111, 7'b1001011,
