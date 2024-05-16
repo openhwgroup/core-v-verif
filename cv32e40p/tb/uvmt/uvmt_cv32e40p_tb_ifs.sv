@@ -600,23 +600,27 @@ interface uvmt_cv32e40p_cov_if
   // calculate each APU operation's current clock cycle number during execution for functional coverage use
   // input(s): apu_op, 
   bit detect_apu_rvalid = 1;
+  bit is_apu_addr_phase = 0;
   always @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         clk_cycle_window    = 0;
         curr_fpu_apu_op_if  = 0;
         detect_apu_rvalid   = 1;
+        is_apu_addr_phase   = 0;
       end
       else begin
           assert (clk_cycle_window <= MAX_FP_XACT_CYCLE)
             else `uvm_error("uvmt_cv32e40p_cov_if", $sformatf("clk_cycle_window (%0d) > MAX_FP_XACT_CYCLE (%0d)", clk_cycle_window, MAX_FP_XACT_CYCLE));
-          if (apu_req && apu_gnt && apu_rvalid_i && detect_apu_rvalid) begin : IS_0_CYC_FPU
-            clk_cycle_window  = 0;
-            detect_apu_rvalid = 0;
+          if (apu_req && apu_gnt && apu_rvalid_i) begin : IS_0_CYC_FPU
+            clk_cycle_window  = (is_apu_addr_phase) ? 1 : 0; // if b2b addr then 1
+            detect_apu_rvalid = (is_apu_addr_phase) ? 0 : 1; // if b2b addr then 0
+            is_apu_addr_phase = 1;
             curr_fpu_apu_op_if = apu_op;
           end
-          else if (apu_req && apu_gnt && !apu_rvalid_i && detect_apu_rvalid) begin : NOT_0_CYC_FPU
+          else if (apu_req && apu_gnt && !apu_rvalid_i) begin : NOT_0_CYC_FPU
             clk_cycle_window  = 1;
             detect_apu_rvalid = 0;
+            is_apu_addr_phase = 1;
             curr_fpu_apu_op_if = apu_op;
           end
           else if (apu_busy && !apu_rvalid_i && !detect_apu_rvalid) begin : FPU_MULT_CYC
@@ -624,9 +628,11 @@ interface uvmt_cv32e40p_cov_if
             clk_cycle_window += 1;
           end
           else if (apu_busy && apu_rvalid_i && !detect_apu_rvalid) begin : DONE_FPU_CYCLE
+            clk_cycle_window  = 0;
             detect_apu_rvalid = 1;
+            is_apu_addr_phase = 0;
           end
-          else if (!apu_busy) begin
+          else if (!apu_busy && detect_apu_rvalid) begin
             clk_cycle_window  = 0;
           end
       end
