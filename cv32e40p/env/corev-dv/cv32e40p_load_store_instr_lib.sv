@@ -20,25 +20,20 @@
     rand bit          has_taken_avail_comp_reg[];
     riscv_reg_t       s0_a5_avail_regs[];
 
-    constraint default_c {
-      foreach(data_page_id[i]) {
-        data_page_id[i] < max_data_page_id;
-      }
-      data_page_id.size() == num_of_instr_stream;
-      rs1_reg.size() == num_of_instr_stream;
-      has_taken_avail_comp_reg.size() == rs1_reg.size();
-      if (cfg.disable_compressed_instr == 0) {
-        (has_taken_avail_comp_reg.sum() < s0_a5_avail_regs.size());
-      }
-      unique {rs1_reg};
-      foreach(rs1_reg[i]) {
-        !(rs1_reg[i] inside {cfg.reserved_regs, ZERO});
-        if (rs1_reg[i] inside {s0_a5_avail_regs}) {
-          has_taken_avail_comp_reg[i] == 1;
-        } else {
-          has_taken_avail_comp_reg[i] == 0;
+    constraint with_compress_instructions_c {
+        has_taken_avail_comp_reg.size() == rs1_reg.size();
+        foreach(rs1_reg[i]) {
+            if (rs1_reg[i] inside {s0_a5_avail_regs}) {
+                has_taken_avail_comp_reg[i] == 1;
+            } else {
+                has_taken_avail_comp_reg[i] == 0;
+            }
         }
-      }
+        // to make sure at least one is left for compress instructions
+        // count the number of ones (= taken comp regs), and contraint it to be less than the number of avail regs
+        if (cfg.disable_compressed_instr == 0) {
+          has_taken_avail_comp_reg.sum() < s0_a5_avail_regs.size();
+        }
     }
 
     `uvm_object_utils(cv32e40p_multi_page_load_store_instr_stream)
@@ -56,26 +51,22 @@
     rand bit          has_taken_avail_comp_reg[];
     riscv_reg_t       s0_a5_avail_regs[];
 
-    constraint default_c {
-      foreach(data_page_id[i]) {
-        data_page_id[i] < max_data_page_id;
-      }
-      data_page_id.size() == num_of_instr_stream;
-      rs1_reg.size() == num_of_instr_stream;
-      has_taken_avail_comp_reg.size() == rs1_reg.size();
-      if (cfg.disable_compressed_instr == 0) {
-        (has_taken_avail_comp_reg.sum() < s0_a5_avail_regs.size());
-      }
-      unique {rs1_reg};
-      foreach(rs1_reg[i]) {
-        !(rs1_reg[i] inside {cfg.reserved_regs, ZERO});
-        if (rs1_reg[i] inside {s0_a5_avail_regs}) {
-          has_taken_avail_comp_reg[i] == 1;
-        } else {
-          has_taken_avail_comp_reg[i] == 0;
+    constraint with_compress_instructions_c {
+        has_taken_avail_comp_reg.size() == rs1_reg.size();
+        foreach(rs1_reg[i]) {
+            if (rs1_reg[i] inside {s0_a5_avail_regs}) {
+                has_taken_avail_comp_reg[i] == 1;
+            } else {
+                has_taken_avail_comp_reg[i] == 0;
+            }
         }
-      }
+        // to make sure at least one is left for compress instructions
+        // count the number of ones (= taken comp regs), and contraint it to be less than the number of avail regs
+        if (cfg.disable_compressed_instr == 0) {
+          has_taken_avail_comp_reg.sum() < s0_a5_avail_regs.size();
+        }
     }
+
 
     `uvm_object_utils(cv32e40p_mem_region_stress_test)
     `uvm_object_new
