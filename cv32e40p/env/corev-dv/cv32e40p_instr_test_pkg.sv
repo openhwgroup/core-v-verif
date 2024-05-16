@@ -113,6 +113,8 @@ package cv32e40p_instr_test_pkg;
   `include "cv32e40p_privil_reg.sv"
   `include "cv32e40p_debug_rom_gen.sv"
   `include "cv32e40p_asm_program_gen.sv"
+  `include "cv32e40p_load_store_instr_lib.sv"
+
   `include "cv32e40p_instr_base_test.sv"
 
   // Push general purpose register to the debugger stack
@@ -497,7 +499,7 @@ package cv32e40p_instr_test_pkg;
 
     end
 
-    // fixme: the irq handling logic flow need to be rework to consider nested irq scenario for fpu csr such as FS.  
+    // fixme: the irq handling logic flow need to be rework to consider nested irq scenario for fpu csr such as FS.
     // workaround_1 for MSTATUS.FS during nested irq by assuming FS always DIRTY prior irq handling.
     if (cfg_corev.enable_nested_interrupt) begin
       // always set FS to DIRTY prior mret
