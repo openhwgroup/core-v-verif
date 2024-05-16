@@ -45,6 +45,7 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
     override_privil_reg();
     override_debug_rom_gen();
     override_instr_stream();
+    override_load_store_lib();
     super.build_phase(phase);
   endfunction
 
@@ -97,8 +98,8 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
     string test_override_fp_instr_stream = "default";
     if ($value$plusargs("test_override_riscv_instr_stream=%0d", test_override_riscv_instr_stream)) begin : TEST_OVERRIDE_RISCV_INSTR_STREAM
       unique case(test_override_riscv_instr_stream)
-        1: begin 
-          uvm_factory::get().set_type_override_by_type(riscv_rand_instr_stream::get_type(), cv32e40p_rand_instr_stream::get_type()); 
+        1: begin
+          uvm_factory::get().set_type_override_by_type(riscv_rand_instr_stream::get_type(), cv32e40p_rand_instr_stream::get_type());
         end
       endcase
     end // TEST_OVERRIDE_RISCV_INSTR_STREAM
@@ -124,6 +125,12 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
         end
       endcase
     end
+  endfunction
+
+  // to avoid stress tests to reserve all S0:A5 regs used by compressed instructions
+  virtual function void override_load_store_lib();
+    uvm_factory::get().set_type_override_by_type(riscv_multi_page_load_store_instr_stream::get_type(), cv32e40p_multi_page_load_store_instr_stream::get_type());
+    uvm_factory::get().set_type_override_by_type(riscv_mem_region_stress_test::get_type(), cv32e40p_mem_region_stress_test::get_type());
   endfunction
 
   virtual function void apply_directed_instr();
