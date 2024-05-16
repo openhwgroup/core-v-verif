@@ -135,7 +135,7 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 # Add the ISS to compilation
-VLOG_FLAGS += +define+$(CV_CORE_UC)_RVFI
+VLOG_FLAGS += +define+$(CV_CORE_UC)_RVFI +define+$(CV_CORE_UC)_RVVI
 
 ifeq ($(call IS_YES,$(ENABLE_TRACE_LOG)),YES)
     VLOG_FLAGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
