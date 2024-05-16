@@ -530,6 +530,7 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
       pma_regions[i].bufferable     = e40s_cntxt.core_cntrl_vif.pma_cfg[i].bufferable;
       pma_regions[i].cacheable      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].cacheable;
       pma_regions[i].integrity      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].integrity;
+      pma_regions[i].xlen           = MXL_32;
    end
 
    // Copy to the pma_configuration
@@ -547,6 +548,7 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
    pma_cfg.region_overrides[0].bufferable = 0;
    pma_cfg.region_overrides[0].cacheable = 0;
    pma_cfg.region_overrides[0].integrity = 0;
+   pma_cfg.region_overrides[0].xlen = MXL_32;
 endfunction: sample_parameters
 
 function bit uvme_cv32e40s_cfg_c::is_csr_check_disabled(string name);
