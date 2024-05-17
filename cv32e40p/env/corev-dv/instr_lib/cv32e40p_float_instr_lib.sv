@@ -310,6 +310,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   endfunction : print_stream_setting
 
   // set/restore reserved sp to have fix addr for store instrs
+  riscv_reg_t temp_reg; 
   virtual function void set_reserved_sp_addr();
     if (include_load_store_base_sp) begin
       // During exception/irq/debug mode, sp (can be any xreg) is used and must not be alter in this stream.
@@ -319,11 +320,13 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
         // store original sp content
       riscv_instr instr;
-      `SET_GPR_VALUE(T0,32'h8000_0004);
+      if (cfg.sp != T0) temp_reg = T0;
+      else              temp_reg = T1;
+      `SET_GPR_VALUE(temp_reg,32'h8000_0004);
       instr = new riscv_instr::get_rand_instr(.include_instr({SW}));
       `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
         if (has_rs2) {rs2 == SP;}
-        if (has_rs1) {rs1 == T0;}
+        if (has_rs1) {rs1 == temp_reg;}
         if (has_imm) {imm == 0;}
       );
       instr_list.push_back(instr);
@@ -339,7 +342,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       instr = new riscv_instr::get_rand_instr(.include_instr({LW}));
       `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
         if (has_rd)  {rd == SP;}
-        if (has_rs1) {rs1 == T0;}
+        if (has_rs1) {rs1 == temp_reg;}
         if (has_imm) {imm == 0;}
       );
       instr_list.push_back(instr);
