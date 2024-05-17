@@ -287,8 +287,6 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
     end // for GEN_N_MANIPULATE_INSTR
 
-    restore_reserved_sp_addr();
-
     super.post_randomize();
   endfunction: post_randomize
   
@@ -309,42 +307,12 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       ), UVM_NONE);
   endfunction : print_stream_setting
 
-  // set/restore reserved sp to have fix addr for store instrs
+  // set reserved sp to have fix addr for store instrs
   virtual function void set_reserved_sp_addr();
     if (include_load_store_base_sp) begin
-      // During exception/irq/debug mode, sp (can be any xreg) is used and must not be alter in this stream.
-      // since this steams sometimes uses sp in store instr, we need to set sp to a safer space to prevent
-      // from corrupting the main code. Then we restore original sp content at end of stream. 
-      // (note: in stream, SP can be any registers not neccessary X2)
-
-        // store original sp content
-      riscv_instr instr;
-      `SET_GPR_VALUE(T0,32'h8000_0004);
-      instr = new riscv_instr::get_rand_instr(.include_instr({SW}));
-      `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-        if (has_rs2) {rs2 == SP;}
-        if (has_rs1) {rs1 == T0;}
-        if (has_imm) {imm == 0;}
-      );
-      instr_list.push_back(instr);
-
-        // set temporary sp with large value to prevent overlap with maincode
-      `SET_GPR_VALUE(SP,32'h8000_0000); // set SP to have higher range
+      `SET_GPR_VALUE(SP,32'h8000_0000);
     end
   endfunction: set_reserved_sp_addr
-  virtual function void restore_reserved_sp_addr();
-    // restore original sp content
-    if (include_load_store_base_sp) begin
-      riscv_instr instr;
-      instr = new riscv_instr::get_rand_instr(.include_instr({LW}));
-      `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-        if (has_rd)  {rd == SP;}
-        if (has_rs1) {rs1 == T0;}
-        if (has_imm) {imm == 0;}
-      );
-      instr_list.push_back(instr);
-    end
-  endfunction : restore_reserved_sp_addr
 
   // clear csr fflags (by through fflags or fcsr)
   // condition: reg rs1 must be keep for csr clr purpose only throughout this stream
@@ -390,9 +358,10 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       logic [31:0] i_imm;
       for (int i=1; i<32; i++) begin
         riscv_reg_t i_gpr = riscv_reg_t'(i);
-        if (i == int'(cfg_cv32e40p.sp)) continue;   // do not alter stack pointer
         if (cfg.gen_debug_section) begin
-          if (i == int'(cfg_cv32e40p.dp)) continue; // do not alter debug pointer
+          if (i == int'(cfg_cv32e40p.dp)) begin
+            continue;
+          end
         end
         rand_fp_val(i_imm);
         `SET_GPR_VALUE(i_gpr,i_imm);
