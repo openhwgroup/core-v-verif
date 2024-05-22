@@ -326,6 +326,11 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
   if (extension_table['H'] && !supervisor)
     bad_isa_string(str, "'H' extension requires S mode");
 
+  // B Standard Extension for Bit Manipulation Instructions	  April 2024
+  if (extension_table[EXT_ZBA] && extension_table[EXT_ZBB] && extension_table[EXT_ZBS]) {
+    extension_table['B'] = true;
+  }
+
   max_isa = max_xlen == 32 ? reg_t(1) << 30 : reg_t(2) << 62;
   for (unsigned char ch = 'A'; ch <= 'Z'; ch++) {
     if (extension_table[ch])
