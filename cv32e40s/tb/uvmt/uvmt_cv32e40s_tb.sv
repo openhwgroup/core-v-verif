@@ -1764,9 +1764,11 @@ module uvmt_cv32e40s_tb;
       uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
     `endif
 
+    //TODO: Get this ifdef to work. For now, always include the RM
     `ifdef USE_RM
-      uvmt_cv32e40s_reference_model_wrap reference_model ();
+      //uvmt_cv32e40s_reference_model_wrap reference_model ();
     `endif
+    uvmt_cv32e40s_reference_model_wrap reference_model ();
 
    /**
     * Test bench entry point.
