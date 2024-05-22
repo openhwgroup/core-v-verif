@@ -95,19 +95,18 @@ module controller
     always_ff @(posedge clk) begin
         if (rst_n == 1'b0 || flush_pipeline)begin 
             pipe_count <= 0;
-            flush_pipeline_q <= 1'b0;
-        end else if (pipe_count < (PIPELINE_DEPTH - 1)) begin
+        end else if (!pipeline_full) begin
             pipe_count <= pipe_count + 1;
-            flush_pipeline_q <= flush_pipeline;
         end else begin
             pipe_count <= pipe_count;
-            flush_pipeline_q <= flush_pipeline;
         end
     end
 
     // step the pipeline until the first stages are filled up to be in sync with the core
     always_comb begin
-        if (pipe_count < (PIPELINE_DEPTH - 1)) begin
+        if (rst_n == 1'b0) begin
+            step <= 1'b0;
+        end else if (!pipeline_full) begin
             step <= 1'b1;
         end
         else if (valid) begin
@@ -184,7 +183,7 @@ module controller
 
     always_ff @(posedge clk, negedge rst_n) begin
         if (rst_n == 1'b0) begin
-            mie <= 1'b0;
+            mie <= '0;
         end else if (mie_found && step) begin
             mie <= wb_mie;
         end else begin
