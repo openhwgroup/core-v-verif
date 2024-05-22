@@ -8,6 +8,7 @@
 #ifndef __INTERRUPT_TEST_H__
 #define __INTERRUPT_TEST_H__
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "corev_uvmt.h"
@@ -101,21 +102,10 @@ extern void alt_direct_ecall_table();
 
 // Function prototypes for individual tests
 
+int test2IRQS();
 int divisionTest();
 int addTest();
 int memTest();
-int test1();
-int test2();
-int test3();
-int test4();
-int test5();
-int test6();
-int test7();
-int test8();
-int test9();
-
-// Test1 (all irqs in sequence) used in multiple tests so break out implementation
-int test1_impl(int direct_mode);
 
 #endif
 
