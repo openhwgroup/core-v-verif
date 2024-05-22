@@ -69,11 +69,13 @@ install_exes_dir := $(INSTALLDIR)/bin
 sprojs         := @subprojects@
 sprojs_enabled := @subprojects_enabled@
 
-sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled))
+EDA_INCLUDES := -I$(VCS_HOME)/include -I/$(QUESTASIM_HOME)/include -I$(XCEL_HOME)/include -I$(VERILATOR_INSTALL_DIR)/share/verilator/include/vltstd/
+
+sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled)) $(EDA_INCLUDES)
 VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 
 #-------------------------------------------------------------------------
-# Programs and flags 
+# Programs and flags
 #-------------------------------------------------------------------------
 
 # C++ compiler
@@ -92,8 +94,9 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 #
 # These all appear on the command line, from lowest precedence to
 # highest.
+SPIKE_HASH_VERSION:= $(shell git log -1 --pretty=tformat:"%h" -- .. )
 
-default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC
+default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC -DSPIKE_HASH_VERSION=0x$(SPIKE_HASH_VERSION)
 default-CXXFLAGS := $(default-CFLAGS) -std=c++17
 
 mcppbs-CPPFLAGS := @CPPFLAGS@
@@ -163,7 +166,7 @@ dist_junk += $(sprojs_mk)
 #-------------------------------------------------------------------------
 # This function is used by the subproject template to reverse the list
 # of dependencies. It uses recursion to perform the reversal.
-# 
+#
 # Arguments:
 #  $(1)   : space separated input list
 #  retval : input list in reverse order
@@ -185,7 +188,7 @@ endef
 # subprojects defining a certain set of make variables which are all
 # prefixed with the subproject name. Since subproject names can have
 # dashes in them (and the make variables are assumed to only use
-# underscores) the template takes two arguments - one with the regular 
+# underscores) the template takes two arguments - one with the regular
 # subproject name and one with dashes replaced with underscores.
 #
 # Arguments:
@@ -441,7 +444,7 @@ dist_junk += config.status config.h Makefile config.log
 # Distribution
 #-------------------------------------------------------------------------
 # The distribution tarball is named project-ver.tar.gz and it includes
-# both enabled and disabled subprojects. 
+# both enabled and disabled subprojects.
 
 dist_files = \
   $(sprojs) \

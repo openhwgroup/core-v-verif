@@ -20,6 +20,7 @@
 
 // implement class csr_t
 csr_t::csr_t(processor_t* const proc, const reg_t addr):
+  reg::reg(proc, addr, 0),
   proc(proc),
   state(proc->get_state()),
   address(addr),
@@ -44,16 +45,10 @@ void csr_t::verify_permissions(insn_t insn, bool write) const {
       throw trap_virtual_instruction(insn.bits());
     throw trap_illegal_instruction(insn.bits());
   }
+  this->custom_verify_permissions(insn, write);
 }
 
 csr_t::~csr_t() {
-}
-
-void csr_t::write(const reg_t val) noexcept {
-  const bool success = unlogged_write(val);
-  if (success) {
-    log_write();
-  }
 }
 
 void csr_t::log_write() const noexcept {
@@ -71,19 +66,18 @@ reg_t csr_t::written_value() const noexcept {
 
 // implement class basic_csr_t
 basic_csr_t::basic_csr_t(processor_t* const proc, const reg_t addr, const reg_t init):
-  csr_t(proc, addr),
-  val(init) {
+  csr_t(proc, addr) {
+  openhw::reg::unlogged_write(init);
 }
 
 bool basic_csr_t::unlogged_write(const reg_t val) noexcept {
-  this->val = val;
+  openhw::reg::unlogged_write(val);
   return true;
 }
 
 // implement class pmpaddr_csr_t
 pmpaddr_csr_t::pmpaddr_csr_t(processor_t* const proc, const reg_t addr):
   csr_t(proc, addr),
-  val(0),
   cfg(0),
   pmpidx(address - CSR_PMPADDR0) {
 }
@@ -100,8 +94,8 @@ void pmpaddr_csr_t::verify_permissions(insn_t insn, bool write) const {
 
 reg_t pmpaddr_csr_t::read() const noexcept {
   if ((cfg & PMP_A) >= PMP_NAPOT)
-    return val | (~proc->pmp_tor_mask() >> 1);
-  return val & proc->pmp_tor_mask();
+    return openhw::reg::unlogged_read() | (~proc->pmp_tor_mask() >> 1);
+  return openhw::reg::unlogged_read() & proc->pmp_tor_mask();
 }
 
 bool pmpaddr_csr_t::unlogged_write(const reg_t val) noexcept {
@@ -117,7 +111,7 @@ bool pmpaddr_csr_t::unlogged_write(const reg_t val) noexcept {
   const bool locked = !lock_bypass && (cfg & PMP_L);
 
   if (pmpidx < proc->n_pmp && !locked && !next_locked_and_tor()) {
-    this->val = val & ((reg_t(1) << (MAX_PADDR_BITS - PMP_SHIFT)) - 1);
+      openhw::reg::unlogged_write(val & ((reg_t(1) << (MAX_PADDR_BITS - PMP_SHIFT)) - 1));
   }
   else
     return false;
@@ -134,7 +128,7 @@ bool pmpaddr_csr_t::next_locked_and_tor() const noexcept {
 }
 
 reg_t pmpaddr_csr_t::tor_paddr() const noexcept {
-  return (val & proc->pmp_tor_mask()) << PMP_SHIFT;
+  return (openhw::reg::unlogged_read() & proc->pmp_tor_mask()) << PMP_SHIFT;
 }
 
 reg_t pmpaddr_csr_t::tor_base_paddr() const noexcept {
@@ -144,7 +138,7 @@ reg_t pmpaddr_csr_t::tor_base_paddr() const noexcept {
 
 reg_t pmpaddr_csr_t::napot_mask() const noexcept {
   bool is_na4 = (cfg & PMP_A) == PMP_NA4;
-  reg_t mask = (val << 1) | (!is_na4) | ~proc->pmp_tor_mask();
+  reg_t mask = (openhw::reg::unlogged_read() << 1) | (!is_na4) | ~proc->pmp_tor_mask();
   return ~(mask & ~(mask + 1)) << PMP_SHIFT;
 }
 
@@ -348,31 +342,29 @@ bool virtualized_csr_t::unlogged_write(const reg_t val) noexcept {
 
 // implement class epc_csr_t
 epc_csr_t::epc_csr_t(processor_t* const proc, const reg_t addr):
-  csr_t(proc, addr),
-  val(0) {
+  csr_t(proc, addr) {
 }
 
 reg_t epc_csr_t::read() const noexcept {
-  return val & proc->pc_alignment_mask();
+  return openhw::reg::unlogged_read() & proc->pc_alignment_mask();
 }
 
 bool epc_csr_t::unlogged_write(const reg_t val) noexcept {
-  this->val = val & ~(reg_t)1;
+  openhw::reg::unlogged_write(val & ~(reg_t)1);
   return true;
 }
 
 // implement class tvec_csr_t
 tvec_csr_t::tvec_csr_t(processor_t* const proc, const reg_t addr):
-  csr_t(proc, addr),
-  val(0) {
+  csr_t(proc, addr) {
 }
 
 reg_t tvec_csr_t::read() const noexcept {
-  return val;
+  return openhw::reg::unlogged_read();
 }
 
 bool tvec_csr_t::unlogged_write(const reg_t val) noexcept {
-  this->val = val & ~(reg_t)2;
+  openhw::reg::unlogged_write(val & ~(reg_t)2);
   return true;
 }
 
@@ -387,8 +379,8 @@ reg_t cause_csr_t::read() const noexcept {
   // not generally support dynamic xlen, but this code was (partly)
   // there since at least 2015 (ea58df8 and c4350ef).
   if (proc->get_isa().get_max_xlen() > proc->get_xlen()) // Move interrupt bit to top of xlen
-    return val | ((val >> (proc->get_isa().get_max_xlen()-1)) << (proc->get_xlen()-1));
-  return val;
+    return openhw::reg::unlogged_read() | ((openhw::reg::unlogged_read() >> (proc->get_isa().get_max_xlen()-1)) << (proc->get_xlen()-1));
+  return openhw::reg::unlogged_read();
 }
 
 // implement class base_status_csr_t
@@ -450,14 +442,14 @@ namespace {
 
 // implement class vsstatus_csr_t
 vsstatus_csr_t::vsstatus_csr_t(processor_t* const proc, const reg_t addr):
-  base_status_csr_t(proc, addr),
-  val(proc->get_state()->mstatus->read() & sstatus_read_mask) {
+  base_status_csr_t(proc, addr) {
+    openhw::reg::unlogged_write(proc->get_state()->mstatus->read() & sstatus_read_mask);
 }
 
 bool vsstatus_csr_t::unlogged_write(const reg_t val) noexcept {
-  const reg_t newval = (this->val & ~sstatus_write_mask) | (val & sstatus_write_mask);
+  const reg_t newval = (openhw::reg::unlogged_read() & ~sstatus_write_mask) | (val & sstatus_write_mask);
   if (state->v) maybe_flush_tlb(newval);
-  this->val = adjust_sd(newval);
+  openhw::reg::unlogged_write(adjust_sd(newval));
   return true;
 }
 
@@ -480,8 +472,8 @@ bool sstatus_proxy_csr_t::unlogged_write(const reg_t val) noexcept {
 
 // implement class mstatus_csr_t
 mstatus_csr_t::mstatus_csr_t(processor_t* const proc, const reg_t addr):
-  base_status_csr_t(proc, addr),
-  val(compute_mstatus_initial_value()) {
+  base_status_csr_t(proc, addr) {
+  openhw::reg::unlogged_write(compute_mstatus_initial_value());
 }
 
 bool mstatus_csr_t::unlogged_write(const reg_t val) noexcept {
@@ -501,7 +493,7 @@ bool mstatus_csr_t::unlogged_write(const reg_t val) noexcept {
   const reg_t adjusted_val = set_field(val, MSTATUS_MPP, requested_mpp);
   const reg_t new_mstatus = (read() & ~mask) | (adjusted_val & mask);
   maybe_flush_tlb(new_mstatus);
-  this->val = adjust_sd(new_mstatus);
+  openhw::reg::unlogged_write(adjust_sd(new_mstatus));
   return true;
 }
 
@@ -697,16 +689,15 @@ bool misa_csr_t::extension_enabled_const(unsigned char ext) const noexcept {
 
 // implement class mip_or_mie_csr_t
 mip_or_mie_csr_t::mip_or_mie_csr_t(processor_t* const proc, const reg_t addr):
-  csr_t(proc, addr),
-  val(0) {
+  csr_t(proc, addr) {
 }
 
 reg_t mip_or_mie_csr_t::read() const noexcept {
-  return val;
+  return openhw::reg::unlogged_read();
 }
 
 void mip_or_mie_csr_t::write_with_mask(const reg_t mask, const reg_t val) noexcept {
-  this->val = (this->val & ~mask) | (val & mask);
+  openhw::reg::unlogged_write((openhw::reg::unlogged_read() & ~mask) | (val & mask));
   log_write();
 }
 
@@ -720,7 +711,7 @@ mip_csr_t::mip_csr_t(processor_t* const proc, const reg_t addr):
 }
 
 void mip_csr_t::backdoor_write_with_mask(const reg_t mask, const reg_t val) noexcept {
-  this->val = (this->val & ~mask) | (val & mask);
+  openhw::reg::unlogged_write((openhw::reg::unlogged_read() & ~mask) | (val & mask));
 }
 
 reg_t mip_csr_t::write_mask() const noexcept {
@@ -876,7 +867,7 @@ bool medeleg_csr_t::unlogged_write(const reg_t val) noexcept {
     | (1 << CAUSE_BREAKPOINT)
     | (1 << CAUSE_MISALIGNED_LOAD)
     | (1 << CAUSE_LOAD_ACCESS)
-    | (1 << CAUSE_MISALIGNED_STORE) 
+    | (1 << CAUSE_MISALIGNED_STORE)
     | (1 << CAUSE_STORE_ACCESS)
     | (1 << CAUSE_USER_ECALL)
     | (1 << CAUSE_SUPERVISOR_ECALL)
@@ -984,31 +975,30 @@ bool virtualized_satp_csr_t::unlogged_write(const reg_t val) noexcept {
 
 // implement class wide_counter_csr_t
 wide_counter_csr_t::wide_counter_csr_t(processor_t* const proc, const reg_t addr):
-  csr_t(proc, addr),
-  val(0) {
+  csr_t(proc, addr) {
 }
 
 reg_t wide_counter_csr_t::read() const noexcept {
-  return val;
+  return openhw::reg::unlogged_read();
 }
 
 void wide_counter_csr_t::bump(const reg_t howmuch) noexcept {
-  val += howmuch;  // to keep log reasonable size, don't log every bump
+  openhw::reg::unlogged_write(openhw::reg::unlogged_read() + howmuch);  // to keep log reasonable size, don't log every bump
 }
 
 bool wide_counter_csr_t::unlogged_write(const reg_t val) noexcept {
-  this->val = val;
+   openhw::reg::unlogged_write(val);
   // The ISA mandates that if an instruction writes instret, the write
   // takes precedence over the increment to instret.  However, Spike
   // unconditionally increments instret after executing an instruction.
   // Correct for this artifact by decrementing instret here.
-  this->val--;
+   openhw::reg::unlogged_write( openhw::reg::unlogged_read()-1);
   return true;
 }
 
 reg_t wide_counter_csr_t::written_value() const noexcept {
   // Re-adjust for upcoming bump()
-  return this->val + 1;
+  return  openhw::reg::unlogged_read() + 1;
 }
 
 // implement class time_counter_csr_t
@@ -1050,12 +1040,12 @@ bool proxy_csr_t::unlogged_write(const reg_t val) noexcept {
 }
 
 const_csr_t::const_csr_t(processor_t* const proc, const reg_t addr, reg_t val):
-  csr_t(proc, addr),
-  val(val) {
+  csr_t(proc, addr) {
+      openhw::reg::unlogged_write(val);
 }
 
 reg_t const_csr_t::read() const noexcept {
-  return val;
+  return openhw::reg::unlogged_read();
 }
 
 bool const_csr_t::unlogged_write(const reg_t UNUSED val) noexcept {

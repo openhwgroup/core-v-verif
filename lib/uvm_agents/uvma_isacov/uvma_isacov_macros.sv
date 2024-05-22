@@ -27,8 +27,9 @@
 
 `define ISACOV_IGN_BINS \
     ignore_bins IGN_UNKNOWN = {UNKNOWN}; \
+    ignore_bins IGN_DRET = {DRET} `WITH (!debug_supported); \
     ignore_bins IGN_M = {MUL, MULH, MULHSU, MULHU, \
-                         DIV, DIVU, REM, REMU} `WITH (!ext_m_supported); \
+                         DIV, DIVU, REM, REMU, C_MUL} `WITH (!ext_m_supported); \
     ignore_bins IGN_C = {C_ADDI4SPN, C_LW, C_SW, C_NOP, \
                          C_ADDI, C_JAL, C_LI, C_ADDI16SP, C_LUI, C_SRLI, C_SRAI, \
                          C_ANDI, C_SUB, C_XOR, C_OR, C_AND, C_J, C_BEQZ, C_BNEZ, \
@@ -42,7 +43,10 @@
                            ROL,ROR,RORI,REV8,ORC_B} `WITH (!ext_zbb_supported); \
     ignore_bins IGN_ZBC = {CLMUL,CLMULH,CLMULR} `WITH (!ext_zbc_supported); \
     ignore_bins IGN_ZBS = {BSET,BSETI,BCLR,BCLRI, \
-                           BINV,BINVI,BEXT,BEXTI} `WITH (!ext_zbs_supported);
+                           BINV,BINVI,BEXT,BEXTI} `WITH (!ext_zbs_supported); \
+    ignore_bins IGN_ZCB = {C_LBU,C_LHU,C_LH,C_SB,C_SH, \
+                           C_ZEXT_B,C_ZEXT_H,C_SEXT_B,C_SEXT_H, \
+                           C_NOT,C_MUL} `WITH (!ext_zcb_supported);
 
 
 `define ISACOV_CP_BITWISE(name, field, iff_exp) \
@@ -173,6 +177,14 @@
 ``name``: coverpoint(``field``) iff (``iff_exp``) { \
     wildcard bins BIT0_0  = {1'b0}; \
     wildcard bins BIT0_1  = {1'b1}; \
+}
+
+`define ISACOV_CP_BITWISE_1_0(name, field, iff_exp) \
+``name``: coverpoint(``field``) iff (``iff_exp``) { \
+    wildcard bins BIT0_0  = {2'b?0}; \
+    wildcard bins BIT1_0  = {2'b0?}; \
+    wildcard bins BIT0_1  = {2'b?1}; \
+    wildcard bins BIT1_1  = {2'b1?}; \
 }
 
 `define ISACOV_CP_BITWISE_31_12(name, field, iff_exp) \

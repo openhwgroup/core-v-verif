@@ -42,6 +42,67 @@ typedef struct packed {
   logic        trap;
 } rvfi_trap_t;
 
+typedef struct packed {
+   bit [MAX_XLEN-1:0]         nret_id;
+   bit [MAX_XLEN-1:0]         cycle_cnt;
+   bit [MAX_XLEN-1:0]         order;
+   bit [MAX_XLEN-1:0]         insn;
+   bit [MAX_XLEN-1:0]         trap;
+   bit [MAX_XLEN-1:0]         halt;
+   bit [MAX_XLEN-1:0]         intr;
+   bit [MAX_XLEN-1:0]         mode;
+   bit [MAX_XLEN-1:0]         ixl;
+   bit [MAX_XLEN-1:0]         dbg;
+   bit [MAX_XLEN-1:0]         dbg_mode;
+   bit [MAX_XLEN-1:0]         nmip;
+
+   bit [MAX_XLEN-1:0]         insn_interrupt;
+   bit [MAX_XLEN-1:0]         insn_interrupt_id;
+   bit [MAX_XLEN-1:0]         insn_bus_fault;
+   bit [MAX_XLEN-1:0]         insn_nmi_cause;
+
+   bit [MAX_XLEN-1:0]         pc_rdata;
+   bit [MAX_XLEN-1:0]         pc_wdata;
+
+   bit [MAX_XLEN-1:0]         rs1_addr;
+   bit [MAX_XLEN-1:0]         rs1_rdata;
+
+   bit [MAX_XLEN-1:0]         rs2_addr;
+   bit [MAX_XLEN-1:0]         rs2_rdata;
+
+   bit [MAX_XLEN-1:0]         rs3_addr;
+   bit [MAX_XLEN-1:0]         rs3_rdata;
+
+   bit [MAX_XLEN-1:0]         rd1_addr;
+   bit [MAX_XLEN-1:0]         rd1_wdata;
+
+   bit [MAX_XLEN-1:0]         rd2_addr;
+   bit [MAX_XLEN-1:0]         rd2_wdata;
+
+   bit [MAX_XLEN-1:0]         mem_addr;
+   bit [MAX_XLEN-1:0]         mem_rdata;
+   bit [MAX_XLEN-1:0]         mem_rmask;
+   bit [MAX_XLEN-1:0]         mem_wdata;
+   bit [MAX_XLEN-1:0]         mem_wmask;
+
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_valid;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_addr;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_rdata;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_rmask;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_wdata;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_wmask;
+
+} st_rvfi;
+
+`define ST_NUM_WORDS ($size(st_rvfi)/MAX_XLEN)
+parameter ST_NUM_WORDS =  ($size(st_rvfi)/MAX_XLEN);
+
+typedef bit [ST_NUM_WORDS-1:0] [63:0] vector_rvfi;
+typedef union {
+    st_rvfi rvfi;
+    vector_rvfi array;
+} union_rvfi;
+
 function string get_mode_str(uvma_rvfi_mode mode);
    case (mode)
       UVMA_RVFI_U_MODE: return "U";

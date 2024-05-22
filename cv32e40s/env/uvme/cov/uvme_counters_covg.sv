@@ -21,8 +21,8 @@ covergroup cg_counters (int num_mhpmcounters)
 
   `per_instance_fcov
 
-  cp_inhibit_mcycle : coverpoint isacov.instr.rvfi.csrs["mcountinhibit"].get_csr_retirement_data()[0];
-  cp_inhibit_minstret : coverpoint isacov.instr.rvfi.csrs["mcountinhibit"].get_csr_retirement_data()[2];
+  cp_inhibit_mcycle : coverpoint isacov.instr.rvfi.name_csrs["mcountinhibit"].get_csr_retirement_data()[0];
+  cp_inhibit_minstret : coverpoint isacov.instr.rvfi.name_csrs["mcountinhibit"].get_csr_retirement_data()[2];
   cp_is_csr_read : coverpoint (isacov.instr.group == CSR_GROUP) && (isacov.instr.rd != 0) {
     bins is_csr_read = {1};
   }
@@ -61,11 +61,11 @@ covergroup cg_mhpm (int idx)
 
   `per_instance_fcov
 
-  cp_inhibit : coverpoint isacov.instr.rvfi.csrs["mcountinhibit"].get_csr_retirement_data()[idx] {
+  cp_inhibit : coverpoint isacov.instr.rvfi.name_csrs["mcountinhibit"].get_csr_retirement_data()[idx] {
     bins inhibit = {1};
     bins no_inhibit = {0};
   }
-  cp_event : coverpoint isacov.instr.rvfi.csrs[$sformatf("mhpmevent%0d", idx)].get_csr_retirement_data() {
+  cp_event : coverpoint isacov.instr.rvfi.name_csrs[$sformatf("mhpmevent%0d", idx)].get_csr_retirement_data() {
     bins events = {[1:$]};
     bins no_events = {0};
   }
@@ -101,15 +101,15 @@ covergroup cg_inhibit_mix (int idx)
 
   `per_instance_fcov
 
-  cp_inhibit_mcycle : coverpoint isacov.instr.rvfi.csrs["mcountinhibit"].get_csr_retirement_data()[0];
-  cp_inhibit_minstret : coverpoint isacov.instr.rvfi.csrs["mcountinhibit"].get_csr_retirement_data()[2];
+  cp_inhibit_mcycle : coverpoint isacov.instr.rvfi.name_csrs["mcountinhibit"].get_csr_retirement_data()[0];
+  cp_inhibit_minstret : coverpoint isacov.instr.rvfi.name_csrs["mcountinhibit"].get_csr_retirement_data()[2];
   cp_is_csr_read : coverpoint (isacov.instr.group == CSR_GROUP) && (isacov.instr.rd != 0) {
     bins is_csr_read = {1};
   }
-  cp_is_event_cycles : coverpoint isacov.instr.rvfi.csrs[$sformatf("mhpmevent%0d", idx)].get_csr_retirement_data() {
+  cp_is_event_cycles : coverpoint isacov.instr.rvfi.name_csrs[$sformatf("mhpmevent%0d", idx)].get_csr_retirement_data() {
     bins event_cycles = {1};  // selector CYCLES is bit 0
   }
-  cp_is_event_instr : coverpoint isacov.instr.rvfi.csrs[$sformatf("mhpmevent%0d", idx)].get_csr_retirement_data() {
+  cp_is_event_instr : coverpoint isacov.instr.rvfi.name_csrs[$sformatf("mhpmevent%0d", idx)].get_csr_retirement_data() {
     bins event_instr = {2};  // selector INSTR is bit 1
   }
   cp_is_mhpm_idx : coverpoint (isacov.instr.csr == (uvma_isacov_pkg::MCYCLE + idx)) {

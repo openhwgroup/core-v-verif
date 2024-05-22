@@ -1,0 +1,27 @@
+From ec2af39b3202fa5c897b083c0ff506370a12b099 Mon Sep 17 00:00:00 2001
+From: ajalali <ayoub.jalali@external.thalesgroup.com>
+Date: Tue, 6 Feb 2024 11:20:55 +0100
+Subject: [PATCH 2844/2844] SPike DISAM : Fix CSR Pseudo code
+
+---
+ vendor/riscv/riscv-isa-sim/disasm/disasm.cc | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+index fef9facab..9a3ecc292 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+@@ -874,10 +874,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+   add_insn(new disasm_insn_t("fence", match_fence, mask_fence, {&iorw}));
+   DEFINE_NOARG(fence_i);
+ 
+-  add_insn(new disasm_insn_t("csrr", match_csrrs, mask_csrrs | mask_rs1, {&xrd, &csr}));
+-  add_insn(new disasm_insn_t("csrw", match_csrrw, mask_csrrw | mask_rd, {&csr, &xrs1}));
+-  add_insn(new disasm_insn_t("csrs", match_csrrs, mask_csrrs | mask_rd, {&csr, &xrs1}));
+-  add_insn(new disasm_insn_t("csrc", match_csrrc, mask_csrrc | mask_rd, {&csr, &xrs1}));
+   add_insn(new disasm_insn_t("csrwi", match_csrrwi, mask_csrrwi | mask_rd, {&csr, &zimm5}));
+   add_insn(new disasm_insn_t("csrsi", match_csrrsi, mask_csrrsi | mask_rd, {&csr, &zimm5}));
+   add_insn(new disasm_insn_t("csrci", match_csrrci, mask_csrrci | mask_rd, {&csr, &zimm5}));
+-- 
+2.39.3
+

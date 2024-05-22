@@ -99,7 +99,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    constraint defaults_cons {
       soft enabled                         == 0;
       soft is_active                       == UVM_PASSIVE;
-      soft scoreboarding_enabled           == 1;
+      soft scoreboard_enabled              == 1;
       soft cov_model_enabled               == 1;
       soft trn_log_enabled                 == 1;
       soft sys_clk_period                  == uvme_cv32e40s_sys_default_clk_period; // see uvme_cv32e40s_constants.sv
@@ -307,7 +307,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_data_cfg.cov_model_enabled   == 1;
       }
 
-      if (!scoreboarding_enabled) {
+      if (!scoreboard_enabled) {
          buserr_scoreboarding_enabled == 0;
          pma_cfg.scoreboard_enabled   == 0;
       }
@@ -530,6 +530,7 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
       pma_regions[i].bufferable     = e40s_cntxt.core_cntrl_vif.pma_cfg[i].bufferable;
       pma_regions[i].cacheable      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].cacheable;
       pma_regions[i].integrity      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].integrity;
+      pma_regions[i].xlen           = MXL_32;
    end
 
    // Copy to the pma_configuration
@@ -547,6 +548,7 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
    pma_cfg.region_overrides[0].bufferable = 0;
    pma_cfg.region_overrides[0].cacheable = 0;
    pma_cfg.region_overrides[0].integrity = 0;
+   pma_cfg.region_overrides[0].xlen = MXL_32;
 endfunction: sample_parameters
 
 function bit uvme_cv32e40s_cfg_c::is_csr_check_disabled(string name);
@@ -602,6 +604,9 @@ function void uvme_cv32e40s_cfg_c::set_unsupported_csr_mask();
    unsupported_csr_mask[uvma_core_cntrl_pkg::TIMEH] = 1;
    unsupported_csr_mask[uvma_core_cntrl_pkg::INSTRETH] = 1;
    unsupported_csr_mask[uvma_core_cntrl_pkg::SCOUNTEREN] = 1;
+
+   unsupported_csr_mask[uvma_core_cntrl_pkg::MTINST] = 1;
+   unsupported_csr_mask[uvma_core_cntrl_pkg::MTVAL2] = 1;
 
    unsupported_csr_mask[uvma_core_cntrl_pkg::TDATA3] = 1;
    unsupported_csr_mask[uvma_core_cntrl_pkg::TCONTROL] = 1;

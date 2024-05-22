@@ -3,6 +3,7 @@
 #include "config.h"
 #include "cfg.h"
 #include "sim.h"
+#include "Simulation.h"
 #include "mmu.h"
 #include "arith.h"
 #include "remote_bitbang.h"
@@ -20,15 +21,40 @@
 #include <cinttypes>
 #include "../VERSION"
 
+static void version(int exit_code = 1)
+{
+  fprintf(stderr, SPIKE_VERSION " %x\n", SPIKE_HASH_VERSION);
+  exit(exit_code);
+}
+
+static void print_params(int exit_code = 1)
+{
+    openhw::Params params;
+    openhw::Simulation::default_params(params);
+
+    std::cout << "Available Simulation Params:" << std::endl;
+    params.print_table("/top/");
+
+    cout << endl;
+    cout << "Available Cores Params:" << std::endl;
+    cout << "* Param for all the cores: /top/cores/" << std::endl;
+    cout << "* Param for one specific core: /top/core/${hartid}/" << std::endl;
+    params.print_table("/top/cores/");
+
+    exit(exit_code);
+}
+
 static void help(int exit_code = 1)
 {
   fprintf(stderr, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
   fprintf(stderr, "usage: spike [host options] <target program> [target options]\n");
   fprintf(stderr, "Host Options:\n");
+  fprintf(stderr, "  --print-params        Print Spike parameters\n");
   fprintf(stderr, "  -p<n>                 Simulate <n> processors [default 1]\n");
   fprintf(stderr, "  -m<n>                 Provide <n> MiB of target memory [default 2048]\n");
   fprintf(stderr, "  -m<a:m,b:n,...>       Provide memory regions of size m and n bytes\n");
   fprintf(stderr, "                          at base addresses a and b (with 4 KiB alignment)\n");
+  fprintf(stderr, "  -v                    Print Spike version\n");
   fprintf(stderr, "  -d                    Interactive debug mode\n");
   fprintf(stderr, "  -g                    Track histogram of PCs\n");
   fprintf(stderr, "  -l                    Generate a log of execution\n");
@@ -89,6 +115,13 @@ static void help(int exit_code = 1)
   fprintf(stderr, "  --steps=<n>           Stop simulation after reaching specified number of steps "
           "(default: unlimited)\n");
   fprintf(stderr, "  --nb_register_source=<n>     Set the number of register source usable(2 or 3)\n");
+  fprintf(stderr, "  --param <path>:<type>=<val>  Set parameter to specified value (see 'spike --print-params' for a full list.)\n"
+                  "                        <type> can be any of 'bool', 'str', or 'uint64_t'.\n"
+                  "                        Supported bool values are 0, 1, 'false' and 'true'.\n"
+                  "                        String values need to be duly quoted where needed.\n"
+                  "                        A uint64_t value can be any unsigned number literal\n"
+                  "                        in C/C++ syntax (42, 0x2a, etc.)\n"
+                  "                        This flag can be used multiple times.\n");
 
   exit(exit_code);
 }
@@ -425,8 +458,12 @@ int main(int argc, char** argv)
   };
 
   option_parser_t parser;
+  openhw::Params params;
+
   parser.help(&suggest_help);
   parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
+  parser.option('v', "version", 0, [&](const char UNUSED *s){version(0);});
+  parser.option(0, "print-params", 0, [&](const char UNUSED *s){print_params(0);});
   parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
   parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
   parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});
@@ -471,6 +508,7 @@ int main(int argc, char** argv)
     }
   });
   parser.option(0, "steps", 1, [&](const char* s){max_steps = strtoull(s, 0, 0);});
+  parser.option(0, "param", 1, [&](const char* s){params.setFromCmdline(s);});
   parser.option(0, "dm-progsize", 1,
       [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
   parser.option(0, "dm-no-impebreak", 0,
@@ -515,6 +553,10 @@ int main(int argc, char** argv)
   parser.option(0, "nb_register_source", 1, [&](const char* s){
     number_register_source = (uint8_t)atoi(s);
   });
+
+  // Set default param values prior to parsing the cmdline.
+  params.set_uint64_t("/top/core/0/", "boot_addr", 0x10000UL);
+  params.set_uint64_t("/top/core/0/", "pmpregions", 0x0UL);
 
   auto argv1 = parser.parse(argv);
   std::vector<std::string> htif_args(argv1, (const char*const*)argv + argc);
@@ -572,10 +614,24 @@ int main(int argc, char** argv)
     cfg.hartids = default_hartids;
   }
 
-  sim_t s(&cfg, halted,
+  if (max_steps != 0) {
+    params.set_uint64_t("/top/", "max_steps", max_steps);
+    params.set_bool("/top/", "max_steps_enabled", true);
+    std::cout << "[SPIKE] Max simulation steps: " << max_steps << std::endl;
+  }
+  openhw::Params::cfg_to_params(cfg, params);
+  params.set_uint64_t("/top/", "num_procs", cfg.nprocs());
+  params.set_string("/top/core/0/", "isa", std::string(cfg.isa()));
+  params.set_string("/top/core/0/", "priv", std::string(cfg.priv()));
+
+  openhw::Param param = params.get("/top/core/0/misa_we");
+  std::cerr << "[spike.cc:main()] Value of '/top/core/0/misa_we' = " << (param.name != "" ? (param.a_bool ? "true" : "false") : "UNDEFINED") << "\n";
+
+  openhw::Simulation s(&cfg, halted,
           mems, plugin_devices, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
           socket,
-          cmd_file, max_steps);
+          cmd_file, params);
+  s.standalone_mode = 1;
   std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
   std::unique_ptr<jtag_dtm_t> jtag_dtm(
       new jtag_dtm_t(&s.debug_module, dmi_rti));
@@ -598,8 +654,11 @@ int main(int argc, char** argv)
     s.get_core(i)->set_nb_register_source(number_register_source);
     if (ic) s.get_core(i)->get_mmu()->register_memtracer(&*ic);
     if (dc) s.get_core(i)->get_mmu()->register_memtracer(&*dc);
-    for (auto e : extensions)
-      s.get_core(i)->register_extension(e());
+    for (auto e : extensions) {
+      extension_t *ext = e();
+      s.get_core(i)->register_extension(ext);
+      ext->reset();
+    }
     s.get_core(i)->get_mmu()->set_cache_blocksz(blocksz);
   }
 

@@ -34,7 +34,7 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
    /**
     * Writes contents of t to disk.
     */
-   virtual function void write(uvma_axi_base_seq_item_c trs);
+   virtual function void write(uvma_axi_base_seq_item_c t);
       if(cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET)begin
 
          string write_address_access = "";
@@ -61,16 +61,16 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
          string r_id_str     = "";
          string r_access_complet = "";
 
-         if(trs.aw_valid && trs.aw_ready) begin
+         if(t.aw_valid && t.aw_ready) begin
 
             write_address_access = "write_address_access";
-            if(trs.aw_lock) begin
+            if(t.aw_lock) begin
                aw_access_type = "Exclusive_access";
             end else begin
                aw_access_type = "Normal_access";
             end
-            aw_address = $sformatf("%h", trs.aw_addr);
-            aw_id_str = $sformatf("%b", trs.aw_id);
+            aw_address = $sformatf("%h", t.aw_addr);
+            aw_id_str = $sformatf("%b", t.aw_id);
             fwrite($sformatf("----> %t | %s | %s | %s | %s", $realtime(), write_address_access, aw_address, aw_access_type, aw_id_str));
 
          end else begin
@@ -82,11 +82,11 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
 
          end
 
-         if(trs.w_valid && trs.w_ready) begin
+         if(t.w_valid && t.w_ready) begin
 
             write_data_access = "write_data_access";
-            w_data = $sformatf("%h", trs.w_data);
-            if(trs.w_last) begin
+            w_data = $sformatf("%h", t.w_data);
+            if(t.w_last) begin
                w_access_complet = "Yes";
             end else begin
                w_access_complet = "No";
@@ -101,17 +101,17 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
 
          end
 
-         if(trs.b_valid && trs.b_ready) begin
+         if(t.b_valid && t.b_ready) begin
 
             write_response_access = "write_response_access";
-            case (trs.b_resp)
+            case (t.b_resp)
                00 : b_err = "No Err";
                01 : b_err  = "Err";
                10 : b_err  = "Err";
                11 : b_err  = "Err";
                default : b_err = " ? ";
             endcase
-            b_id_str = $sformatf("%b", trs.b_id);
+            b_id_str = $sformatf("%b", t.b_id);
             fwrite($sformatf("----> %t | %s | __ | %s | __ | %s", $realtime(), write_response_access, b_id_str, b_err));
 
          end else begin
@@ -122,16 +122,16 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
 
          end
 
-         if(trs.ar_valid && trs.ar_ready) begin
+         if(t.ar_valid && t.ar_ready) begin
 
             read_address_access = "read_address_access";
-            if(trs.ar_lock) begin
+            if(t.ar_lock) begin
                ar_access_type = "Exclusive_access";
             end else begin
                ar_access_type = "Normal_access";
             end
-            ar_address = $sformatf("%h", trs.ar_addr);
-            ar_id_str = $sformatf("%b", trs.ar_id);
+            ar_address = $sformatf("%h", t.ar_addr);
+            ar_id_str = $sformatf("%b", t.ar_id);
             fwrite($sformatf("----> %t | %s | %s | %s | %s", $realtime(), read_address_access, ar_address, ar_access_type, ar_id_str));
 
          end else begin
@@ -143,17 +143,17 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
 
          end
 
-         if(trs.r_valid && trs.r_ready) begin
+         if(t.r_valid && t.r_ready) begin
 
             read_data_access = "read_data_access";
-            r_data = $sformatf("%h", trs.r_data);
-            r_id_str = $sformatf("%b", trs.r_id);
-            if(trs.r_last) begin
+            r_data = $sformatf("%h", t.r_data);
+            r_id_str = $sformatf("%b", t.r_id);
+            if(t.r_last) begin
                r_access_complet = "Yes";
             end else begin
                r_access_complet = "No";
             end
-            case (trs.r_resp)
+            case (t.r_resp)
                00 : r_err = "No Err";
                01 : r_err  = "Err";
                10 : r_err  = "Err";

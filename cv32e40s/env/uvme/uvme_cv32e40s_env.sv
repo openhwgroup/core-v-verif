@@ -227,7 +227,7 @@ function void uvme_cv32e40s_env_c::connect_phase(uvm_phase phase);
 
    if (cfg.enabled) begin
 
-      if (cfg.scoreboarding_enabled) begin
+      if (cfg.scoreboard_enabled) begin
          connect_predictor ();
          connect_scoreboard();
       end
@@ -476,7 +476,7 @@ endfunction: create_agents
 
 function void uvme_cv32e40s_env_c::create_env_components();
 
-   if (cfg.scoreboarding_enabled) begin
+   if (cfg.scoreboard_enabled) begin
       predictor = uvme_cv32e40s_prd_c::type_id::create("predictor", this);
       sb        = uvme_cv32e40s_sb_c::type_id::create("sb"       , this);
    end
@@ -511,15 +511,11 @@ function void uvme_cv32e40s_env_c::connect_scoreboard();
    if (cfg.buserr_scoreboarding_enabled) begin
       obi_memory_data_agent.mon_ap.connect(buserr_sb.obid);
       obi_memory_instr_agent.mon_ap.connect(buserr_sb.obii);
-      foreach (rvfi_agent.instr_mon_ap[i]) begin
-         rvfi_agent.instr_mon_ap[i].connect(buserr_sb.rvfi);
-      end
+      rvfi_agent.rvfi_core_ap.connect(buserr_sb.rvfi);
    end
 
    // Connect the PMA scoreboard
-   foreach (rvfi_agent.instr_mon_ap[i]) begin
-      rvfi_agent.instr_mon_ap[i].connect(pma_agent.scoreboard.rvfi_instr_export);
-   end
+   rvfi_agent.rvfi_core_ap.connect(pma_agent.scoreboard.rvfi_instr_export);
    obi_memory_instr_agent.mon_ap.connect(pma_agent.scoreboard.obi_i_export);
    obi_memory_data_agent.mon_ap.connect(pma_agent.scoreboard.obi_d_export);
 
@@ -534,12 +530,10 @@ function void uvme_cv32e40s_env_c::connect_coverage_model();
    isacov_agent.monitor.ap.connect(cov_model.clic_covg.isacov_mon_export);
 
    obi_memory_data_agent.mon_ap.connect(pma_agent.monitor.obi_d_export);
-   foreach (rvfi_agent.instr_mon_ap[i]) begin
-      rvfi_agent.instr_mon_ap[i].connect(isacov_agent.monitor.rvfi_instr_imp);
-      rvfi_agent.instr_mon_ap[i].connect(cov_model.interrupt_covg.interrupt_mon_export);
-      rvfi_agent.instr_mon_ap[i].connect(cov_model.clic_covg.clic_mon_export);
-      rvfi_agent.instr_mon_ap[i].connect(pma_agent.monitor.rvfi_instr_export);
-   end
+   rvfi_agent.rvfi_core_ap.connect(isacov_agent.monitor.rvfi_instr_imp);
+   rvfi_agent.rvfi_core_ap.connect(cov_model.interrupt_covg.interrupt_mon_export);
+   rvfi_agent.rvfi_core_ap.connect(cov_model.clic_covg.clic_mon_export);
+   rvfi_agent.rvfi_core_ap.connect(pma_agent.monitor.rvfi_instr_export);
 
 endfunction: connect_coverage_model
 

@@ -5,6 +5,7 @@
 *.itb
 *.map
 *.o
+*.so
 *.objdump
 *.readelf
 *.gtkw
