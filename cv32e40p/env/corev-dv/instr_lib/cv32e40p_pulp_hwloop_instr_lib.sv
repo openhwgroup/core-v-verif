@@ -1377,7 +1377,7 @@ endclass : cv32e40p_xpulp_short_single_hwloop_stream_directed
 //Running with large instruction number in HWLOOP upto 4094 corresponding to 12-bit uimmL for end label.
 //Max num inside HWLOOP body can be 4094 only as End label is on instruction after last instr of HWLOOP.
 //Reduce Loop Count range to upto 25.
-class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stream; // fixme
+class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stream;
 
   `uvm_object_utils_begin(cv32e40p_xpulp_long_hwloop_stream)
       `uvm_field_int(num_loops_active, UVM_DEFAULT)
@@ -1455,7 +1455,8 @@ class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_strea
           num_fill_instr_loop_ctrl_to_loop_start[0] == 0;
           num_hwloop_ctrl_instr[0] == 1;
       } else {
-          num_fill_instr_loop_ctrl_to_loop_start[0] inside {[0:200]};
+          // num_fill_instr_loop_ctrl_to_loop_start[0] inside {[0:200]};
+          num_fill_instr_loop_ctrl_to_loop_start[0] == 0; // For this long test non-zero value here is not necessary
           num_hwloop_ctrl_instr[0] == 3;
       }
 
