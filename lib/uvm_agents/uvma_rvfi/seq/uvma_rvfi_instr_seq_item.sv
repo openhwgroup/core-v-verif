@@ -469,7 +469,7 @@ function void uvma_rvfi_instr_seq_item_c::rvfi2seq(st_rvfi rvfi);
     trap = rvfi.trap;
     halt = rvfi.halt;
     intr = rvfi.intr;
-    mode = rvfi.mode;
+    mode = uvma_rvfi_mode'(rvfi.mode);
     ixl = rvfi.ixl;
     dbg = rvfi.dbg;
     dbg_mode = rvfi.dbg_mode;
