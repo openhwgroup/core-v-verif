@@ -845,14 +845,18 @@ class uvme_rv32x_hwloop_covg # (
         end // bypass if pending irq exist
       end // EXCEPTION_HANDLING
 
+      forever begin
+        @(posedge cv32e40p_rvvi_vif.clk);
+        if (prev_irq_onehot_priority == 0) prev_irq_onehot_priority_is_0 = 1;
+        else                               prev_irq_onehot_priority_is_0 = 0;
+      end
       forever begin : SET_PENDING_IRQ_FLAG
         @(negedge cv32e40p_rvvi_vif.clk);
         if (cv32e40p_rvvi_vif.irq_onehot_priority !== prev_irq_onehot_priority) begin
           pending_irq = 0;
-          prev_irq_onehot_priority_is_0 = 0;
           if (enter_hwloop_sub) update_prev_irq_onehot_priority(); // within excp period
           else if ((hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1])) begin // within main loop
-            if (prev_irq_onehot_priority === 0) begin prev_irq_onehot_priority_is_0 = 1; update_prev_irq_onehot_priority(); end // new pending
+            if (prev_irq_onehot_priority === 0) update_prev_irq_onehot_priority(); // new pending
             else begin // last irq or any pending irq(s)
               if (!is_irq) pending_irq = 1;
               else begin 
@@ -1000,7 +1004,7 @@ class uvme_rv32x_hwloop_covg # (
           end
           if (is_dbg_mode)                begin wait (!is_dbg_mode); continue; end
           if (has_pending_trap_due2_dbg)  begin // e.g exception event intercept with debug step
-            assert(!cv32e40p_rvvi_vif.csr_dcsr_step); // this is not mean for step debug
+            assert (!dcsr_cause_t'(cv32e40p_rvvi_vif.csr_dcsr_cause) != STEP); // this is not mean for step debug
             if (pc_is_mtvec_addr() || (cv32e40p_rvvi_vif.trap && is_trap)) begin is_trap = 1; enter_hwloop_sub = 1; has_pending_trap_due2_dbg = 0; continue; end // if pc is exception related
             else begin              is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0; has_pending_trap_due2_dbg = 0; continue; end // if pc is non-exception related
           end
