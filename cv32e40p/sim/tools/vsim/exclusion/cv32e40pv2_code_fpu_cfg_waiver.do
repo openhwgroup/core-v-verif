@@ -384,3 +384,5 @@ coverage exclude -feccondrow 211 4 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb
 coverage exclude -feccondrow 237 5 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/ex_stage_i -comment {one specific condition (Row5) is unreachable. Proven with Formal.}
 coverage exclude -feccondrow 241 5 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/ex_stage_i -comment {one specific condition (Row5) is unreachable. Proven with Formal.}
 coverage exclude -feccondrow 387 22 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/ex_stage_i -comment {unreachable in FPU config. It only could be hit with Z config for apu_read_dep_for_jalr.}
+coverage exclude -feccondrow 387 17 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/ex_stage_i -comment {one specific condition (Row17) is unreachable. Proven with Formal.}
+coverage exclude -feccondrow 396 15 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/ex_stage_i -comment {one specific condition (Row15) is unreachable. Proven with Formal.}
