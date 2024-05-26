@@ -45,6 +45,11 @@ import "DPI-C" function bit spike_set_debug(bit debug_req, int unsigned revert_s
 
         rtl_isa = "rv32imc_zicsr_zifencei_zca_zcb_zcmp_zcmt_zba_zbb_zbc_zbs";
         rtl_priv = "MU";
+
+        // CV32E40S hardcodes MISA bit 23(non-standard extension) to 1
+        // We add "xdummy" so spike also enables bit 23 of MISA
+        rtl_isa = {rtl_isa, "_xdummy"};
+
         //spike_init(binary);
         void'(spike_set_default_params("cv32e40s"));
         void'(spike_set_param_uint64_t("/top/core/0/", "boot_addr", 'h00000080));
