@@ -211,7 +211,15 @@ module controller
 
 
     // Temporarily inject the interrupt allowed signal directly from the core
-    assign interrupt_allowed = `CONTROLLER_FSM.interrupt_allowed && interrupt_enabled; 
+    // Delay one cycle since RM is one cycle behind the core
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            interrupt_allowed <= 1'b0;
+        end else begin
+            interrupt_allowed <= `CONTROLLER_FSM.interrupt_allowed;
+        end
+    end
+
     // TODO: Use the content of the pipeline stages to recreate the interrupt_allowed signal
     // signal independently of the core
     //assign interrupt_allowed = lsu_interruptible && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
@@ -231,7 +239,7 @@ module controller
     // Call iss_intr every cycle to inform the ISS changes in irq and mie, and 
     // determine if an interrupt can be taken
     always_ff @(posedge clk) begin
-        interrupt_taken <= iss_intr(irq_qq, mie, interrupt_allowed, ROLLBACK_STEPS);
+        interrupt_taken <= iss_intr(irq_qq, mie, interrupt_allowed && interrupt_enabled, ROLLBACK_STEPS);
     end
 
     // Delay interrupt_taken to properly time the interrupt_enabled signal
