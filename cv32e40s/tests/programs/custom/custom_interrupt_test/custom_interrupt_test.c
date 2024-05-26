@@ -375,11 +375,12 @@ int memTest() {
     volatile uint32_t mie = (uint32_t) -1;
     __asm__ volatile("csrw mie, %0" : : "r" (mie));
 
-    uint32_t a0 = 1; 
-    uint32_t a1 = 2; 
-    uint32_t a2 = 3;
-    uint32_t a3 = 4;
-    uint32_t a4 = 5;
+    // volatile so that the compiler doesn't optimize the load away
+    volatile uint32_t a0 = 1; 
+    volatile uint32_t a1 = 2; 
+    volatile uint32_t a2 = 3;
+    volatile uint32_t a3 = 4;
+    volatile uint32_t a4 = 5;
     int load_value;
     int count = 0;
     
