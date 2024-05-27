@@ -9,6 +9,7 @@ TODO: Add a more detailed explenation
 ## Usage 
 
 To run the reference model alongside cv32e40s, run `make` as normal, but include the following:
+- Spike uses "svdpi.h" from the simulator, so the path to the simulator home directory must be exported as either `QUESTASIM_HOME`, `XCEL_HOME`, `VCS_HOME`, or `VERILATOR_INSTALL_DIR`
 - Export `SPIKE_PATH=<path to riscv/riscv-isa-sim>` to use another spike version. If not set, spike from `vendor/riscv/riscv-isa-sim` will be used.
 
 - set `USE_ISS=YES ISS=RM` to enable the reference model.
