@@ -206,8 +206,8 @@ VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 #  endif
 #endif
 
-GCC_PATH			= $(HOME)/opt/gcc-11.4.0/bin/gcc
-
+# Use a custom GCC path to compile DPI
+GCC_PATH			?= $(shell which gcc)
 VSIM_FLAGS        	+= -dpicpppath $(GCC_PATH)
 VSIM_FLAGS 			+= -noautoldlibpath
 
