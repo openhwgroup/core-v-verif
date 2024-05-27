@@ -35,8 +35,11 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
    rand bit                      enabled;
    rand uvm_active_passive_enum  is_active;
 
+   rand bit                      unified_csr_vif;
    rand bit                      cov_model_enabled;
    rand bit                      trn_log_enabled;
+
+   rand bit                      unified_exceptions;
 
    // Number of instructions that may be retired in a single cycle
    // This number cannot be zero
@@ -55,10 +58,14 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
    // Name for the instruction retirment ports (nret of these)
    string                        instr_name[int];
 
+   // Merge exceptions with the first instruction after exception
+
    `uvm_object_utils_begin(uvma_rvfi_cfg_c)
       `uvm_field_int (                         enabled                    , UVM_DEFAULT)
       `uvm_field_int (                         nret                       , UVM_DEFAULT)
+      `uvm_field_int (                         unified_csr_vif            , UVM_DEFAULT)
       `uvm_field_enum(uvm_active_passive_enum, is_active                  , UVM_DEFAULT)
+      `uvm_field_int (                         unified_exceptions         , UVM_DEFAULT)
       `uvm_field_int (                         cov_model_enabled          , UVM_DEFAULT)
       `uvm_field_int (                         trn_log_enabled            , UVM_DEFAULT)
       `uvm_field_int (                         nmi_load_fault_enabled     , UVM_DEFAULT)
@@ -90,6 +97,8 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
       soft nmi_store_fault_cause   == 0;
       soft insn_bus_fault_enabled  == 0;
       soft insn_bus_fault_cause    == 0;
+      soft unified_exceptions      == 1;
+      soft unified_csr_vif         == 0;
    }
 
    /**

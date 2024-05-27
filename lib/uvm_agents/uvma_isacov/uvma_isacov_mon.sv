@@ -109,29 +109,6 @@ function string uvma_isacov_mon_c::convert_instr_to_spike_name(string instr_name
     spike_instr_name = { spike_instr_name, chr };
   end
 
-  // But fence.i is encoded as fence_i in the disassembler
-  if (spike_instr_name == "fence.i")
-    spike_instr_name = "fence_i";
-  // Ugh
-  if (spike_instr_name == "lr.w")
-    spike_instr_name = "lr_w";
-  if (spike_instr_name == "bset")
-    spike_instr_name = "bset (args unknown)";
-  if (spike_instr_name == "bseti")
-    spike_instr_name = "bseti (args unknown)";
-  if (spike_instr_name == "bclr")
-    spike_instr_name = "bclr (args unknown)";
-  if (spike_instr_name == "bclri")
-    spike_instr_name = "bclri (args unknown)";
-  if (spike_instr_name == "binv")
-    spike_instr_name = "binv (args unknown)";
-  if (spike_instr_name == "binvi")
-    spike_instr_name = "binvi (args unknown)";
-  if (spike_instr_name == "bext")
-    spike_instr_name = "bext (args unknown)";
-  if (spike_instr_name == "bexti")
-    spike_instr_name = "bexti (args unknown)";
-
   return spike_instr_name;
 
 endfunction : convert_instr_to_spike_name
@@ -146,7 +123,8 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   mon_trn.instr = uvma_isacov_instr_c#(ILEN,XLEN)::type_id::create("mon_instr");
   mon_trn.instr.rvfi = rvfi_instr;
   // Mark trapped instructions from RVFI
-  mon_trn.instr.trap = rvfi_instr.trap;
+  mon_trn.instr.trap = rvfi_instr.trap[0];
+  mon_trn.instr.cause = rvfi_instr.trap >> 1;
 
   // Get the config
   void'(uvm_config_db#(uvma_isacov_cfg_c)::get(this, "", "cfg", cfg));
@@ -183,9 +161,9 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       mon_trn.instr.rs2     = dasm_rvc_rs2(instr);
       mon_trn.instr.rd      = dasm_rvc_rd(instr);
       mon_trn.instr.c_rdrs1 = dasm_rvc_rd(instr);
-      mon_trn.instr.c_rdp   = dasm_rvc_rs1s(instr);
-      mon_trn.instr.c_rs1s  = dasm_rvc_rs1s(instr);
-      mon_trn.instr.c_rs2s  = dasm_rvc_rs2s(instr);
+      mon_trn.instr.c_rd    = mon_trn.instr.decode_rd_c(instr);
+      mon_trn.instr.c_rs1   = mon_trn.instr.decode_rs1_c(instr);
+      mon_trn.instr.c_rs2   = mon_trn.instr.decode_rs2_c(instr);
     end
     else begin
       mon_trn.instr.rs1  = dasm_rs1(instr);
@@ -221,17 +199,17 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       case (1)
         instr_asm.rd.valid_gpr_rvc_sreg : begin
           mon_trn.instr.c_rdrs1 = instr_asm.rd.gpr_rvc_sreg;
-          mon_trn.instr.c_rdp   = instr_asm.rd.gpr_rvc_sreg;
-          mon_trn.instr.rd      = instr_asm.rd.gpr_rvc_sreg;
+          mon_trn.instr.c_rd    = instr_asm.rd.gpr_rvc_sreg;
+          mon_trn.instr.rd      = instr_asm.rd.gpr_rvc_sreg;  //TODO:ERROR:silabs-robin Probably not correct.
         end
         instr_asm.rd.valid_gpr_rvc : begin
           mon_trn.instr.c_rdrs1 = instr_asm.rd.gpr_rvc;
-          mon_trn.instr.c_rdp   = instr_asm.rd.gpr_rvc;
+          mon_trn.instr.c_rd    = instr_asm.rd.gpr_rvc;
           mon_trn.instr.rd      = instr_asm.rd.gpr_rvc;
         end
         default : begin
           mon_trn.instr.c_rdrs1 = instr_asm.rd.gpr;
-          mon_trn.instr.c_rdp   = instr_asm.rd.gpr;
+          mon_trn.instr.c_rd    = instr_asm.rd.gpr;  //TODO:ERROR:silabs-robin Probably not correct.
           mon_trn.instr.rd      = instr_asm.rd.gpr;
         end
       endcase
@@ -241,17 +219,17 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       case (1)
         instr_asm.rs1.valid_gpr_rvc_sreg : begin
             mon_trn.instr.c_rdrs1 = instr_asm.rd.valid ? mon_trn.instr.c_rdrs1 : instr_asm.rs1.gpr_rvc_sreg;
-            mon_trn.instr.c_rs1s  = instr_asm.rs1.gpr_rvc_sreg;
+            mon_trn.instr.c_rs1   = instr_asm.rs1.gpr_rvc_sreg;
             mon_trn.instr.rs1     = instr_asm.rs1.gpr_rvc_sreg;
           end
         instr_asm.rs1.valid_gpr_rvc : begin
             mon_trn.instr.c_rdrs1 = instr_asm.rd.valid ? mon_trn.instr.c_rdrs1 : instr_asm.rs1.gpr_rvc;
-            mon_trn.instr.c_rs1s  = instr_asm.rs1.gpr_rvc;
+            mon_trn.instr.c_rs1   = instr_asm.rs1.gpr_rvc;
             mon_trn.instr.rs1     = instr_asm.rs1.gpr_rvc;
           end
         default : begin
             mon_trn.instr.c_rdrs1 = instr_asm.rd.valid ? mon_trn.instr.c_rdrs1 : instr_asm.rs1.gpr;
-            mon_trn.instr.c_rs1s  = instr_asm.rs1.gpr;
+            mon_trn.instr.c_rs1   = instr_asm.rs1.gpr;
             mon_trn.instr.rs1     = instr_asm.rs1.gpr;
           end
       endcase
@@ -260,15 +238,15 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     if ( instr_asm.rs2.valid ) begin
       case (1)
         instr_asm.rs2.valid_gpr_rvc_sreg : begin
-            mon_trn.instr.c_rs2s = instr_asm.rs2.gpr_rvc_sreg;
+            mon_trn.instr.c_rs2  = instr_asm.rs2.gpr_rvc_sreg;
             mon_trn.instr.rs2    = instr_asm.rs2.gpr_rvc_sreg;
           end
         instr_asm.rs2.valid_gpr_rvc : begin
-            mon_trn.instr.c_rs2s = instr_asm.rs2.gpr_rvc;
+            mon_trn.instr.c_rs2  = instr_asm.rs2.gpr_rvc;
             mon_trn.instr.rs2    = instr_asm.rs2.gpr_rvc;
           end
         default : begin
-            mon_trn.instr.c_rs2s = instr_asm.rs2.gpr;
+            mon_trn.instr.c_rs2  = instr_asm.rs2.gpr;
             mon_trn.instr.rs2    = instr_asm.rs2.gpr;
         end
       endcase
@@ -309,7 +287,8 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       (mon_trn.instr.itype == ZBA_TYPE && !cfg.core_cfg.ext_zba_supported) ||
       (mon_trn.instr.itype == ZBB_TYPE && !cfg.core_cfg.ext_zbb_supported) ||
       (mon_trn.instr.itype == ZBC_TYPE && !cfg.core_cfg.ext_zbc_supported) ||
-      (mon_trn.instr.itype == ZBS_TYPE && !cfg.core_cfg.ext_zbs_supported)) begin
+      (mon_trn.instr.itype == ZBS_TYPE && !cfg.core_cfg.ext_zbs_supported) ||
+      (mon_trn.instr.itype == ZCB_TYPE && !cfg.core_cfg.ext_zcb_supported)) begin
     mon_trn.instr.illegal = 1;
   end
   // 4. Valid supported instruction with invalid operands
@@ -383,6 +362,15 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       C_J,
       C_JAL: mon_trn.instr.c_imm_value_type = mon_trn.instr.get_instr_value_type(mon_trn.instr.get_field_imm(), 11, c_imm_is_signed[mon_trn.instr.name]);
       default:     `uvm_fatal("ISACOV", $sformatf("unhandled CJ instruction: %s", mon_trn.instr.name.name()))
+    endcase
+  end
+  if (mon_trn.instr.name inside {C_LBU, C_SB, C_LHU, C_SH, C_LH}) begin
+    case (mon_trn.instr.name)
+      C_LBU,
+      C_SB: mon_trn.instr.c_imm_value_type = mon_trn.instr.get_instr_value_type(mon_trn.instr.get_field_imm(), 2, c_imm_is_signed[mon_trn.instr.name]);
+      C_LHU, C_SH,
+      C_LH: mon_trn.instr.c_imm_value_type = mon_trn.instr.get_instr_value_type(mon_trn.instr.get_field_imm(), 1, c_imm_is_signed[mon_trn.instr.name]);
+      default:     `uvm_fatal("ISACOV", $sformatf("unhandled ZCB instruction: %s", mon_trn.instr.name.name()))
     endcase
   end
 

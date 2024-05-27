@@ -31,6 +31,8 @@ covergroup cg_irq_entry(string name,
                         bit ext_zbb_supported,
                         bit ext_zbc_supported,
                         bit ext_zbs_supported,
+                        bit debug_supported,
+                        bit ext_zcb_supported,
                         bit ext_a_supported)
 with function sample(uvma_isacov_instr_c instr);
     option.name = name;
@@ -52,6 +54,8 @@ covergroup cg_wfi_entry(string name,
                         bit ext_zbb_supported,
                         bit ext_zbc_supported,
                         bit ext_zbs_supported,
+                        bit debug_supported,
+                        bit ext_zcb_supported,
                         bit ext_a_supported)
 with function sample(uvma_isacov_instr_c instr);
     option.name = name;
@@ -68,6 +72,8 @@ covergroup cg_irq_exit(string name,
                         bit ext_zbb_supported,
                         bit ext_zbc_supported,
                         bit ext_zbs_supported,
+                        bit debug_supported,
+                        bit ext_zcb_supported,
                         bit ext_a_supported)
 with function sample(uvma_isacov_instr_c instr);
     option.name = name;
@@ -88,6 +94,8 @@ covergroup cg_wfi_exit(string name,
                         bit ext_zbb_supported,
                         bit ext_zbc_supported,
                         bit ext_zbs_supported,
+                        bit debug_supported,
+                        bit ext_zcb_supported,
                         bit ext_a_supported)
 with function sample(uvma_isacov_instr_c instr);
     option.name = name;
@@ -156,6 +164,8 @@ function void uvme_interrupt_covg::build_phase(uvm_phase phase);
                        .ext_zbb_supported(cfg.ext_zbb_supported),
                        .ext_zbc_supported(cfg.ext_zbc_supported),
                        .ext_zbs_supported(cfg.ext_zbs_supported),
+                       .debug_supported(cfg.debug_supported),
+                       .ext_zcb_supported(cfg.ext_zcb_supported),
                        .ext_a_supported(cfg.ext_a_supported));
 
     wfi_entry_cg = new("wfi_entry",
@@ -165,6 +175,8 @@ function void uvme_interrupt_covg::build_phase(uvm_phase phase);
                        .ext_zbb_supported(cfg.ext_zbb_supported),
                        .ext_zbc_supported(cfg.ext_zbc_supported),
                        .ext_zbs_supported(cfg.ext_zbs_supported),
+                       .debug_supported(cfg.debug_supported),
+                       .ext_zcb_supported(cfg.ext_zcb_supported),
                        .ext_a_supported(cfg.ext_a_supported));
 
     irq_exit_cg  = new("irq_exit",
@@ -174,6 +186,8 @@ function void uvme_interrupt_covg::build_phase(uvm_phase phase);
                        .ext_zbb_supported(cfg.ext_zbb_supported),
                        .ext_zbc_supported(cfg.ext_zbc_supported),
                        .ext_zbs_supported(cfg.ext_zbs_supported),
+                       .debug_supported(cfg.debug_supported),
+                       .ext_zcb_supported(cfg.ext_zcb_supported),
                        .ext_a_supported(cfg.ext_a_supported));
 
     wfi_exit_cg  = new("wfi_exit",
@@ -183,6 +197,8 @@ function void uvme_interrupt_covg::build_phase(uvm_phase phase);
                        .ext_zbb_supported(cfg.ext_zbb_supported),
                        .ext_zbc_supported(cfg.ext_zbc_supported),
                        .ext_zbs_supported(cfg.ext_zbs_supported),
+                       .debug_supported(cfg.debug_supported),
+                       .ext_zcb_supported(cfg.ext_zcb_supported),
                        .ext_a_supported(cfg.ext_a_supported));
 
 endfunction : build_phase

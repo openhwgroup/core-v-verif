@@ -18,13 +18,36 @@
 `ifndef __UVMA_RVFI_TDEFS_SV__
 `define __UVMA_RVFI_TDEFS_SV__
 
+typedef enum bit[MODE_WL-1:0] {
+   UVMA_RVFI_U_MODE        = 0,
+   UVMA_RVFI_S_MODE        = 1,
+   UVMA_RVFI_RESERVED_MODE = 2,
+   UVMA_RVFI_M_MODE        = 3
+} uvma_rvfi_mode;
+
+typedef struct packed {
+  logic [10:0] cause;
+  logic        interrupt;
+  logic        exception;
+  logic        intr;
+} rvfi_intr_t;
+
+typedef struct packed {
+  logic        clicptr;
+  logic [1:0]  cause_type;
+  logic [2:0]  debug_cause;
+  logic [5:0]  exception_cause;
+  logic        debug;
+  logic        exception;
+  logic        trap;
+} rvfi_trap_t;
+
 typedef struct packed {
    bit [MAX_XLEN-1:0]         nret_id;
    bit [MAX_XLEN-1:0]         cycle_cnt;
    bit [MAX_XLEN-1:0]         order;
    bit [MAX_XLEN-1:0]         insn;
    bit [MAX_XLEN-1:0]         trap;
-   bit [MAX_XLEN-1:0]         cause;
    bit [MAX_XLEN-1:0]         halt;
    bit [MAX_XLEN-1:0]         intr;
    bit [MAX_XLEN-1:0]         mode;
@@ -36,8 +59,7 @@ typedef struct packed {
    bit [MAX_XLEN-1:0]         insn_interrupt;
    bit [MAX_XLEN-1:0]         insn_interrupt_id;
    bit [MAX_XLEN-1:0]         insn_bus_fault;
-   bit [MAX_XLEN-1:0]         insn_nmi_store_fault;
-   bit [MAX_XLEN-1:0]         insn_nmi_load_fault;
+   bit [MAX_XLEN-1:0]         insn_nmi_cause;
 
    bit [MAX_XLEN-1:0]         pc_rdata;
    bit [MAX_XLEN-1:0]         pc_wdata;
@@ -76,36 +98,10 @@ typedef struct packed {
 parameter ST_NUM_WORDS =  ($size(st_rvfi)/MAX_XLEN);
 
 typedef bit [ST_NUM_WORDS-1:0] [63:0] vector_rvfi;
-
-
 typedef union {
-   st_rvfi rvfi;
-   vector_rvfi array;
+    st_rvfi rvfi;
+    vector_rvfi array;
 } union_rvfi;
-
-typedef enum bit[MODE_WL-1:0] {
-   UVMA_RVFI_U_MODE        = 0,
-   UVMA_RVFI_S_MODE        = 1,
-   UVMA_RVFI_RESERVED_MODE = 2,
-   UVMA_RVFI_M_MODE        = 3
-} uvma_rvfi_mode;
-
-typedef struct packed {
-  logic [10:0] cause;
-  logic        interrupt;
-  logic        exception;
-  logic        intr;
-} rvfi_intr_t;
-
-typedef struct packed {
-  logic        clicptr;
-  logic [1:0]  cause_type;
-  logic [2:0]  debug_cause;
-  logic [5:0]  exception_cause;
-  logic        debug;
-  logic        exception;
-  logic        trap;
-} rvfi_trap_t;
 
 function string get_mode_str(uvma_rvfi_mode mode);
    case (mode)

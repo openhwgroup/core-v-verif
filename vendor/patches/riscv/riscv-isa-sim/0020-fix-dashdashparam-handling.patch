@@ -1,0 +1,56 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Params.h b/vendor/riscv/riscv-isa-sim/riscv/Params.h
+index b5ff10d6..42eb8c90 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Params.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Params.h
+@@ -87,9 +87,9 @@ public:
+     std::regex_match(pathColonTypeEqVal, match, regexp);
+     std::cerr << "Params::setFromCmdLine(): setting parameter '" << match[1].str() << "/" << match[2].str() << "' of type '" << match[3].str() << "' to value '" << match[4].str() << "'\n";
+     if (match[3].str() == "uint64_t") {
+-      // 64-bit unsigned integer
++      // 64-bit unsigned integer.  Use base 0 to support any C-style format.
+       errno = 0;
+-      unsigned long uintval = strtoul(match[4].str().c_str(), NULL, 10);
++      unsigned long uintval = strtoul(match[4].str().c_str(), NULL, 0);
+       std::cerr << "### Using unsigned long uintval = " << uintval << "\n";
+       if (errno == 0)
+         set_uint64_t(match[1].str() + "/", match[2].str(), uintval, match[3].str());
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+index 38a54437..7e08b8a3 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+@@ -115,8 +115,13 @@ static void help(int exit_code = 1)
+   fprintf(stderr, "  --steps=<n>           Stop simulation after reaching specified number of steps "
+           "(default: unlimited)\n");
+   fprintf(stderr, "  --nb_register_source=<n>     Set the number of register source usable(2 or 3)\n");
+-  fprintf(stderr, "  --param <path>=<val>  Set parameter to specified value (see 'spike --print-params' for a full list.)\n"
+-                  "                          This flag can be used multiple times.\n");
++  fprintf(stderr, "  --param <path>:<type>=<val>  Set parameter to specified value (see 'spike --print-params' for a full list.)\n"
++                  "                        <type> can be any of 'bool', 'str', or 'uint64_t'.\n"
++                  "                        Supported bool values are 0, 1, 'false' and 'true'.\n"
++                  "                        String values need to be duly quoted where needed.\n"
++                  "                        A uint64_t value can be any unsigned number literal\n"
++                  "                        in C/C++ syntax (42, 0x2a, etc.)\n"
++                  "                        This flag can be used multiple times.\n");
+ 
+   exit(exit_code);
+ }
+@@ -549,6 +554,10 @@ int main(int argc, char** argv)
+     number_register_source = (uint8_t)atoi(s);
+   });
+ 
++  // Set default param values prior to parsing the cmdline.
++  params.set_uint64_t("/top/core/0/", "boot_addr", 0x10000UL);
++  params.set_uint64_t("/top/core/0/", "pmpregions", 0x0UL);
++
+   auto argv1 = parser.parse(argv);
+   std::vector<std::string> htif_args(argv1, (const char*const*)argv + argc);
+ 
+@@ -612,8 +621,6 @@ int main(int argc, char** argv)
+   }
+   openhw::Params::cfg_to_params(cfg, params);
+   params.set_uint64_t("/top/", "num_procs", cfg.nprocs());
+-  params.set_uint64_t("/top/core/0/", "boot_addr", 0x10000UL);
+-  params.set_uint64_t("/top/core/0/", "pmpregions", 0x0UL);
+   params.set_string("/top/core/0/", "isa", std::string(cfg.isa()));
+   params.set_string("/top/core/0/", "priv", std::string(cfg.priv()));
+ 

@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
 #
-# Original Author: Zbigniew Chamski (zbigniew.chamski@thalesgroup.com)
+# Original Author: Zbigniew Chamski (Thales)
 #############################################################################
 ## Config is Project dependent. It is imported from platform_package
 ## PYTHON_PATH env variable could be used

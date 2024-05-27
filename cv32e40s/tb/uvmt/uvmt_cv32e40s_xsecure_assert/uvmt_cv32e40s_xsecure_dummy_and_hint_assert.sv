@@ -702,6 +702,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   //Verify that the LFSR's seeds are reset when lockups are detected
 
   sequence seq_xsecure_dummy_hint_instr_LFSRx_lockup_detection(logic get_new_lfsr_value, logic seed_we, logic [31:0] seed_w_value, logic [31:0] lfsr_n);
+    @(posedge clk_i)
 
     (rnddummy_enabled || rndhint_enabled)
     && get_new_lfsr_value

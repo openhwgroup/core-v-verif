@@ -54,3 +54,6 @@ questa: q
 q:  $(CV_CORE_PKG)
 	$(CV_SIM_PREFIX)  qverify  -do qverify.tcl
 	# TODO:silabs-robin  Move to "mk/fv/jg.mk"?
+
+onespin:  $(CV_CORE_PKG)
+	$(CV_SIM_PREFIX) onespin -i onespin.tcl

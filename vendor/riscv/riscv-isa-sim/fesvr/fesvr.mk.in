@@ -1,4 +1,4 @@
-fesvr_hdrs = \
+fesvr_install_hdrs = \
   byteorder.h \
   elf.h \
   elfloader.h \
@@ -15,8 +15,6 @@ fesvr_hdrs = \
   rfb.h \
   tsi.h \
 
-fesvr_install_hdrs = $(fesvr_hdrs)
-
 fesvr_install_config_hdr = yes
 
 fesvr_install_lib = yes
@@ -24,6 +22,7 @@ fesvr_install_shared_lib = yes
 
 fesvr_srcs = \
   elfloader.cc \
+  fesvr_dpi.cc \
   htif.cc \
   memif.cc \
   dtm.cc \
@@ -37,6 +36,7 @@ fesvr_srcs = \
   option_parser.cc \
   term.cc \
   tsi.cc \
+  SimDTM.cc \
 
 fesvr_install_prog_srcs = \
   elf2hex.cc \

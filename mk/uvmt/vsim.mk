@@ -50,6 +50,13 @@ VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
 
 # Warning suppressions. TODO: review
 VSIM_SUPPRESS            = -suppress 2181 \
+                           -suppress 13071 \
+                           -suppress 13185 \
+                           -suppress 13262 \
+                           -suppress 13288 \
+                           -suppress 13314 \
+                           -suppress 13401 \
+                           -suppress 2181 \
                            -suppress 2250 \
                            -suppress 2577 \
                            -suppress 2583 \
@@ -58,11 +65,6 @@ VSIM_SUPPRESS            = -suppress 2181 \
                            -suppress 8522 \
                            -suppress 8549 \
                            -suppress 8550 \
-                           -suppress 13314 \
-                           -suppress 13185 \
-                           -suppress 13262 \
-                           -suppress 13288 \
-						   -suppress vlog-2643 \
                            -suppress vlog-2643 \
                            -suppress vlog-2697 \
                            -suppress vlog-2745 \
@@ -127,15 +129,31 @@ VLOG_FLAGS    ?= \
                  +acc=rb \
                  $(SV_CMP_FLAGS) \
                  $(QUIET) \
-                 -writetoplevels uvmt_$(CV_CORE_LC)_tb
+                 -writetoplevels  uvmt_$(CV_CORE_LC)_tb
 
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    ifeq ($(ISS),IMPERAS)
+        VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
+    endif
+    ifeq ($(ISS),SPIKE)
+	VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+	VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
+	LIBS = spike_lib
+    endif
+endif
+
+ifeq ($(call IS_YES,$(COMPILE_SPIKE)),YES)
+    VSIM_FLAGS += -sv_lib $(SPIKE_FESVR_LIB)
+    LIBS = spike_lib
+endif
 
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+UVM"
+VLOG_FLAGS += "+define+$(CORE_DEFINES)"
 
 ###############################################################################
 # VOPT (Optimization)
@@ -158,6 +176,7 @@ endif
 
 ###############################################################################
 # VSIM (Simulaion)
+
 VSIM_FLAGS        += $(VSIM_USER_FLAGS)
 VSIM_FLAGS        += $(USER_RUN_FLAGS)
 VSIM_FLAGS        += -sv_seed $(RNDSEED)
@@ -545,7 +564,7 @@ lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
 	fi
 
 # Target to run vlog over SystemVerilog source in $(VSIM_RESULTS)/
-vlog: lib 
+vlog: $(LIBS) lib
 	@echo "$(BANNER)"
 	@echo "* Running vlog in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"

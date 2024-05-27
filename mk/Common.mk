@@ -686,13 +686,33 @@ vcs-unit-test:  vcs-run
 
 DPI_DASM_SRC    = $(DPI_DASM_PKG)/dpi_dasm.cxx $(DPI_DASM_PKG)/spike/disasm.cc $(DPI_DASM_SPIKE_PKG)/disasm/regnames.cc
 DPI_DASM_ARCH   = $(shell uname)$(shell getconf LONG_BIT)
-DPI_DASM_LIB    = $(DPI_DASM_PKG)/lib/$(DPI_DASM_ARCH)/libdpi_dasm.so
+DPI_DASM_LIB    ?= $(DPI_DASM_PKG)/lib/$(DPI_DASM_ARCH)/libdpi_dasm.so
 DPI_DASM_CFLAGS = -shared -fPIC -std=c++11
 DPI_DASM_INC    = -I$(DPI_DASM_PKG) -I$(DPI_INCLUDE) -I$(DPI_DASM_SPIKE_PKG)/riscv -I$(DPI_DASM_SPIKE_PKG)/softfloat
 DPI_DASM_CXX    = g++
 
 dpi_dasm: $(DPI_DASM_SPIKE_PKG)
+	$(CLONE_DPI_DASM_SPIKE_CMD)
 	$(DPI_DASM_CXX) $(DPI_DASM_CFLAGS) $(DPI_DASM_INC) $(DPI_DASM_SRC) -o $(DPI_DASM_LIB)
+
+###############################################################################
+# Build vendor/riscv-isa-sim into tools/
+
+export SPIKE_PATH  = $(CORE_V_VERIF)/vendor/riscv/riscv-isa-sim
+export SPIKE_INSTALL_DIR = $(CORE_V_VERIF)/tools/spike/
+SPIKE_LIBS_DIR = $(SPIKE_INSTALL_DIR)/lib/
+SPIKE_FESVR_LIB = $(SPIKE_LIBS_DIR)/libfesvr
+SPIKE_RISCV_LIB = $(SPIKE_LIBS_DIR)/libriscv
+SPIKE_DISASM_LIB = $(SPIKE_LIBS_DIR)/libdisasm
+
+NUM_JOBS ?= 8
+
+$(SPIKE_FESVR_LIB).so $(SPIKE_RISCV_LIB).so:
+	mkdir -p $(SPIKE_PATH)/build;
+	[ ! -f $(SPIKE_PATH)/build/config.log ] && cd $(SPIKE_PATH)/build && ../configure --prefix=$(SPIKE_INSTALL_DIR) || true
+	make -C $(SPIKE_PATH)/build/ -j $(NUM_JOBS) install;
+
+spike_lib: $(SPIKE_FESVR_LIB).so $(SPIKE_RISCV_LIB).so
 
 ###############################################################################
 # Build SVLIB DPI

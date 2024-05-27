@@ -5,6 +5,7 @@
 *.itb
 *.map
 *.o
+*.so
 *.objdump
 *.readelf
 *.gtkw
@@ -29,6 +30,7 @@ __pycache__
 dvt_build.log
 xrun.history
 xrun.log
+xrun.key
 xcelium.d/
 waves.shm/
 *.log
@@ -65,3 +67,6 @@ transcript
 tools/spike
 tools/verilator*
 *_results/
+*.signature_output
+ucli.key
+vcs.cmd

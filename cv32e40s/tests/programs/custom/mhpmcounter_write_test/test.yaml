@@ -1,4 +1,4 @@
 name: mhpmcounter_write_test
 uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
 description: >
-    Write to mhpmcounters. Is only verifyed by ISS, should be verifyed that we get excpected behaviour?
+    Write to the mhpmcounters.

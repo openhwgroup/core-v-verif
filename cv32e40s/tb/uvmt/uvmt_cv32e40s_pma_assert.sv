@@ -146,12 +146,20 @@ module  uvmt_cv32e40s_pma_assert
 
   // After PMA-deny, subsequent accesses are also suppressed  (vplan:"Multi-memory operation instructions")
 
-  a_failure_denies_subsequents: assert property (
-    rvfi_instr_if.is_pma_instr_fault
+  a_failure_denies_subsequents_loads: assert property (
+    rvfi_instr_if.is_pma_data_fault
     |->
-    (rvfi_instr_if.rvfi_mem_wmask == '0)
-    //TODO:ERROR:silabs-robin Zcmp should be able to break this. RVFI bug.
-    //TODO:ERROR:silabs-robin Also reads
+    (rvfi_instr_if.rvfi_mem_rmask != rvfi_instr_if.rvfi_mem_rmask_intended)
+    ||
+    (rvfi_instr_if.rvfi_mem_rmask == 'd 0)
+  ) else `uvm_error(info_tag, "accesses aftmr pma fault should be suppressed");
+
+  a_failure_denies_subsequents_stores: assert property (
+    rvfi_instr_if.is_pma_data_fault
+    |->
+    (rvfi_instr_if.rvfi_mem_wmask != rvfi_instr_if.rvfi_mem_wmask_intended)
+    ||
+    (rvfi_instr_if.rvfi_mem_wmask == 'd 0)
   ) else `uvm_error(info_tag, "accesses aftmr pma fault should be suppressed");
 
   property p_partial_pma_allow (exc_cause);
@@ -172,6 +180,16 @@ module  uvmt_cv32e40s_pma_assert
   cov_partial_pma_allow_store: cover property (
     p_partial_pma_allow (EXC_CAUSE_STORE_FAULT)
   );
+
+
+  // PMA-deny on instr, no mem op  (vplan: Not a vplan item. Inspo from a_failure_denies_subsequents.)
+
+  a_failure_denies_memops: assert property (
+    rvfi_instr_if.is_pma_instr_fault
+    |->
+    (rvfi_instr_if.rvfi_mem_wmask == '0)  &&
+    (rvfi_instr_if.rvfi_mem_rmask == '0)
+  ) else `uvm_error(info_tag, "pma-blocked instrs shouldn't access the bus");
 
 
   // MPU-accepted transactions must reach OBI  (vplan: not a vplan item)

@@ -24,7 +24,8 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
   bit           illegal;
 
   // Set for traped instructions, determines what should not be considered for coverage
-  bit [13:0]    trap;
+  bit [13:0]     trap;
+  bit [XLEN-1:0] cause;
 
   // Enumeration
   instr_name_t  name;
@@ -48,10 +49,13 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
   bit rs2_valid;
   bit rd_valid;
 
+  // rx for compressed instruction (5-bit encoding)
   bit [4:0]  c_rdrs1;
-  bit [2:0]  c_rs1s;
-  bit [2:0]  c_rs2s;
-  bit [2:0]  c_rdp;
+
+  // rx for compressed instruction (3-bit encoding)
+  bit [2:0]  c_rs1;
+  bit [2:0]  c_rs2;
+  bit [2:0]  c_rd;
 
   bit[XLEN-1:0]     rs1_value;
   instr_value_t rs1_value_type;
@@ -79,6 +83,7 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
 
     `uvm_field_int(illegal,   UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(trap,      UVM_ALL_ON | UVM_NOPRINT);
+    `uvm_field_int(cause,      UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(csr_val,   UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(rs1,       UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(rs1_value, UVM_ALL_ON | UVM_NOPRINT);
@@ -92,6 +97,11 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
     `uvm_field_int(rd_value,  UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(rd_valid,  UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_enum(instr_value_t, rd_value_type, UVM_ALL_ON | UVM_NOPRINT);
+
+    `uvm_field_int(c_rdrs1,     UVM_ALL_ON | UVM_NOPRINT);
+    `uvm_field_int(c_rs1,       UVM_ALL_ON | UVM_NOPRINT);
+    `uvm_field_int(c_rs2,       UVM_ALL_ON | UVM_NOPRINT);
+    `uvm_field_int(c_rd,        UVM_ALL_ON | UVM_NOPRINT);
 
     `uvm_field_int(immi, UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_enum(instr_value_t, immi_value_type, UVM_ALL_ON | UVM_NOPRINT);
@@ -126,6 +136,10 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
   extern function int                        get_addr_rs1();
   extern function int                        get_addr_rs2();
   extern function int                        get_data_imm();
+  
+  extern function int                        decode_rd_c(bit[ILEN-1:0] instr);
+  extern function int                        decode_rs1_c(bit[ILEN-1:0] instr);
+  extern function int                        decode_rs2_c(bit[ILEN-1:0] instr);
 
 endclass : uvma_isacov_instr_c
 
@@ -174,19 +188,19 @@ function string uvma_isacov_instr_c::convert2string();
     instr_str = $sformatf("x%0d, %0d(x2)",  this.get_addr_rs2(), this.get_data_imm());
   end
   if (itype == CIW_TYPE) begin
-    instr_str = $sformatf("x%0d, x2, %0d", this.get_addr_rd(), this.get_data_imm());
+    instr_str = $sformatf("x%0d, x2, %0d", this.decode_rd_c($signed(this.rvfi.insn)), this.get_data_imm());
   end
   if (itype == CL_TYPE) begin
-    instr_str = $sformatf("x%0d, x%0d, %0d", this.get_addr_rd(), this.get_addr_rs1(), get_data_imm());
+    instr_str = $sformatf("x%0d, %0d(x%0d)", this.decode_rd_c($signed(this.rvfi.insn)), this.get_data_imm(), this.decode_rs1_c($signed(this.rvfi.insn)));
   end
   if (itype == CS_TYPE) begin
-    instr_str = $sformatf("x%0d, %0d(x%0d)", this.get_addr_rs2, this.get_data_imm(), this.get_addr_rs1);
+    instr_str = $sformatf("x%0d, %0d(x%0d)", this.decode_rs2_c($signed(this.rvfi.insn)), this.get_data_imm(), this.decode_rs1_c($signed(this.rvfi.insn)));
   end
   if (itype == CA_TYPE) begin
-    instr_str = $sformatf("x%0d, x%0d", this.get_addr_rd(), this.get_addr_rs2());
+    instr_str = $sformatf("x%0d, x%0d", this.decode_rs1_c($signed(this.rvfi.insn)), this.decode_rs2_c($signed(this.rvfi.insn)));
   end
   if (itype == CB_TYPE) begin
-    instr_str = $sformatf("x%0d, %0x", this.get_addr_rs1(), ($signed(rvfi.pc_rdata) + this.get_data_imm()));
+    instr_str = $sformatf("x%0d, %0x", this.decode_rs1_c($signed(this.rvfi.insn)), ($signed(rvfi.pc_rdata) + this.get_data_imm()));
   end
   if (itype == CJ_TYPE) begin
     instr_str = $sformatf("%0x", ($signed(rvfi.pc_rdata) + this.get_data_imm()));
@@ -211,15 +225,49 @@ function string uvma_isacov_instr_c::convert2string();
     instr_str = $sformatf("x%0d, 0x%0x", this.get_addr_rd(), this.get_data_imm());
   end
   if (name inside {C_SRAI, C_SRLI}) begin
-    instr_str = $sformatf("x%0d, 0x%0x", this.get_addr_rs1(), this.get_data_imm());
+    instr_str = $sformatf("x%0d, 0x%0x", this.decode_rs1_c($signed(this.rvfi.insn)), this.get_data_imm());
   end
   if (name == C_ANDI) begin
-    instr_str = $sformatf("x%0d, %0d", this.get_addr_rd(), $signed(this.get_data_imm()));
+    instr_str = $sformatf("x%0d, %0d", this.decode_rs1_c($signed(this.rvfi.insn)), $signed(this.get_data_imm()));
   end
   if (name == FENCE) begin
     instr_str = "iorw, iorw";  // Note: If later found necessary, add support for `fence` arguments other than "iorw"
   end
-
+  if (name inside {C_LBU, C_LH, C_LHU}) begin
+    instr_str = $sformatf("x%0d, %0d(x%0d)", this.decode_rd_c($signed(this.rvfi.insn)), this.get_data_imm(), this.decode_rs1_c($signed(this.rvfi.insn)));
+  end
+  if (name inside {C_SB, C_SH}) begin
+    instr_str = $sformatf("x%0d, %0d(x%0d)", this.decode_rs2_c($signed(this.rvfi.insn)), this.get_data_imm(), this.decode_rs1_c($signed(this.rvfi.insn)));
+  end
+  if (name inside {C_ZEXT_B, C_SEXT_B, C_ZEXT_H, C_SEXT_H, C_NOT}) begin
+    instr_str = $sformatf("x%0d", this.decode_rs1_c($signed(this.rvfi.insn)));
+  end
+  if (name inside {C_MUL}) begin
+    instr_str = $sformatf("x%0d, x%0d", this.decode_rs1_c($signed(this.rvfi.insn)), this.decode_rs2_c($signed(this.rvfi.insn)));
+  end
+  if (itype == ZBA_TYPE) begin
+    instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+  end
+  if (itype ==  ZBC_TYPE) begin
+    instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+  end
+  if (itype == ZBS_TYPE) begin
+    if (name inside {BCLR, BEXT, BINV, BSET}) begin
+      instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+    end
+    else begin
+      instr_str = $sformatf("x%0d, x%0d, x%0x",  rd, rs1, rs2);
+    end
+  end
+  if (name inside {CLZ, CTZ, CPOP, SEXT_B,
+                  SEXT_H, ZEXT_H, ORC_B, REV8}) begin
+    instr_str = $sformatf("x%0d, x%0d",  rd, rs1);
+  end
+  else if (name inside {MIN, MINU, MAX, MAXU,
+                        ANDN, ORN, XNOR, ROL,
+                        ROR, RORI}) begin
+    instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+  end
   // Default printing of just the instruction name
   begin
     instr_name_t  nm = (name == C_NOP) ? C_ADDI : name;
@@ -333,6 +381,51 @@ function void uvma_isacov_instr_c::set_valid_flags();
     return;
   end
 
+  if (itype == ZCB_TYPE) begin
+    rs1_valid = 1;
+    if (name inside {C_LBU, C_LH, C_LHU}) begin
+       rd_valid = 1;
+    end
+    if (name inside {C_SB, C_SH, C_MUL}) begin
+       rs2_valid = 1;
+    end
+    return;
+  end
+
+  if (itype == ZBA_TYPE) begin
+    rs1_valid = 1;
+    rs2_valid = 1;
+    rd_valid = 1;
+    return;
+  end
+
+  if (itype == ZBB_TYPE) begin
+    rs1_valid = 1;
+    rd_valid = 1;
+    if (name inside {MIN, MINU, MAX, MAXU,
+                     ANDN, ORN, XNOR, ROL,
+                     ROR}) begin
+      rs2_valid = 1;
+    end
+    return;
+  end
+
+  if (itype == ZBC_TYPE) begin
+    rs1_valid = 1;
+    rs2_valid = 1;
+    rd_valid = 1;
+    return;
+  end
+
+  if (itype == ZBS_TYPE) begin
+    rs1_valid = 1;
+    rd_valid = 1;
+    if (name inside {BCLR, BEXT, BINV, BSET}) begin
+      rs2_valid = 1;
+    end
+    return;
+  end
+
 endfunction : set_valid_flags
 
 
@@ -400,6 +493,15 @@ function  int  uvma_isacov_instr_c::get_field_imm();
   end
   if (this.itype == CJ_TYPE) begin
     return (dasm_rvc_j_imm(instr) >> 1);  // Shift 1 because [11:1] to [10:0]
+  end
+
+  if (this.itype == ZCB_TYPE) begin
+     if (this.name inside {C_LBU, C_SB}) begin
+        return {instr[5], instr[6]};
+     end
+     if (this.name inside {C_LH, C_LHU, C_SH}) begin
+        return instr[5];
+     end
   end
 
   // Note: 64-bit and 128-bit might require refinement of the above filtering
@@ -480,7 +582,7 @@ function  int  uvma_isacov_instr_c::get_data_imm();
   bit [63:0] instr = $signed(this.rvfi.insn);
   int        imm   = this.get_field_imm();
 
-  if (this.itype inside {CSS_TYPE, CIW_TYPE, CS_TYPE}) begin
+  if (this.itype inside {CSS_TYPE, CIW_TYPE, CS_TYPE, CL_TYPE}) begin
     return {imm, 2'b 00};
   end
   if (this.itype inside {CJ_TYPE} || this.name inside {C_BEQZ, C_BNEZ}) begin
@@ -492,11 +594,31 @@ function  int  uvma_isacov_instr_c::get_data_imm();
   if (this.name inside {C_LUI}) begin
     return imm[19:0];  // TODO:ropeders should adhere to "LUI-semantics" or "RVC-semantics"?
   end
+  if (this.name inside {C_LH, C_LHU, C_SH}) begin
+    return {imm, 1'b 0};
+  end
 
   return imm;
 
 endfunction : get_data_imm
 
+function int uvma_isacov_instr_c::decode_rd_c(bit[ILEN-1:0] instr); //function to extract the rd' (3 bits) address from a compressed instruction
+
+  return instr[4:2] + 8;
+
+endfunction : decode_rd_c
+
+function int uvma_isacov_instr_c::decode_rs1_c(bit[ILEN-1:0] instr); //function to extract the rs1' (3 bits) address from a compressed instruction
+
+  return instr[9:7] + 8;
+
+endfunction : decode_rs1_c
+
+function int uvma_isacov_instr_c::decode_rs2_c(bit[ILEN-1:0] instr); //function to extract the rs2' (3 bits) address from a compressed instruction
+
+  return instr[4:2] + 8;
+
+endfunction : decode_rs2_c
 
 function bit uvma_isacov_instr_c::is_conditional_branch();
 

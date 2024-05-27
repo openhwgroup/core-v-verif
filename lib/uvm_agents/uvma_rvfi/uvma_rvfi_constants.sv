@@ -48,8 +48,6 @@ localparam DEFAULT_XLEN     = 32;
 localparam MAX_XLEN         = 64;
 localparam DEFAULT_NRET     = 1;
 
-localparam CSR_QUEUE_SIZE   = 250;
-
 // RISC-V Constants
 parameter logic[ 2:0]  DBG_CAUSE_TRIGGER               =  3'h 2;
 parameter logic[ 1:0]  PRIV_LVL_M                      =  2'b 11;
@@ -64,5 +62,11 @@ parameter logic[10:0]  EXC_CAUSE_ENV_CALL_M            = 11'd 11;
 parameter logic[10:0]  EXC_CAUSE_INSTR_BUS_FAULT       = 11'd 24;
 parameter logic[10:0]  EXC_CAUSE_INSTR_INTEGRITY_FAULT = 11'd 25;
 
+localparam CSR_QUEUE_SIZE = 250;
+
+const string format_header_str = "%8s | RVFI | %8s | %6s | %8s | %8s | %s | %03s | %08s | %03s | %08s | %03s | %08s | %03s | %08s | %08s | %s";
+const string format_instr_str  = "%8s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %8x | x%-2d | %8x | x%-2d | %16x";
+`define FORMAT_INSTR_STR_MACRO "%8s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %8x | x%-2d | %8x | x%-2d | %16x | %s"
+const string format_mem_str    = "| %02s | %08x | %08s |";
 
 `endif // __UVMA_RVFI_CONSTANTS_SV__

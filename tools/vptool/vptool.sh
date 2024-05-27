@@ -1,11 +1,11 @@
+#!/bin/sh
 #############################################################################
 # Copyright (C) 2023 Thales DIS France SAS
 #
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
 #
-# Original Author: Zbigniew Chamski (zbigniew.chamski@thalesgroup.com)
+# Original Author: Zbigniew Chamski (Thales)
 #############################################################################
-#!/bin/sh
 
 # Set the canonical path of the current script.
 VPTOOL_DIR=$(dirname $(readlink -f $0))

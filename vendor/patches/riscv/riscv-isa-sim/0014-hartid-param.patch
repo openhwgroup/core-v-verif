@@ -1,0 +1,842 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Params.cc b/vendor/riscv/riscv-isa-sim/riscv/Params.cc
+index 5b468700..65e31995 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Params.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Params.cc
+@@ -1,18 +1,92 @@
+ #include "Params.h"
++using namespace std;
+ 
+-namespace openhw
+-{
+-    void ParseParams(string base, Params& baseParams, Params& newParams)
+-    {
+-
+-        if (newParams.v.find(base) == newParams.v.end())
+-            return;
+-
+-        for (auto it = newParams.v[base].begin(); it != newParams.v[base].end(); it++)
+-        {
+-            string name = it->first;
+-            Param p = it->second;
+-            baseParams.set(base, name, p);
+-        }
+-    }
++namespace openhw {
++void Params::parse_params(string base, Params &baseParams, Params &newParams) {
++
++  if (newParams.v.find(base) == newParams.v.end())
++    return;
++
++  for (auto it = newParams.v[base].begin(); it != newParams.v[base].end();
++       it++) {
++    string name = it->first;
++    Param p = it->second;
++    baseParams.set(base, name, p);
++  }
++}
++void Params::cfg_to_params(cfg_t &cfg, Params &params) {
++  params.set("/top/", "isa", std::string(cfg.isa()));
++  params.set("/top/", "priv", std::string(cfg.priv()));
++  params.set("/top/", "boot_addr",
++             (unsigned long)cfg.start_pc.value_or(0x10000UL));
++
++  params.set("/top/core/0/", "isa", std::string(cfg.isa()));
++  params.set("/top/core/0/", "priv", std::string(cfg.priv()));
++  params.set("/top/core/0/", "misaligned", cfg.misaligned);
++  params.set("/top/core/0/", "pmpregions", (cfg.pmpregions));
++}
++
++void print_center(string &str, const size_t line_length) {
++  size_t str_length = str.length();
++  size_t how_many = (line_length - str_length) / 2;
++
++  for (size_t i = 0; i < how_many; ++i)
++    cout << ' ';
++  cout << str;
++  for (size_t i = 0; i < (line_length - str_length) - how_many; ++i)
++    cout << ' ';
++}
++
++static size_t name_column = 50;
++static size_t type_column = 30;
++static size_t default_type_column = 40;
++static size_t description_column = 60;
++static size_t table_size =
++    name_column + type_column + default_type_column + description_column;
++
++void print_param(Param &param) {
++  string name = param.base + param.name;
++  string type = param.type;
++  string default_value = param.default_value;
++  string description = param.description;
++  cout << '|';
++  print_center(name, name_column - 1);
++  cout << '|';
++  print_center(type, type_column - 1);
++  cout << '|';
++  print_center(default_value, default_type_column - 1);
++  cout << '|';
++  print_center(description, description_column - 2);
++  cout << '|' << std::endl;
++}
++
++void print_row_separator(size_t size) {
++  for (size_t i = 0; i < table_size; i++)
++    std::cout << '-';
++  cout << std::endl;
++}
++
++void print_header() {
++  print_row_separator(table_size);
++  Param table_header = {"Name", "", "", "Default", "Type", "Description"};
++  print_param(table_header);
++  print_row_separator(table_size);
++}
++
++void Params::print_table(string param_set) {
++  print_header();
++  auto it = this->v.find(param_set);
++
++  // Sort unordered_map keys
++  std::vector<string> keys;
++  for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
++    keys.push_back(it2->first);
++  sort(keys.begin(), keys.end());
++
++  // Print each param
++  for (auto key : keys)
++    print_param(it->second[key]);
++
++  print_row_separator(table_size);
+ }
++} // namespace openhw
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Params.h b/vendor/riscv/riscv-isa-sim/riscv/Params.h
+index 914bbafe..39ff69f7 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Params.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Params.h
+@@ -1,71 +1,87 @@
+-#include <iostream>
+-#include <string>
+-#include <unordered_map>
++#include "cfg.h"
+ #include <any>
++#include <iomanip>
+ #include <iostream>
++#include <regex>
+ #include <stdexcept>
++#include <string>
++#include <unordered_map>
+ 
+ #pragma once
+ 
+ using namespace std;
+ 
+-namespace openhw
+-{
+-    typedef struct {
+-        string base;
+-        string name;
+-        any a;
+-        string description;
+-    } Param;
++namespace openhw {
++typedef struct {
++  string base;
++  string name;
++  any a;
++  string default_value;
++  string type;
++  string description;
++} Param;
++
++typedef std::unordered_map<string, Param> mapParam;
++
++class Params {
++public:
++  //              Base                 Name
++  std::unordered_map<string, mapParam> v;
++
++  std::any operator[](string str) { return this->get(str).a; }
+ 
+-    class Params {
+-        public:
+-        //              Base                 Name
+-        unordered_map<string, unordered_map<string, Param>> v;
++  void set(string base, string name, any value, string type = "",
++           string default_value = "", string description = "") {
++    Param p = {base, name, value, default_value, type, description};
++    v[base][name] = p;
++  }
+ 
+-        any operator[](string str) {
+-            return this->get(str).a;
+-        }
++  void set(string base, string name, Param &p) { v[base][name] = p; }
+ 
+-        void set(string base, string name, any value, string description="")
+-        {
+-            Param p = {base, name, value, description};
+-            v[base][name] = p;
+-        }
++  Param get(string base, string name) {
++    auto it = v.find(base);
++    if (it != this->v.end()) {
++      auto it2 = it->second.find(name);
++      if (it2 != it->second.end())
++        return v[base][name];
++    }
++    return Param();
++  }
+ 
+-        void set(string base, string name, Param& p)
+-        {
+-            v[base][name] = p;
+-        }
++  Param get(string str) {
++    string base, name;
++    std::size_t n_base = str.find_last_of("/");
++    if (n_base != std::string::npos) {
++      base = str.substr(0, n_base + 1);
++      name = str.substr(n_base + 1, str.length());
++      return this->get(base, name);
++    }
++    return Param();
++  }
+ 
+-        Param get(string base, string name)
+-        {
+-            auto it = v.find(base);
+-            if (it != this->v.end())
+-            {
+-                auto it2 = it->second.find(name);
+-                if (it2 != it->second.end())
+-                    return v[base][name];
+-                throw std::invalid_argument("The param does not exist");
+-            }
+-            return Param();
+-        }
++  mapParam get_base(string base) {
++    auto it = v.find(base);
++    if (it != v.end())
++      return it->second;
++    return mapParam();
++  }
+ 
+-        Param get(string str)
+-        {
+-            string base, name;
+-            std::size_t n_base = str.find_last_of("/");
+-            if (n_base != std::string::npos)
+-            {
+-                base = str.substr(0, n_base + 1);
+-                name = str.substr(n_base + 1, str.length());
+-                return this->get(base, name);
+-            }
+-            return Param();
++  static void parse_params(string base, Params &baseParams, Params &newParams);
+ 
+-        }
++  static void cfg_to_params(cfg_t &cfg, Params &params);
+ 
+-    };
++  void print_table(string param_set);
+ 
+-    void ParseParams(string base, Params& baseParams, Params& newParams);
+-}
++  std::vector<size_t> get_hartids() {
++    std::vector<size_t> mhartids;
++    regex regexp("/top/proc/[0-9]+");
++    for (auto it : this->v) {
++      std::smatch match;
++      regex_search(it.first, match, regexp);
++      for (size_t i = 0; i < match.size(); i++)
++        mhartids.push_back(stoi(match[i].str()));
++    }
++    return mhartids;
++  }
++};
++} // namespace openhw
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 1dbdddfc..62dd261e 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -88,33 +88,15 @@ Processor::Processor(
+     : processor_t::processor_t(isa, cfg, sim, id, halt_on_reset, log_file,
+                                sout_) {
+ 
+-  this->params.set("/top/core/0/", "isa", any(std::string("RV32GC")));
+-  this->params.set("/top/core/0/", "priv", DEFAULT_PRIV);
+-  this->params.set("/top/core/0/", "boot_addr", any(0x80000000UL));
+-  this->params.set("/top/core/0/", "mmu_mode", any(std::string("sv39")));
+-
+-  this->params.set("/top/core/0/", "pmpregions", any(0x0UL));
+-  this->params.set("/top/core/0/", "pmpaddr0", any(0x0UL));
+-  this->params.set("/top/core/0/", "pmpcfg0", any(0x0UL));
+-  this->params.set("/top/core/0/", "marchid", any(0x3UL));
+-  this->params.set("/top/core/0/", "mvendorid", any(0x00000602UL));
+-  this->params.set("/top/core/0/", "status_fs_field_we_enable", any(false));
+-  this->params.set("/top/core/0/", "status_fs_field_we", any(false));
+-  this->params.set("/top/core/0/", "status_vs_field_we_enable", any(false));
+-  this->params.set("/top/core/0/", "status_vs_field_we", any(false));
+-  this->params.set("/top/core/0/", "misa_we_enable", any(true));
+-  this->params.set("/top/core/0/", "misa_we", any(false));
+-
+-  this->params.set("/top/core/0/", "extensions", any(std::string("")));
+-
+   std::map<string, bool> registered_extensions_v;
+   registered_extensions_v["cv32a60x"] = false;
+ 
+-  // Process User Params
+-  ParseParams("/top/core/0/", this->params, params);
++  string base = "/top/core/" + std::to_string(id) + "/";
++  Processor::default_params(base, this->params);
++  Params::parse_params(base, this->params, params);
+ 
+-  string isa_str = std::any_cast<string>(this->params["/top/core/0/isa"]);
+-  string priv_str = std::any_cast<string>(this->params["/top/core/0/priv"]);
++  string isa_str = std::any_cast<string>(this->params[base + "isa"]);
++  string priv_str = std::any_cast<string>(this->params[base + "priv"]);
+   std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str
+             << std::endl;
+   this->isa =
+@@ -126,8 +108,13 @@ Processor::Processor(
+     register_extension(e.second);
+   }
+ 
++  this->n_pmp = std::any_cast<uint64_t>(this->params[base + "pmpregions"]);
++
++  ((cfg_t *)cfg)->misaligned =
++      std::any_cast<bool>(this->params[base + "misaligned"]);
++
+   string extensions_str =
+-      std::any_cast<string>(this->params["/top/core/0/extensions"]);
++      std::any_cast<string>(this->params[base + "extensions"]);
+   string delimiter = ",";
+   size_t found = extensions_str.rfind(delimiter);
+ 
+@@ -159,28 +146,27 @@ Processor::Processor(
+ 
+   this->reset();
+ 
+-  uint64_t new_pc =
+-      std::any_cast<uint64_t>(this->params["/top/core/0/boot_addr"]);
++  uint64_t new_pc = std::any_cast<uint64_t>(this->params[base + "boot_addr"]);
+   this->state.pc = new_pc;
+ 
+   this->put_csr(CSR_PMPADDR0,
+-                std::any_cast<uint64_t>(this->params["/top/core/0/pmpaddr0"]));
++                std::any_cast<uint64_t>(this->params[base + "pmpaddr0"]));
+   this->put_csr(CSR_PMPCFG0,
+-                std::any_cast<uint64_t>(this->params["/top/core/0/pmpcfg0"]));
++                std::any_cast<uint64_t>(this->params[base + "pmpcfg0"]));
+ 
+   this->put_csr(CSR_MVENDORID,
+-                std::any_cast<uint64_t>(this->params["/top/core/0/mvendorid"]));
++                std::any_cast<uint64_t>(this->params[base + "mvendorid"]));
+   this->put_csr(CSR_MARCHID,
+-                std::any_cast<uint64_t>(this->params["/top/core/0/marchid"]));
++                std::any_cast<uint64_t>(this->params[base + "marchid"]));
+ 
+-  bool fs_field_we_enable = std::any_cast<bool>(
+-      this->params["/top/core/0/status_fs_field_we_enable"]);
++  bool fs_field_we_enable =
++      std::any_cast<bool>(this->params[base + "status_fs_field_we_enable"]);
+   bool fs_field_we =
+-      std::any_cast<bool>(this->params["/top/core/0/status_fs_field_we"]);
+-  bool vs_field_we_enable = std::any_cast<bool>(
+-      this->params["/top/core/0/status_vs_field_we_enable"]);
++      std::any_cast<bool>(this->params[base + "status_fs_field_we"]);
++  bool vs_field_we_enable =
++      std::any_cast<bool>(this->params[base + "status_vs_field_we_enable"]);
+   bool vs_field_we =
+-      std::any_cast<bool>(this->params["/top/core/0/status_vs_field_we"]);
++      std::any_cast<bool>(this->params[base + "status_vs_field_we"]);
+ 
+   reg_t sstatus_mask = this->state.mstatus->get_param_write_mask();
+   if (fs_field_we_enable)
+@@ -192,8 +178,8 @@ Processor::Processor(
+   this->state.mstatus->set_param_write_mask(sstatus_mask);
+ 
+   bool misa_we_enable =
+-      std::any_cast<bool>(this->params["/top/core/0/misa_we_enable"]);
+-  bool misa_we = std::any_cast<bool>(this->params["/top/core/0/misa_we"]);
++      std::any_cast<bool>(this->params[base + "misa_we_enable"]);
++  bool misa_we = std::any_cast<bool>(this->params[base + "misa_we"]);
+   if (misa_we_enable)
+     this->state.misa->set_we(misa_we);
+ }
+@@ -206,6 +192,45 @@ void Processor::take_trap(trap_t &t, reg_t epc) {
+ 
+ Processor::~Processor() { delete this->isa; }
+ 
++void Processor::default_params(string base, openhw::Params &params) {
++  params.set(base, "isa", any(std::string("RV32GC")), "string", "RV32GC",
++             "ISA");
++  params.set(base, "priv", any(std::string(DEFAULT_PRIV)), "string",
++             DEFAULT_PRIV, "Privilege Level");
++  params.set(base, "boot_addr", any(0x80000000UL), "uint64_t", "0x80000000UL",
++             "First PC of the core");
++  params.set(base, "mmu_mode", any(std::string("sv39")), "string", "sv39",
++             "Memory virtualization mode");
++
++  params.set(base, "pmpregions", std::any(0x0UL), "uint64_t", "0x0",
++             "Number of PMP regions");
++  params.set(base, "pmpaddr0", any(0x0UL), "uint64_t", "0x0",
++             "Default PMPADDR0 value");
++  params.set(base, "pmpcfg0", any(0x0UL), "uint64_t", "0x0",
++             "Default PMPCFG0 value");
++  params.set(base, "marchid", any(0x3UL), "uint64_t", "0x3", "MARCHID value");
++  params.set(base, "mvendorid", any(0x00000602UL), "uint64_t", "0x00000602UL",
++             "MVENDORID value");
++  params.set(base, "extensions", any(std::string("")), "string",
++             "\"extension1,extension2\"", "Possible extensions: cv32a60x");
++
++  params.set(base, "status_fs_field_we_enable", any(false), "bool", "false",
++             "XSTATUS CSR FS Write Enable param enable");
++  params.set(base, "status_fs_field_we", any(false), "bool", "false",
++             "XSTATUS CSR FS Write Enable");
++  params.set(base, "status_vs_field_we_enable", any(false), "bool", "false",
++             "XSTATUS CSR VS Write Enable param enable");
++  params.set(base, "status_vs_field_we", any(false), "bool", "false",
++             "XSTATUS CSR VS Write Enable");
++  params.set(base, "misa_we_enable", any(true), "bool", "true",
++             "MISA CSR Write Enable param enable");
++  params.set(base, "misa_we", any(false), "bool", "false",
++             "MISA CSR Write Enable value");
++
++  params.set(base, "misaligned", std::any(false), "bool", "false",
++             "Support for misaligned memory operations");
++}
++
+ inline void Processor::set_XPR(reg_t num, reg_t value) {
+   this->state.XPR.write(num, value);
+ }
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index 6b5e4177..daf9126f 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -13,6 +13,8 @@ public:
+   ~Processor();
+   st_rvfi step(size_t n, st_rvfi reference);
+ 
++  static void default_params(string base, openhw::Params &params);
++
+   inline void set_XPR(reg_t num, reg_t value);
+   inline void set_FPR(reg_t num, float128_t value);
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+index 16a60654..4610b9b6 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+@@ -35,6 +35,34 @@ debug_module_config_t dm_config = {.progbufsize = 2,
+                                    .support_haltgroups = true,
+                                    .support_impebreak = true};
+ 
++void Simulation::default_params(openhw::Params &params) {
++  params.set("/top/", "generic_core_config", std::any(true), "bool", "true",
++             "Make generic configuration for all cores");
++
++  params.set("/top/", "bootrom", std::any(true), "bool", "true",
++             "bootrom enable");
++  params.set("/top/", "bootrom_base", std::any(0x10000UL), "uint64_t",
++             "0x10000", "bootrom address");
++  params.set("/top/", "bootrom_size", std::any(0x1000UL), "uint64_t", "0x1000",
++             "bootrom size");
++
++  params.set("/top/", "dram", std::any(true), "bool", "true", "DRAM enable");
++  params.set("/top/", "dram_base", std::any(0x80000000UL), "uint64_t",
++             "0x80000000", "DRAM base address");
++  params.set("/top/", "dram_size", std::any(0x400UL * 1024 * 1024), "uint64_t",
++             "0x40000000", "DRAM size");
++
++  params.set("/top/", "log_commits", std::any(true), "bool", "False",
++             "Log commit enable");
++
++  params.set("/top/", "max_steps_enabled", std::any(false), "bool", "False",
++             "Maximum steps enable");
++  params.set("/top/", "max_steps", std::any(200000UL), "uint64_t", "200000",
++             "Maximum steps that the simulation can do ");
++
++  Processor::default_params("/top/cores/", params);
++}
++
+ Simulation::Simulation(
+     const cfg_t *cfg, bool halted, std::vector<std::pair<reg_t, mem_t *>> mems,
+     std::vector<std::pair<reg_t, abstract_device_t *>> plugin_devices,
+@@ -45,28 +73,14 @@ Simulation::Simulation(
+     openhw::Params &params)
+     : sim_t(cfg, halted, mems, plugin_devices, args, dm_config, log_path,
+             dtb_enabled, dtb_file, socket_enabled, cmd_file, params) {
++
++  Simulation::default_params(this->params);
+   // It seems mandatory to set cache block size for MMU.
+   // FIXME TODO: Use actual cache configuration (on/off, # of ways/sets).
+   // FIXME TODO: Support multiple cores.
+   get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
+ 
+-  this->params.set("/top/", "isa", any(std::string("RV32GC")));
+-  this->params.set("/top/", "priv", any(std::string(DEFAULT_PRIV)));
+-
+-  this->params.set("/top/", "bootrom", std::any(true));
+-  this->params.set("/top/", "bootrom_base", std::any(0x10000UL));
+-  this->params.set("/top/", "bootrom_size", std::any(0x1000UL));
+-
+-  this->params.set("/top/", "dram", std::any(true));
+-  this->params.set("/top/", "dram_base", std::any(0x80000000UL));
+-  this->params.set("/top/", "dram_size", std::any(0x40000000UL));
+-
+-  this->params.set("/top/", "log_commits", std::any(true));
+-
+-  this->params.set("/top/", "max_steps_enabled", std::any(false));
+-  this->params.set("/top/", "max_steps", std::any(200000UL));
+-
+-  ParseParams("/top/", this->params, params);
++  Params::parse_params("/top/", this->params, params);
+ 
+   const std::vector<mem_cfg_t> layout;
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+index 95a6d136..9ade57a0 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+@@ -44,6 +44,8 @@ public:
+ 
+   void make_mems(const std::vector<mem_cfg_t> &layout);
+ 
++  static void default_params(openhw::Params &params);
++
+   /*
+    * Run function that runs the whole program while in standalone mode
+    * */
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.cc b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+index 330bd30c..c8260ebd 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+@@ -39,6 +39,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
+   impl_table(256, false), extension_enable_table(isa->get_extension_table()),
+   last_pc(1), executions(1), TM(cfg->trigger_count)
+ {
++
+   VU.p = this;
+   TM.proc = this;
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+index ea3093cb..de95d4df 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -1,31 +1,31 @@
+ #include <fesvr/elf.h>
+ #include <fesvr/memif.h>
+ 
+-#include "riscv/mmu.h"
+-#include "Types.h"
+ #include "Simulation.h"
++#include "Types.h"
++#include "riscv/mmu.h"
+ 
+-#include <vpi_user.h>
+ #include "svdpi.h"
++#include <vpi_user.h>
+ 
++#include <fcntl.h>
++#include <memory>
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <vector>
+ #include <string>
+-#include <memory>
+ #include <sys/mman.h>
+ #include <sys/stat.h>
+-#include <fcntl.h>
++#include <vector>
+ 
+ #include <assert.h>
+-#include <unistd.h>
+-#include <map>
+ #include <iostream>
++#include <map>
++#include <unistd.h>
+ 
+ using namespace openhw;
+ 
+-Simulation* sim;
+-std::vector<std::pair<reg_t, mem_t*>> mem_cuts;
++Simulation *sim;
++std::vector<std::pair<reg_t, mem_t *>> mem_cuts;
+ 
+ #define SHT_PROGBITS 0x1
+ #define SHT_GROUP 0x11
+@@ -36,46 +36,55 @@ std::vector<std::pair<reg_t, mem_t*>> mem_cuts;
+ std::vector<mem_cfg_t> memory_map;
+ Params params;
+ 
+-extern "C" void spike_set_default_params(const char* profile)
+-{
+-    if (strcmp(profile, "cva6") == 0)
+-    {
+-        params.set("/top/", "isa", std::any(std::string("RV64GC")));
+-        params.set("/top/", "bootrom", std::any(true));
+-        params.set("/top/", "dram_base", std::any(0x80000000UL));
+-        params.set("/top/", "dram_size", std::any(0x64UL * 1024 * 1024));
+-        params.set("/top/", "max_steps_enabled", std::any(false));
+-        params.set("/top/", "max_steps", std::any(2000000UL));
+-
+-        params.set("/top/core/0/", "name", std::any(std::string("cva6")));
+-        params.set("/top/core/0/", "isa", std::any(std::string("RV64GC")));
+-    }
++extern "C" void spike_set_default_params(const char *profile) {
++  if (strcmp(profile, "cva6") == 0) {
++    params.set("/top/", "isa", std::any(std::string("RV64GC")));
++    params.set("/top/", "priv", any(std::string(DEFAULT_PRIV))); // MSU
++    params.set("/top/", "num_procs", std::any(0x1UL));
++    params.set("/top/", "bootrom", std::any(true));
++    params.set("/top/", "generic_core_config", std::any(true));
++    params.set("/top/", "dram_base", std::any(0x80000000UL));
++    params.set("/top/", "dram_size", std::any(0x400UL * 1024 * 1024));
++    params.set("/top/", "max_steps_enabled", std::any(false));
++    params.set("/top/", "max_steps", std::any(2000000UL));
++
++    params.set("/top/core/0/", "name", std::any(std::string("cva6")));
++    params.set("/top/core/0/", "isa", std::any(std::string("RV64GC")));
++  }
+ }
+ 
+-extern "C" void spike_set_param_uint64_t(const char* base, const char* name, uint64_t value) { params.set(base, name, value); }
+-extern "C" void spike_set_param_str(const char* base, const char* name, const char* value) { params.set(base, name, std::string(value)); }
++extern "C" void spike_set_param_uint64_t(const char *base, const char *name,
++                                         uint64_t value) {
++  params.set(base, name, value);
++}
++extern "C" void spike_set_param_str(const char *base, const char *name,
++                                    const char *value) {
++  params.set(base, name, std::string(value));
++}
++extern "C" void spike_set_param_bool(const char *base, const char *name,
++                                     bool value) {
++  params.set(base, name, std::any(value));
++}
+ 
+-extern "C" void spike_create(const char* filename)
+-{
+-  std::cerr << "[SPIKE] Starting 'spike_create'...\n" ;
++extern "C" void spike_create(const char *filename) {
++  std::cerr << "[SPIKE] Starting 'spike_create'...\n";
+ 
+   // TODO parse params from yaml
+   string isa_str = std::any_cast<string>(params["/top/isa"]);
+ 
+-  cfg_t *config = new
+-      cfg_t(/*default_initrd_bounds=*/std::make_pair((reg_t)0, (reg_t)0),
+-            /*default_bootargs=*/nullptr,
+-            /*default_isa=*/isa_str.c_str(),  // Built from the RTL configuration
+-            /*default_priv=*/DEFAULT_PRIV,   // TODO FIXME Ditto
+-            /*default_varch=*/DEFAULT_VARCH, // TODO FIXME Ditto
+-            /*default_misaligned=*/false,
+-            /*default_endianness*/endianness_little,
+-            /*default_pmpregions=*/16,
+-            /*default_mem_layout=*/memory_map,
+-            /*default_hartids=*/std::vector<size_t>(),
+-            /*default_real_time_clint=*/false,
+-            /*default_trigger_count=*/4);
+-
++  cfg_t *config = new cfg_t(
++      /*default_initrd_bounds=*/std::make_pair((reg_t)0, (reg_t)0),
++      /*default_bootargs=*/nullptr,
++      /*default_isa=*/isa_str.c_str(), // Built from the RTL configuration
++      /*default_priv=*/DEFAULT_PRIV,   // TODO FIXME Ditto
++      /*default_varch=*/DEFAULT_VARCH, // TODO FIXME Ditto
++      /*default_misaligned=*/false,
++      /*default_endianness*/ endianness_little,
++      /*default_pmpregions=*/16,
++      /*default_mem_layout=*/memory_map,
++      /*default_hartids=*/std::vector<size_t>(),
++      /*default_real_time_clint=*/false,
++      /*default_trigger_count=*/4);
+ 
+   // Define the default set of harts with their associated IDs.
+   // If there are multiple IDs, the vector must be sorted in ascending
+@@ -87,7 +96,6 @@ extern "C" void spike_create(const char* filename)
+   default_hartids.push_back(0);
+   config->hartids = default_hartids;
+ 
+-
+   if (!sim) {
+     std::vector<std::string> htif_args;
+     htif_args.push_back(std::string(filename));
+@@ -97,6 +105,39 @@ extern "C" void spike_create(const char* filename)
+       std::cerr << "  " << s << ",\n";
+     std::cerr << "}\n";
+ 
++    std::any a_num_procs = params["/top/num_procs"];
++    ;
++    uint64_t num_procs = a_num_procs.has_value()
++                             ? std::any_cast<uint64_t>(a_num_procs)
++                             : config->nprocs();
++    std::any a_generic_config = params["/top/generic_core_config"];
++    bool generic_config = a_generic_config.has_value()
++                              ? std::any_cast<bool>(a_generic_config)
++                              : false;
++
++    mapParam coreParams = params.get_base("/top/cores/");
++
++    std::vector<uint64_t> hartids = params.get_hartids();
++    std::sort(hartids.begin(), hartids.end());
++
++    uint64_t next_id =
++        (hartids.size() == 0 ? 0 : hartids[hartids.size() - 1] + 1);
++
++    for (size_t i = 0; i < (num_procs - hartids.size()); i++) {
++      hartids.push_back(next_id + i);
++    }
++
++    config->hartids = hartids;
++
++    if (generic_config) {
++      for (size_t i = 0; i < num_procs; i++) {
++        string base = "/top/core/" + std::to_string(hartids[i]) + "/";
++        for (auto p : coreParams) {
++          params.set(base, p.first, p.second);
++        }
++      }
++    }
++
+     sim = new Simulation((const cfg_t *)config, filename, params);
+ 
+     // Disable the debug mode.
+@@ -105,39 +146,36 @@ extern "C" void spike_create(const char* filename)
+ }
+ 
+ // Convert svOpenArrayHandle -> st_rvfi
+-void sv2rvfi(st_rvfi& rvfi, svOpenArrayHandle svOpen)
+-{
+-    size_t size = svSize(svOpen, 1);
+-    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
+-    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
+-
+-    for(size_t i = 0; i < size; i++) {
+-        rvfi_ptr[i] = array_ptr[size-i-1];
+-    }
++void sv2rvfi(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
++  size_t size = svSize(svOpen, 1);
++  uint64_t *array_ptr = (uint64_t *)svGetArrayPtr(svOpen);
++  uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
++
++  for (size_t i = 0; i < size; i++) {
++    rvfi_ptr[i] = array_ptr[size - i - 1];
++  }
+ }
+ 
+ // Convert st_rvfi -> svOpenArrayHandle
+-void rvfi2sv(st_rvfi& rvfi, svOpenArrayHandle svOpen)
+-{
+-    size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
+-    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
+-    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
+-
+-    for(size_t i = 0; i < size; i++) {
+-        array_ptr[size-i-1] = rvfi_ptr[i];
+-    }
++void rvfi2sv(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
++  size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
++  uint64_t *array_ptr = (uint64_t *)svGetArrayPtr(svOpen);
++  uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
++
++  for (size_t i = 0; i < size; i++) {
++    array_ptr[size - i - 1] = rvfi_ptr[i];
++  }
+ }
+ 
+-extern "C" void spike_step_struct(st_rvfi& reference, st_rvfi& spike)
+-{
++extern "C" void spike_step_struct(st_rvfi &reference, st_rvfi &spike) {
+   std::vector<st_rvfi> vreference, vspike;
+   vreference.push_back(reference);
+   vspike = sim->step(1, vreference);
+   spike = vspike[0];
+ }
+ 
+-extern "C" void spike_step_svOpenArray(svOpenArrayHandle reference, svOpenArrayHandle spike)
+-{
++extern "C" void spike_step_svOpenArray(svOpenArrayHandle reference,
++                                       svOpenArrayHandle spike) {
+   st_rvfi reference_rvfi, spike_rvfi;
+ 
+   sv2rvfi(reference_rvfi, reference);
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.cc b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+index 713b0e00..fa69a83a 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+@@ -99,7 +99,10 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+ 
+   debug_mmu = new mmu_t(this, cfg->endianness, NULL);
+ 
+-  for (size_t i = 0; i < cfg->nprocs(); i++) {
++  std::any a_num_procs = params["/top/num_procs"];;
++  uint64_t num_procs = a_num_procs.has_value() ? std::any_cast<uint64_t>(a_num_procs) : cfg->nprocs();
++
++  for (size_t i = 0; i < num_procs; i++) {
+     procs[i] = new openhw::Processor(&isa, cfg, this, cfg->hartids()[i], halted,
+                                log_file.get(), sout_, params);
+     harts[cfg->hartids()[i]] = procs[i];
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+index 65b807c3..c8fdd851 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+@@ -27,11 +27,29 @@ static void version(int exit_code = 1)
+   exit(exit_code);
+ }
+ 
++static void print_params(int exit_code = 1)
++{
++    openhw::Params params;
++    openhw::Simulation::default_params(params);
++
++    std::cout << "Available Simulation Params:" << std::endl;
++    params.print_table("/top/");
++
++    cout << endl;
++    cout << "Available Cores Params:" << std::endl;
++    cout << "* Param for all the cores: /top/cores/" << std::endl;
++    cout << "* Param for one specific core: /top/core/${hartid}/" << std::endl;
++    params.print_table("/top/cores/");
++
++    exit(exit_code);
++}
++
+ static void help(int exit_code = 1)
+ {
+   fprintf(stderr, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
+   fprintf(stderr, "usage: spike [host options] <target program> [target options]\n");
+   fprintf(stderr, "Host Options:\n");
++  fprintf(stderr, "  --print-params        Print Spike parameters\n");
+   fprintf(stderr, "  -p<n>                 Simulate <n> processors [default 1]\n");
+   fprintf(stderr, "  -m<n>                 Provide <n> MiB of target memory [default 2048]\n");
+   fprintf(stderr, "  -m<a:m,b:n,...>       Provide memory regions of size m and n bytes\n");
+@@ -436,6 +454,7 @@ int main(int argc, char** argv)
+   parser.help(&suggest_help);
+   parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
+   parser.option('v', "version", 0, [&](const char UNUSED *s){version(0);});
++  parser.option(0, "print-params", 0, [&](const char UNUSED *s){print_params(0);});
+   parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
+   parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
+   parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});
+@@ -582,15 +601,15 @@ int main(int argc, char** argv)
+   }
+   openhw::Params params;
+ 
+-  params.set("/top/", "isa", std::string(cfg.isa()));
+-
+   if (max_steps != 0) {
+     params.set("/top/", "max_steps", max_steps);
+     params.set("/top/", "max_steps_enabled", bool(true));
+-    std::cout << "[SPIKE-TANDEM] Max simulation steps: " << max_steps << std::endl;
++    std::cout << "[SPIKE] Max simulation steps: " << max_steps << std::endl;
+   }
+-
++  openhw::Params::cfg_to_params(cfg, params);
++  params.set("/top/", "num_procs", cfg.nprocs());
+   params.set("/top/core/0/", "boot_addr", 0x10000UL);
++  params.set("/top/core/0/", "pmpregions", 0x0UL);
+   params.set("/top/core/0/", "isa", std::string(cfg.isa()));
+   params.set("/top/core/0/", "priv", std::string(cfg.priv()));
+ 

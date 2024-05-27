@@ -13,6 +13,8 @@
 
 
 // Interface(s) / Module(s) / Checker(s)
+// Pre-processor macros
+`include "uvm_macros.svh"
 `include "uvma_cvxif_intf.sv"
 `include "uvma_cvxif_assert.sv"
 `include "uvma_cvxif_macros.sv"

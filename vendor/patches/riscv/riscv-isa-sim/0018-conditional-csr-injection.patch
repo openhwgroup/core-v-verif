@@ -1,0 +1,72 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index c047446d..43507df9 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -64,20 +64,22 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+       }
+   }
+ 
+-  // Inject values comming from the reference
+-  if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS) {
+-    if (rvfi.rs1_addr == 0) {
+-      reg_t read_csr = this->get_state()->last_inst_fetched.csr();
+-      switch (read_csr) {
+-      case 0xC00: // cycle
+-      case 0xC80: // cycleh
+-      case 0xB00: // mcycle
+-      case 0xB80: // mcycleh
+-        this->set_XPR(reference.rd1_addr, reference.rd1_wdata);
+-        rvfi.rd1_wdata = reference.rd1_wdata;
+-        break;
+-      default:
+-        break;
++  if (csr_counters_injection) {
++    // Inject values comming from the reference
++    if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS) {
++      if (rvfi.rs1_addr == 0) {
++        reg_t read_csr = this->get_state()->last_inst_fetched.csr();
++        switch (read_csr) {
++        case 0xC00: // cycle
++        case 0xC80: // cycleh
++        case 0xB00: // mcycle
++        case 0xB80: // mcycleh
++          this->set_XPR(reference.rd1_addr, reference.rd1_wdata);
++          rvfi.rd1_wdata = reference.rd1_wdata;
++          break;
++        default:
++          break;
++        }
+       }
+     }
+   }
+@@ -121,6 +123,8 @@ Processor::Processor(
+   ((cfg_t *)cfg)->misaligned =
+       std::any_cast<bool>(this->params[base + "misaligned"]);
+ 
++  this->csr_counters_injection =
++      std::any_cast<bool>(this->params[base + "csr_counters_injection"]);
+   string extensions_str =
+       std::any_cast<string>(this->params[base + "extensions"]);
+   string delimiter = ",";
+@@ -240,6 +244,9 @@ void Processor::default_params(string base, openhw::Params &params) {
+ 
+   params.set(base, "misaligned", std::any(false), "bool", "false",
+              "Support for misaligned memory operations");
++
++  params.set(base, "csr_counters_injection", std::any(false), "bool", "false",
++             "Allow to set CSRs getting values from a DPI");
+ }
+ 
+ inline void Processor::set_XPR(reg_t num, reg_t value) {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index daf9126f..5387ce19 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -19,6 +19,7 @@ public:
+   inline void set_FPR(reg_t num, float128_t value);
+ 
+ protected:
++  bool csr_counters_injection;
+   bool taken_trap;
+   uint8_t which_trap;
+   virtual void take_trap(trap_t &t, reg_t epc); // take an exception

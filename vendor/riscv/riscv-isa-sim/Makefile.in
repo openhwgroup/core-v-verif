@@ -69,11 +69,13 @@ install_exes_dir := $(INSTALLDIR)/bin
 sprojs         := @subprojects@
 sprojs_enabled := @subprojects_enabled@
 
-sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled))
+EDA_INCLUDES := -I$(VCS_HOME)/include -I/$(QUESTASIM_HOME)/include -I$(XCEL_HOME)/include -I$(VERILATOR_INSTALL_DIR)/share/verilator/include/vltstd/
+
+sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled)) $(EDA_INCLUDES)
 VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 
 #-------------------------------------------------------------------------
-# Programs and flags 
+# Programs and flags
 #-------------------------------------------------------------------------
 
 # C++ compiler
@@ -92,13 +94,14 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 #
 # These all appear on the command line, from lowest precedence to
 # highest.
+SPIKE_HASH_VERSION:= $(shell git log -1 --pretty=tformat:"%h" -- .. )
 
-default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC
-default-CXXFLAGS := $(default-CFLAGS) -std=c++11
+default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC -DSPIKE_HASH_VERSION=0x$(SPIKE_HASH_VERSION)
+default-CXXFLAGS := $(default-CFLAGS) -std=c++17
 
 mcppbs-CPPFLAGS := @CPPFLAGS@
 mcppbs-CFLAGS   := $(default-CFLAGS) @CFLAGS@
-mcppbs-CXXFLAGS := $(default-CXXFLAGS) @CXXFLAGS@
+mcppbs-CXXFLAGS := $(mcppbs-CFLAGS) $(default-CXXFLAGS) @CXXFLAGS@
 
 CC            := @CC@
 CXX           := @CXX@
@@ -163,7 +166,7 @@ dist_junk += $(sprojs_mk)
 #-------------------------------------------------------------------------
 # This function is used by the subproject template to reverse the list
 # of dependencies. It uses recursion to perform the reversal.
-# 
+#
 # Arguments:
 #  $(1)   : space separated input list
 #  retval : input list in reverse order
@@ -185,7 +188,7 @@ endef
 # subprojects defining a certain set of make variables which are all
 # prefixed with the subproject name. Since subproject names can have
 # dashes in them (and the make variables are assumed to only use
-# underscores) the template takes two arguments - one with the regular 
+# underscores) the template takes two arguments - one with the regular
 # subproject name and one with dashes replaced with underscores.
 #
 # Arguments:
@@ -219,7 +222,7 @@ $(2)_deps := $$(patsubst %.o, %.d, $$($(2)_objs))
 $(2)_deps += $$(patsubst %.o, %.d, $$($(2)_c_objs))
 $(2)_deps += $$(patsubst %.h, %.h.d, $$($(2)_precompiled_hdrs))
 $$($(2)_pch) : %.h.gch : %.h
-	$(COMPILE) -x c++-header $$< -o $$@
+	$(COMPILE) -x c++-header $$< -c -o $$@
 $$($(2)_objs) : %.o : %.cc $$($(2)_gen_hdrs) $$($(2)_pch)
 	$(COMPILE) $(if $(HAVE_CLANG_PCH), $$(if $$($(2)_pch), -include-pch $$($(2)_pch))) $$($(2)_CFLAGS) -c $$<
 $$($(2)_c_objs) : %.o : %.c $$($(2)_gen_hdrs)
@@ -241,7 +244,8 @@ $(2)_lib_libnames   := $$(patsubst %, lib%.a, $$($(2)_lib_libs))
 $(2)_lib_libarg     := $$(patsubst %, -l%, $$($(2)_lib_libs))
 $(2)_lib_libnames_shared	:= $$(if $$($(2)_install_shared_lib),lib$(1).so,)
 
-lib$(1).a : $$($(2)_objs) $$($(2)_c_objs) $$($(2)_lib_libnames)
+lib$(1).a : $$($(2)_objs) $$($(2)_c_objs)
+	rm -f $$@
 	$(AR) rcs $$@ $$^
 lib$(1).so : $$($(2)_objs) $$($(2)_c_objs) $$($(2)_lib_libnames_shared) $$($(2)_lib_libnames)
 	$(LINK) -shared -o $$@ $(if $(filter Darwin,$(shell uname -s)),-install_name $(install_libs_dir)/$$@) $$^ $$($(2)_lib_libnames) $(LIBS)
@@ -326,10 +330,6 @@ clean-$(1) :
 
 # Update running variables
 
-libs += lib$(1).a
-objs += $$($(2)_objs)
-srcs += $$(addprefix $(src_dir)/$(1)/, $$($(2)_srcs)) 
-hdrs += $$(addprefix $(src_dir)/$(1)/, $$($(2)_hdrs)) $$($(2)_gen_hdrs)
 junk += $$($(2)_junk)
 deps += $$($(2)_deps)
 
@@ -444,7 +444,7 @@ dist_junk += config.status config.h Makefile config.log
 # Distribution
 #-------------------------------------------------------------------------
 # The distribution tarball is named project-ver.tar.gz and it includes
-# both enabled and disabled subprojects. 
+# both enabled and disabled subprojects.
 
 dist_files = \
   $(sprojs) \

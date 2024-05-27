@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
 #
-# Original Author: Zbigniew Chamski (zbigniew.chamski@thalesgroup.com)
+# Original Author: Zbigniew Chamski (Thales)
 #############################################################################
 
 import tkinter as tk
