@@ -355,7 +355,7 @@ package cv32e40p_instr_test_pkg;
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, (i-1) * (XLEN/8), sp));
     end
 
-    if(cfg_corev.enable_floating_point && !cfg_corev.enable_fp_in_x_regs) begin
+    if(cfg_corev.enable_floating_point && !cfg_corev.enable_fp_in_x_regs) begin : PUSH_FREG
       randcase
         1: store_instr = (FLEN == 32) ? "fsw" : "fsd";
         (sp == 2): store_instr = (FLEN == 32) ? "c.fswsp" : "fsd";
@@ -429,7 +429,7 @@ package cv32e40p_instr_test_pkg;
 
       instr.push_back($sformatf("4: nop")); //BNE 4f Target
 
-    end
+    end // PUSH_FREG
 
   endfunction
 
@@ -445,7 +445,7 @@ package cv32e40p_instr_test_pkg;
 
     string load_instr;
 
-    if(cfg_corev.enable_floating_point && !cfg_corev.enable_fp_in_x_regs) begin
+    if(cfg_corev.enable_floating_point && !cfg_corev.enable_fp_in_x_regs) begin : POP_FREG
       load_instr = (XLEN == 32) ? "lw" : "ld";
 
       // Pop MSTATUS.FS from kernel stack
@@ -497,7 +497,7 @@ package cv32e40p_instr_test_pkg;
 
       instr.push_back($sformatf("2: nop")); //BNE 2f Target
 
-    end
+    end // POP_FREG
 
     // fixme: the irq handling logic flow need to be rework to consider nested irq scenario for fpu csr such as FS.
     // workaround_1 for MSTATUS.FS during nested irq by assuming FS always DIRTY prior irq handling.

@@ -289,13 +289,13 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
 
       // Push MIE, MEPC and MSTATUS to stack
       interrupt_handler_instr.push_back($sformatf("csrr x%0d, mie", cfg.gpr[0]));
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 1 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 0 * (XLEN/8), cfg.sp));
       interrupt_handler_instr.push_back($sformatf("csrr x%0d, mepc", cfg.gpr[0]));
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 2 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 1 * (XLEN/8), cfg.sp));
       interrupt_handler_instr.push_back($sformatf("csrr x%0d, mstatus", cfg.gpr[0]));
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 3 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 2 * (XLEN/8), cfg.sp));
       interrupt_handler_instr.push_back($sformatf("csrr x%0d, mscratch", cfg.gpr[0]));
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 4 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg.gpr[0], 3 * (XLEN/8), cfg.sp));
 
       // Move SP to TP and restore TP
       interrupt_handler_instr.push_back($sformatf("add x%0d, x%0d, zero", cfg.tp, cfg.sp));
@@ -314,7 +314,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
         end
         default: `uvm_fatal(`gfn, $sformatf("Unsupported status %0s", status))
       endcase
-    end
+    end // enable_nested_interrupt
 
     // Read back interrupt related privileged CSR
     // The value of these CSR are checked by comparing with spike simulation result.
@@ -352,17 +352,17 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
       interrupt_handler_instr.push_back($sformatf("csrrw x%0d, mscratch, x%0d", cfg.sp, cfg.sp));
       interrupt_handler_instr.push_back($sformatf("add x%0d, x%0d, zero", cfg.sp, cfg.tp));
 
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 1 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 0 * (XLEN/8), cfg.sp));
       interrupt_handler_instr.push_back($sformatf("csrw mie, x%0d", cfg.gpr[0]));
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 2 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 1 * (XLEN/8), cfg.sp));
       interrupt_handler_instr.push_back($sformatf("csrw mepc, x%0d", cfg.gpr[0]));
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 3 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 2 * (XLEN/8), cfg.sp));
       interrupt_handler_instr.push_back($sformatf("csrw mstatus, x%0d", cfg.gpr[0]));
-      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 4 * (XLEN/8), cfg.sp));
+      interrupt_handler_instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg.gpr[0], 3 * (XLEN/8), cfg.sp));
       interrupt_handler_instr.push_back($sformatf("csrw mscratch, x%0d", cfg.gpr[0]));
 
       interrupt_handler_instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg.sp, cfg.sp, 4 * (XLEN/8)));
-    end
+    end // enable_nested_interrupt
 
     // Restore user mode GPR value from kernel stack before return
 
