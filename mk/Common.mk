@@ -707,10 +707,13 @@ SPIKE_RISCV_LIB = $(SPIKE_LIBS_DIR)/libriscv
 SPIKE_DISASM_LIB = $(SPIKE_LIBS_DIR)/libdisasm
 
 NUM_JOBS ?= 8
-
+# Compile spike without boost to avoid errors in gcc 11.4
 $(SPIKE_FESVR_LIB).so $(SPIKE_RISCV_LIB).so:
 	mkdir -p $(SPIKE_PATH)/build;
-	[ ! -f $(SPIKE_PATH)/build/config.log ] && cd $(SPIKE_PATH)/build && ../configure --prefix=$(SPIKE_INSTALL_DIR) || true
+	[ ! -f $(SPIKE_PATH)/build/config.log ] && cd $(SPIKE_PATH)/build && ../configure --prefix=$(SPIKE_INSTALL_DIR) \
+		--without-boost \
+		--without-boost-asio \
+		--without-boost-regex || true
 	make -C $(SPIKE_PATH)/build/ -j $(NUM_JOBS) install;
 
 spike_lib: $(SPIKE_FESVR_LIB).so $(SPIKE_RISCV_LIB).so
