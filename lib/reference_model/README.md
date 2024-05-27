@@ -9,12 +9,11 @@ TODO: Add a more detailed explenation
 ## Usage 
 
 To run the reference model alongside cv32e40s, run `make` as normal, but include the following:
+- Export `SPIKE_PATH=<path to riscv/riscv-isa-sim>` to use another spike version. If not set, spike from `vendor/riscv/riscv-isa-sim` will be used.
 
-- set `USE_RM=YES` to enable the reference model.
-
-- set `SPIKE_HOME=<path to riscv/riscv-isa-sim>` to use another spike version.
-If not set, spike from `vendor/riscv/riscv-isa-sim` will be used.
+- set `USE_ISS=YES ISS=RM` to enable the reference model.
 
 For example:
-`make test TEST=hello-world USE_RM=YES SPIKE_HOME=~/core-v-verif/vendor/riscv/riscv-isa-sim`
+`export SPIKE_HOME=~/core-v-verif/vendor/riscv/riscv-isa-sim`
+`make test TEST=hello-world ISS=YES ISS=RM`
 

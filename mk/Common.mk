@@ -698,9 +698,10 @@ dpi_dasm: $(DPI_DASM_SPIKE_PKG)
 ###############################################################################
 # Build vendor/riscv-isa-sim into tools/
 
-export SPIKE_PATH  = $(CORE_V_VERIF)/vendor/riscv/riscv-isa-sim
-export SPIKE_INSTALL_DIR = $(CORE_V_VERIF)/tools/spike/
-SPIKE_LIBS_DIR = $(SPIKE_INSTALL_DIR)/lib/
+# Another spike version can be used by exporting another SPIKE_PATH
+export SPIKE_PATH  ?= $(CORE_V_VERIF)/vendor/riscv/riscv-isa-sim
+export SPIKE_INSTALL_DIR = $(CORE_V_VERIF)/tools/spike
+SPIKE_LIBS_DIR = $(SPIKE_INSTALL_DIR)/lib
 SPIKE_FESVR_LIB = $(SPIKE_LIBS_DIR)/libfesvr
 SPIKE_RISCV_LIB = $(SPIKE_LIBS_DIR)/libriscv
 SPIKE_DISASM_LIB = $(SPIKE_LIBS_DIR)/libdisasm

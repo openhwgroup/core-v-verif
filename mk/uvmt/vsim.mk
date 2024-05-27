@@ -137,6 +137,9 @@ VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     ifeq ($(ISS),IMPERAS)
+        VSIM_FLAGS += +USE_ISS
+        VSIM_FLAGS += +define+USE_IMPERASDV
+        VSIM_FLAGS += +define+USE_ISS
         VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
     endif
     ifeq ($(ISS),SPIKE)
@@ -144,6 +147,14 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
 	LIBS = spike_lib
     endif
+	ifeq ($(ISS),RM)
+    VSIM_FLAGS += +USE_RM
+    VSIM_FLAGS += +define+USE_RM
+    VLOG_FILE_LIST += -f $(RM_HOME)/reference_model.flist
+    VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+    VSIM_FLAGS += -gblso $(SPIKE_LIBS_DIR)/libriscv.so
+    LIBS = spike_lib
+	endif
 endif
 
 ifeq ($(call IS_YES,$(COMPILE_SPIKE)),YES)
@@ -205,15 +216,7 @@ VSIM_FLAGS 			+= -noautoldlibpath
 # Or find another solution to handle swapping different ISSs
 export FILE_LIST_RM      ?= -f $(RM_HOME)/reference_model.flist
 
-ifeq ($(call IS_YES,$(USE_RM)),YES)
-  VSIM_FLAGS += +USE_RM
-  VSIM_FLAGS += +define+USE_RM
-  VSIM_FLAGS += -sv_lib $(SPIKE_INSTALL_DIR)/lib/libriscv
-  VSIM_FLAGS += -gblso $(SPIKE_INSTALL_DIR)/lib/libriscv.so
-  VLOG_FILE_LIST += -f $(RM_HOME)/reference_model.flist
-  # Some IDV files must be included because IDV support is hard-hard coded multiple places (for ex in uvme_cv32e40s_vp_fencei_tamper_seq.sv)
-  export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
-else ifeq ($(call IS_YES,$(USE_ISS)),YES)
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
   ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
     export FILE_LIST_IDV        ?=
@@ -222,10 +225,6 @@ else ifeq ($(call IS_YES,$(USE_ISS)),YES)
     export FILE_LIST_IDV      ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dv_deps.flist
   endif
-  VSIM_FLAGS += +USE_ISS
-  VSIM_FLAGS += +define+USE_IMPERASDV
-  VSIM_FLAGS += +define+USE_ISS
-  VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
 else
   VSIM_PLUSARGS               += +DISABLE_OVPSIM
   VLOG_FLAGS                  += +DISABLE_OVPSIM
@@ -635,9 +634,6 @@ test: VSIM_TEST=$(TEST_PROGRAM)
 test: VSIM_FLAGS += +firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex
 test: VSIM_FLAGS += +elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf
 test: VSIM_FLAGS += +itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
-ifeq ($(call IS_YES,$(USE_RM)),YES)
-test: spike_build # Only build spike if we use the reference model
-endif
 test: hex run
 
 ################################################################################
