@@ -52,6 +52,7 @@ VCS_UVM_VERBOSITY ?= UVM_MEDIUM
 #VCS_UVMHOME_ARG ?= /opt/uvm/1800.2-2017-0.9/
 #VCS_UVMHOME_ARG ?= /opt/synopsys/vcs-mx/O-2018.09-SP1-1/etc/uvm
 VCS_UVMHOME_ARG  ?= /synopsys/vcs/S-2021.09-SP1/etc/uvm
+export VCS_HOME  ?= $(abspath $(shell which $(VCS))/../../)
 VCS_UVM_ARGS     ?= +define+UVM +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg.sv +UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) -ntb_opts uvm-1.2
 
 VCS_COMP_FLAGS  ?= -lca -sverilog \
@@ -313,7 +314,7 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 
 corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 
-gen_corev-dv:
+gen_corev-dv: $(LIBS)
 	@echo "$(BANNER)"
 	@echo "* Generating $(TEST) with corev-dv..."
 	@echo "* with VCS_RUN_FLAGS = $(VCS_RUN_FLAGS) "

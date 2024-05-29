@@ -34,6 +34,7 @@ VCOVER                  = vcover
 VWORK     				= work
 VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/$(CFG)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
+export QUESTASIM_HOME  ?= $(abspath $(shell which $(VLIB))/../../)
 USES_DPI = 1
 
 # Special var to point to tool and installation dependent path of DPI headers.
@@ -374,7 +375,7 @@ vopt_corev-dv:
 			-o $(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			-l vopt.log
 
-gen_corev-dv:
+gen_corev-dv: $(LIBS)
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
