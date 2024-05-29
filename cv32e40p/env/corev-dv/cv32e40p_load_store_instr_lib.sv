@@ -17,7 +17,7 @@
 
 
  class cv32e40p_multi_page_load_store_instr_stream extends riscv_multi_page_load_store_instr_stream;
-    rand bit          has_taken_avail_comp_reg[];
+    rand int          has_taken_avail_comp_reg[];
     riscv_reg_t       s0_a5_avail_regs[];
 
     constraint with_compress_instructions_c {
@@ -48,7 +48,7 @@
 
 
  class cv32e40p_mem_region_stress_test extends riscv_mem_region_stress_test;
-    rand bit          has_taken_avail_comp_reg[];
+    rand int          has_taken_avail_comp_reg[];
     riscv_reg_t       s0_a5_avail_regs[];
 
     constraint with_compress_instructions_c {
