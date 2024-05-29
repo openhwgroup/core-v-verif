@@ -215,7 +215,7 @@ class vsstatus_csr_t final: public base_status_csr_t {
   vsstatus_csr_t(processor_t* const proc, const reg_t addr);
 
   reg_t read() const noexcept override {
-    return openhw::reg::unlogged_read();
+    return openhw::reg::read();
   }
 
  protected:
@@ -230,7 +230,7 @@ class mstatus_csr_t final: public base_status_csr_t {
   mstatus_csr_t(processor_t* const proc, const reg_t addr);
 
   reg_t read() const noexcept override {
-    return openhw::reg::unlogged_read();
+    return openhw::reg::read();
   }
 
  protected:

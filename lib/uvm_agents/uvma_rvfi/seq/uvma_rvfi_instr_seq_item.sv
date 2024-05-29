@@ -328,26 +328,24 @@ function st_rvfi uvma_rvfi_instr_seq_item_c::seq2rvfi();
     rvfi.mem_wmask = mem_wmask;
 
     foreach(addr_csrs[i]) begin
-        rvfi.csr_valid[csr_index] = 1;
-        rvfi.csr_addr [csr_index] = addr_csrs[i].addr;
-        rvfi.csr_rdata[csr_index] = addr_csrs[i].rdata;
-        rvfi.csr_rmask[csr_index] = addr_csrs[i].rmask;
-        rvfi.csr_wdata[csr_index] = addr_csrs[i].wdata;
-        rvfi.csr_wmask[csr_index] = addr_csrs[i].wmask;
-        csr_index++;
-        if (csr_index >= CSR_QUEUE_SIZE)
-            break;
+        longint unsigned addr = addr_csrs[i].addr;
+
+        rvfi.csr_valid[addr] = 1;
+        rvfi.csr_addr [addr] = addr_csrs[i].addr;
+        rvfi.csr_rdata[addr] = addr_csrs[i].rdata;
+        rvfi.csr_rmask[addr] = addr_csrs[i].rmask;
+        rvfi.csr_wdata[addr] = addr_csrs[i].wdata;
+        rvfi.csr_wmask[addr] = addr_csrs[i].wmask;
     end
     foreach(name_csrs[i]) begin
-        rvfi.csr_valid[csr_index] = 1;
-        rvfi.csr_addr [csr_index] = csr_name2addr[i];
-        rvfi.csr_rdata[csr_index] = name_csrs[i].rdata;
-        rvfi.csr_rmask[csr_index] = name_csrs[i].rmask;
-        rvfi.csr_wdata[csr_index] = name_csrs[i].wdata;
-        rvfi.csr_wmask[csr_index] = name_csrs[i].wmask;
-        csr_index++;
-        if (csr_index >= CSR_QUEUE_SIZE)
-            break;
+        longint unsigned addr = csr_name2addr[i];
+
+        rvfi.csr_valid[addr] = 1;
+        rvfi.csr_addr [addr] = csr_name2addr[i];
+        rvfi.csr_rdata[addr] = name_csrs[i].rdata;
+        rvfi.csr_rmask[addr] = name_csrs[i].rmask;
+        rvfi.csr_wdata[addr] = name_csrs[i].wdata;
+        rvfi.csr_wmask[addr] = name_csrs[i].wmask;
     end
     return rvfi;
 
@@ -398,7 +396,7 @@ function void uvma_rvfi_instr_seq_item_c::rvfi2seq(st_rvfi rvfi);
     mem_wdata = rvfi.mem_wdata;
     mem_wmask = rvfi.mem_wmask;
 
-    for (int i = 0; i < CSR_QUEUE_SIZE; i++) begin
+    for (int i = 0; i < CSR_MAX_SIZE; i++) begin
         if (rvfi.csr_valid[i]) begin
             uvma_rvfi_csr_seq_item_c csr_trn = uvma_rvfi_csr_seq_item_c#(XLEN)::type_id::create({rvfi.csr_addr[i], "_trn"});
             csr_trn.addr  = rvfi.csr_addr[i];

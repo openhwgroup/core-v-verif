@@ -69,19 +69,19 @@ typedef struct packed {
    bit [MAX_XLEN-1:0]         mem_wdata;
    bit [MAX_XLEN-1:0]         mem_wmask;
 
-   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_valid;
-   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_addr;
-   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_rdata;
-   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_rmask;
-   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_wdata;
-   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_wmask;
+   bit [CSR_MAX_SIZE-1:0] [MAX_XLEN-1:0] csr_valid;
+   bit [CSR_MAX_SIZE-1:0] [MAX_XLEN-1:0] csr_addr;
+   bit [CSR_MAX_SIZE-1:0] [MAX_XLEN-1:0] csr_rdata;
+   bit [CSR_MAX_SIZE-1:0] [MAX_XLEN-1:0] csr_rmask;
+   bit [CSR_MAX_SIZE-1:0] [MAX_XLEN-1:0] csr_wdata;
+   bit [CSR_MAX_SIZE-1:0] [MAX_XLEN-1:0] csr_wmask;
 
 } st_rvfi;
 
 `define ST_NUM_WORDS ($size(st_rvfi)/MAX_XLEN)
 parameter ST_NUM_WORDS =  ($size(st_rvfi)/MAX_XLEN);
 
-    typedef bit [ST_NUM_WORDS-1:0] [63:0] vector_rvfi;
+    typedef bit [ST_NUM_WORDS-1:0] [MAX_XLEN-1:0] vector_rvfi;
 typedef union {
     st_rvfi rvfi;
     vector_rvfi array;
@@ -97,5 +97,13 @@ function string get_mode_str(uvma_rvfi_mode mode);
    return "?";
 
 endfunction : get_mode_str
+
+function bit is_csr_insn (st_rvfi rvfi);
+    return (rvfi.insn[6:0] == 'b1110011);
+endfunction : is_csr_insn
+
+function bit [11:0] get_insn_rs1 (st_rvfi rvfi);
+    return rvfi.insn[31:20];
+endfunction
 
 `endif // __UVMA_RVFI_TDEFS_SV__

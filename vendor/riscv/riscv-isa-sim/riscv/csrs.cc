@@ -45,7 +45,6 @@ void csr_t::verify_permissions(insn_t insn, bool write) const {
       throw trap_virtual_instruction(insn.bits());
     throw trap_illegal_instruction(insn.bits());
   }
-  this->custom_verify_permissions(insn, write);
 }
 
 csr_t::~csr_t() {

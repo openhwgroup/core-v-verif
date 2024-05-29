@@ -46,7 +46,7 @@ void Simulation::default_params(openhw::Params &params) {
   params.set_uint64_t("/top/", "bootrom_size", 0x1000UL, "0x1000",
              "bootrom size");
 
-  params.set_bool("/top/", "dram", true, "true", "DRAM enable");
+  params.set_bool("/top/", "dram_enable", true, "true", "DRAM enable");
   params.set_uint64_t("/top/", "dram_base", 0x80000000UL,
              "0x80000000", "DRAM base address");
   params.set_uint64_t("/top/", "dram_size", 0x400UL * 1024 * 1024,
@@ -115,7 +115,7 @@ Simulation::Simulation(const cfg_t *cfg, string elf_path,
                  plugin_devs, std::vector<std::string>() = {elf_path},
                  dm_config,
                  "tandem.log", // log_path
-                 true,         // dtb_enabled
+                 false,         // dtb_enabled
                  nullptr,      // dtb_file
                  false,        // socket_enabled
                  NULL,         // cmd_file
@@ -169,7 +169,7 @@ void Simulation::make_mems(const std::vector<mem_cfg_t> &layout) {
     this->mems.push_back(bootrom_device);
   }
 
-  bool dram = (this->params["/top/dram"]).a_bool;
+  bool dram = (this->params["/top/dram_enable"]).a_bool;
   uint64_t dram_base = (this->params["/top/dram_base"]).a_uint64_t;
   uint64_t dram_size = (this->params["/top/dram_size"]).a_uint64_t;
   if (dram) {
@@ -188,6 +188,7 @@ std::vector<st_rvfi> Simulation::step(size_t n,
       continue;
 
     vspike[i] = ((Processor *)procs[i])->step(1, vreference[i]);
+    vspike[i].halt = (sim_t::done() ? ((sim_t::exit_code() << 1) | 1) : 0);
 
     host = context_t::current();
     if (!sim_t::done()) {

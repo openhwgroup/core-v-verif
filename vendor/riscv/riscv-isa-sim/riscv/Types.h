@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include "Params.h"
 
-#define CSR_SIZE 250
+#define CSR_MAX_SIZE 4096
 
 typedef struct {
    uint64_t                 nret_id;
@@ -55,12 +55,13 @@ typedef struct {
    uint64_t                 mem_wdata;
    uint64_t                 mem_wmask;
 
-   uint64_t                 csr_valid   [CSR_SIZE];
-   uint64_t                 csr_addr    [CSR_SIZE];
-   uint64_t                 csr_rdata   [CSR_SIZE];
-   uint64_t                 csr_rmask   [CSR_SIZE];
-   uint64_t                 csr_wdata   [CSR_SIZE];
-   uint64_t                 csr_wmask   [CSR_SIZE];
+   uint64_t                 csr_valid   [CSR_MAX_SIZE];
+   uint64_t                 csr_addr    [CSR_MAX_SIZE];
+   uint64_t                 csr_rdata   [CSR_MAX_SIZE];
+   uint64_t                 csr_rmask   [CSR_MAX_SIZE];
+   uint64_t                 csr_wdata   [CSR_MAX_SIZE];
+   uint64_t                 csr_wmask   [CSR_MAX_SIZE];
 
 } st_rvfi;
+
 

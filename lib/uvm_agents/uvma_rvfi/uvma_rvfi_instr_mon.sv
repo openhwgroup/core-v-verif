@@ -131,7 +131,7 @@ endtask : run_phase
 task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
 
   while(1) begin
-      @(cntxt.instr_vif[0].mon_cb);
+      @(cntxt.instr_vif[0].mon_cb)
 
       for(int i = 0; i < cfg.nret; i++)
       begin
@@ -139,7 +139,7 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
           bit monitor_condition;
 
           nret_id = i;
-          monitor_condition = (!cfg.unified_exceptions) ?
+          monitor_condition = (!cfg.core_cfg.unified_traps) ?
                               (cntxt.instr_vif[nret_id].mon_cb.rvfi_valid || cntxt.instr_vif[nret_id].mon_cb.rvfi_trap[0]) :
                               (cntxt.instr_vif[nret_id].mon_cb.rvfi_valid);
 
@@ -210,6 +210,8 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                       if (cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_csr_wmask != 0) begin
                           csr_trn.wmask = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_csr_wmask;
                           csr_trn.wdata = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_csr_wdata;
+                          csr_trn.rmask = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_csr_rmask;
+                          csr_trn.rdata = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_csr_rdata;
                           mon_trn.addr_csrs[addr] = csr_trn;
                       end
                       foreach(supported_csrs_addrs[i]) begin
@@ -218,6 +220,8 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                           csr_trn.addr = addr;
                           csr_trn.wmask = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_wmask[addr];
                           csr_trn.wdata = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_wdata[addr];
+                          csr_trn.rmask = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_rmask[addr];
+                          csr_trn.rdata = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_rdata[addr];
                           mon_trn.addr_csrs[addr] = csr_trn;
                       end
                   end
@@ -225,7 +229,12 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                   // Decode interrupts that need to be communicated to ISS (external or NMI bus faults)
                   if (mon_trn.intr) begin
                       // The cause of the interrupt should be in the "rdata" field of the mcause CSR RVFI port
-                      bit [XLEN-1:0] csr_mcause = mon_trn.name_csrs["mcause"].rdata;
+                      bit [XLEN-1:0] csr_mcause;
+
+                      if (!cfg.unified_csr_vif)
+                          csr_mcause = mon_trn.name_csrs["mcause"].rdata;
+                      else
+                          csr_mcause = mon_trn.addr_csrs[MCAUSE].rdata;
 
                       // External interrupt
                       if (csr_mcause[31]) begin
@@ -244,9 +253,11 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                           end
                       end
                   end
-                  if (mon_trn.name_csrs.exists("dcsr")) begin
+                  if (!cfg.unified_csr_vif && mon_trn.name_csrs.exists("dcsr"))
                       dcsr_ret_data = mon_trn.name_csrs["dcsr"].get_csr_retirement_data();
-                  end
+                  else if (cfg.unified_csr_vif && mon_trn.addr_csrs.exists(DCSR))
+                      dcsr_ret_data = mon_trn.addr_csrs[DCSR].get_csr_retirement_data();
+
                   // In debug mode, detect NMIP event for a data bus error
                   if (mon_trn.dbg_mode &&
                       !last_dcsr_nmip &&
