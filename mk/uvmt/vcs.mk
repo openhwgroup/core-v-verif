@@ -314,7 +314,7 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 
 corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 
-gen_corev-dv:
+gen_corev-dv: $(LIBS)
 	@echo "$(BANNER)"
 	@echo "* Generating $(TEST) with corev-dv..."
 	@echo "* with VCS_RUN_FLAGS = $(VCS_RUN_FLAGS) "
