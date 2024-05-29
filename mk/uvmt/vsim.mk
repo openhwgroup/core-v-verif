@@ -34,6 +34,7 @@ VCOVER                  = vcover
 VWORK     				= work
 VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/$(CFG)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
+export QUESTASIM_HOME  ?= $(abspath $(shell which $(VLIB))/../../)
 USES_DPI = 1
 
 # Special var to point to tool and installation dependent path of DPI headers.
