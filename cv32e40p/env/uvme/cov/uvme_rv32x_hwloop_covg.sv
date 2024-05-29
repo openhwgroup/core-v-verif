@@ -119,7 +119,8 @@ class uvme_rv32x_hwloop_covg # (
   bit           has_pending_trap_due2_irq = 0;    // has trap pending due to irq entry
   bit           enter_hwloop_sub = 0;
   int           enter_hwloop_sub_cnt = 0;
-  bit           pending_irq = 0, pending_irq_ack = 0;
+  bit           pending_irq = 0;
+  bit           pending_irq_ack = 0;
   logic [31:0]  valid_irq_prev = 32'h0;
   logic [31:0]  prev_irq_onehot_priority = 0, prev_irq_onehot_priority_always = 0;
   bit           prev_irq_onehot_priority_is_0 = 0;
