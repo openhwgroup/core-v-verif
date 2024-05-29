@@ -143,18 +143,20 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
         VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
     endif
     ifeq ($(ISS),SPIKE)
-	VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
-	VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
-	LIBS = spike_lib
+        VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+        VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
+        LIBS = spike_lib
     endif
-	ifeq ($(ISS),RM)
-    VSIM_FLAGS += +USE_RM
-    VSIM_FLAGS += +define+USE_RM
-    VLOG_FILE_LIST += -f $(RM_HOME)/reference_model.flist
-    VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
-    VSIM_FLAGS += -gblso $(SPIKE_LIBS_DIR)/libriscv.so
-    LIBS = spike_lib
-	endif
+    ifeq ($(ISS),RM)
+        VSIM_FLAGS += +USE_RM
+        VLOG_FLAGS += +USE_RM
+        VSIM_FLAGS += +define+USE_RM
+        VLOG_FLAGS += +define+USE_RM
+        VLOG_FILE_LIST += -f $(RM_HOME)/reference_model.flist
+        VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+        VSIM_FLAGS += -gblso $(SPIKE_LIBS_DIR)/libriscv.so
+        LIBS = spike_lib
+    endif
 endif
 
 ifeq ($(call IS_YES,$(COMPILE_SPIKE)),YES)
@@ -214,7 +216,7 @@ VSIM_FLAGS 			+= -noautoldlibpath
 # This must currently always be exported, since the reference_model_wrap is used in uvmt_cv32e40s_tb.sv
 # TODO: Make a "dummy" reference model, that is loaded when it is disabled, like ImperasDV. 
 # Or find another solution to handle swapping different ISSs
-export FILE_LIST_RM      ?= -f $(RM_HOME)/reference_model.flist
+export FILE_LIST_RM  = -f $(RM_HOME)/reference_model.flist
 
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
   ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
