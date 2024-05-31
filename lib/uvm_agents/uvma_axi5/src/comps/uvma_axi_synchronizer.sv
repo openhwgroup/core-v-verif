@@ -23,35 +23,26 @@ class uvma_axi_synchronizer_c extends uvm_component;
    uvma_axi_cfg_c    cfg;
 
    // Sequence items queue
-   static uvma_axi_slv_seq_item_c w_trs_queue[int][$];
-   static uvma_axi_slv_seq_item_c r_trs_queue[int][$];
-   static uvma_axi_base_seq_item_c w_trs_item_bp[$];
-
-   // Handles to the monitor ports
-   uvm_analysis_port #(uvma_axi_transaction_c)       uvma_sqr_trs_port;
+   static uvma_axi_transaction_c w_trs_queue[int][$];
+   static uvma_axi_transaction_c r_trs_queue[int][$];
+   static uvma_axi_transaction_c w_trs_item_bp[$];
 
    // Exclusive transactions queue
-   static uvma_axi_slv_seq_item_c exclusive_r_access[int][int];
-   static uvma_axi_slv_seq_item_c exclusive_w_access[int][int];
+   static uvma_axi_transaction_c exclusive_r_access[int][$];
+   static uvma_axi_transaction_c exclusive_w_access[int][$];
+   static int exclusive_addr[int];
 
    // Queue of finished transactions
    static int w_finished_trs_id[$];
    static int r_finished_trs_id[$];
 
-   // Items that encapsulate all the transfers of a transaction to send it to other component outside the agent
-   static uvma_axi_transaction_c axi_r_transaction;
-   static uvma_axi_transaction_c axi_w_transaction;
-
    static int w_trs_class[$];
 
-   static int w_trs_id[int][$];
+   int  outstanding_read_call_times  = 0;
+   int  outstanding_write_call_times = 0;
 
-   static longint read_trs_id  = 0;
-   static longint write_trs_id = 0;
-
-   static int access_w_trs[][];
-   static int access_r_trs[][];
-
+   int  last_outoforder_if = -1;
+   int  count_outoforder   = -1;
 
    /**
     * Default constructor.
@@ -68,45 +59,40 @@ class uvma_axi_synchronizer_c extends uvm_component;
     * 1. Add transaction to w_trs_queue
     * 2. Change the state of the transaction for each transfer
     */
-   extern virtual function void add_w_trs(uvma_axi_base_seq_item_c axi_item);
+   extern virtual task add_w_trs(uvma_axi_transaction_c axi_witem);
 
    /**
     * 1. Add transaction to r_trs_queue
     * 2. Change the state of the transaction for each transfer
     */
-   extern virtual function void add_r_trs(uvma_axi_base_seq_item_c axi_item);
+   extern virtual task add_r_trs(uvma_axi_transaction_c axi_ritem);
 
    /**
     * List all write transfer that is ready to write in the memory
     */
-   extern virtual function void write_data();
+   extern virtual task write_data();
 
    /**
     * change the state of transaction for each read response
     */
-   extern virtual function void read_data_complete(int selected_id, uvma_axi_slv_seq_item_c slv_resp);
+   extern virtual function void read_data_complete(int selected_id);
 
    /**
     * 1. prepare a transaction to send it to other component
     * 2. Delete the completed transactions the transaction from r queue
     */
-   extern virtual function void read_burst_complete(int selected_id, uvma_axi_slv_seq_item_c slv_resp);
+   extern virtual function void read_burst_complete(int selected_id);
 
    /**
     * 1. prepare a transaction to send it to other component
     * 2. Delete the completed transactions the transaction from w queue
     */
-   extern virtual function void write_burst_complete(int selected_id, uvma_axi_slv_seq_item_c slv_resp);
+   extern virtual function void write_burst_complete(int selected_id);
 
    /**
     * Return the b_resp of an exclusive write access
     */
    extern virtual function int check_exclusive_resp(int selected_id);
-
-   /**
-    * Standard method to select the ID from a table according to fifo
-    */
-   extern virtual function int select_id(int tab[]);
 
    /**
     * Standard method to select the Write ID from a table
@@ -116,12 +102,27 @@ class uvma_axi_synchronizer_c extends uvm_component;
    /**
     * Standard method to select the READ ID from a table
     */
-   extern virtual function int r_select_id(int tab[]);
+   extern virtual task r_select_id(int tab[], output int selected);
+
+   /**
+    * Standard method to select the READ ID from a table
+    */
+   extern virtual task read_data(int selected_id);
+
+   /**
+    * Standard api to read data from the memory
+    */
+   extern virtual task memory_read_access_api(uvma_axi_transaction_c axi_item, output uvma_axi_sig_data_t read_data);
+
+   /**
+    * Standard api to write data in the memory
+    */
+   extern virtual task memory_write_access_api(uvma_axi_transaction_c axi_item);
 
    /**
    * check the memory access permission
    */
-   extern virtual function int check_memory_access(uvma_axi_base_seq_item_c item, uvma_axi_access_type_enum type_access);
+   extern virtual function int check_memory_access(uvma_axi_transaction_c axi_item);
 
 endclass : uvma_axi_synchronizer_c
 
@@ -132,13 +133,10 @@ function uvma_axi_synchronizer_c::new(string name = "uvma_axi_synchronizer_c", u
 
 endfunction
 
+
 function void uvma_axi_synchronizer_c::build_phase(uvm_phase phase);
 
    super.build_phase(phase);
-
-   axi_r_transaction = uvma_axi_transaction_c::type_id::create("axi_r_transaction");
-
-   this.uvma_sqr_trs_port   = new("uvma_sqr_trs_port", this);
 
    void'(uvm_config_db#(uvma_axi_cntxt_c)::get(this, "", "cntxt", cntxt));
       if (cntxt == null) begin
@@ -152,342 +150,288 @@ function void uvma_axi_synchronizer_c::build_phase(uvm_phase phase);
 
 endfunction
 
-function void uvma_axi_synchronizer_c::add_w_trs(uvma_axi_base_seq_item_c axi_item);
 
-   uvma_axi_base_seq_item_c  last_w_req;
-   uvma_axi_slv_seq_item_c   slv_rsp;
+task uvma_axi_synchronizer_c::add_w_trs(uvma_axi_transaction_c axi_witem);
+
+   uvma_axi_transaction_c  last_w_req;
+   uvma_axi_transaction_c  axi_item;
    int size;
-   int i = w_trs_queue[axi_item.aw_id].size();
+   int index;
    longint addr, Aligned_Address, Lower_Wrap_Boundary, Upper_Wrap_Boundary;
    int Number_Bytes, dtsize;
    bit aligned;
 
-   last_w_req = uvma_axi_base_seq_item_c::type_id::create("last_w_req");
-   slv_rsp    = uvma_axi_slv_seq_item_c::type_id::create("slv_rsp");
+   last_w_req = uvma_axi_transaction_c::type_id::create("last_w_req");
+   axi_item = uvma_axi_transaction_c::type_id::create("axi_item");
+   $cast(axi_item, axi_witem.clone());
 
-   if(axi_item.aw_valid && axi_item.aw_ready) begin
+   if(axi_item.m_txn_type == UVMA_AXI_WRITE_ADD_REQ) begin
 
-      if(access_w_trs.size() <= axi_item.aw_id) begin
-         access_w_trs = new [axi_item.aw_id +1] (access_w_trs);
-         access_w_trs[axi_item.aw_id] = new[1];
-         access_w_trs[axi_item.aw_id][0] = 1;
-      end else begin
-         access_w_trs[axi_item.aw_id] = new[access_w_trs[axi_item.aw_id].size()+1] (access_w_trs[axi_item.aw_id]);
-         access_w_trs[axi_item.aw_id][access_w_trs[axi_item.aw_id].size()-1] = 1;
-      end
+      if(w_trs_queue.size() > 0) begin
+         index = w_trs_queue[axi_item.m_id].size();
+      end else index = 0;
 
-      size = w_trs_queue[axi_item.aw_id].size();
-      addr = axi_item.aw_addr; // Variable for current address
-      Number_Bytes = 2**axi_item.aw_size;
+      size = w_trs_queue[axi_item.m_id].size();
+      addr = axi_item.m_addr; // Variable for current address
+      Number_Bytes = 2**axi_item.m_size;
       Aligned_Address = (int'(addr/Number_Bytes) * Number_Bytes);
       aligned = (Aligned_Address == addr); // Check whether addr is aligned to nbytes
-      dtsize = Number_Bytes * axi_item.aw_len; // Maximum total data transaction size
-      write_trs_id++;
-      axi_item.write_trs_id = write_trs_id;
-      if (axi_item.aw_burst == 2) begin
+      dtsize = Number_Bytes * axi_item.m_len; // Maximum total data transaction size
+      if (axi_item.m_burst == 2) begin
          Lower_Wrap_Boundary = (int'(addr/dtsize) * dtsize);
          // addr must be aligned for a wrapping burst
          Upper_Wrap_Boundary = Lower_Wrap_Boundary + dtsize;
       end
 
-      for(int i=0; i < axi_item.aw_len+1; i++) begin
+      for(int j=0; j < axi_item.m_len+1; j++) begin
 
-         axi_item.Aw_Lower_Byte_Lane = addr - (int'(addr/(AXI_ADDR_WIDTH/8))) * (AXI_ADDR_WIDTH/8);
+         axi_item.lower_byte_lane = addr - (int'(addr/(MAX_ADDR_WIDTH/8))) * (MAX_ADDR_WIDTH/8);
          if (aligned)
-            axi_item.Aw_Upper_Byte_Lane = axi_item.Aw_Lower_Byte_Lane + Number_Bytes - 1;
+            axi_item.upper_byte_lane = axi_item.lower_byte_lane + Number_Bytes - 1;
          else
-            axi_item.Aw_Upper_Byte_Lane = Aligned_Address + Number_Bytes - 1 - (int'(addr/(AXI_ADDR_WIDTH/8))) * (AXI_ADDR_WIDTH/8);
+            axi_item.upper_byte_lane = Aligned_Address + Number_Bytes - 1 - (int'(addr/(MAX_ADDR_WIDTH/8))) * (MAX_ADDR_WIDTH/8);
 
-         axi_item.aw_addr =  addr - addr%(AXI_ADDR_WIDTH/8);
-         slv_rsp.mon_req = new axi_item;
-         w_trs_queue[axi_item.aw_id][w_trs_queue[axi_item.aw_id].size()] = new slv_rsp;
-         w_trs_queue[axi_item.aw_id][size + i].mon_req.w_trs_status = ADDR_DATA_NOT_COMPLETE;
+         axi_item.m_addr =  addr - addr%(MAX_ADDR_WIDTH/8);
+
+         w_trs_queue[axi_item.m_id][w_trs_queue[axi_item.m_id].size()] = new axi_item;
+         w_trs_queue[axi_item.m_id][size + j].m_trs_status = ADDR_DATA_NOT_COMPLETE;
 
          // Increment address if necessary
-         if (axi_item.aw_burst != 0) begin
+         if (axi_item.m_burst != 0) begin
             if (aligned) begin
-
                addr = addr + Number_Bytes;
-               if (axi_item.aw_burst == 2 && addr >= Upper_Wrap_Boundary) addr = Lower_Wrap_Boundary;
-
+               if (axi_item.m_burst == 2 && addr >= Upper_Wrap_Boundary) addr = Lower_Wrap_Boundary;
             end else begin
-
                addr = Aligned_Address + Number_Bytes;
                aligned = 1; // All transfers after the first are aligned
-
             end
          end
       end
-      w_trs_class.push_back(axi_item.aw_id);
+      w_trs_class.push_back(axi_item.m_id);
 
       if(w_trs_item_bp.size() > 0) begin
-         do begin
 
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_valid      = w_trs_item_bp[0].w_valid;
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_data       = w_trs_item_bp[0].w_data;
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_strb       = w_trs_item_bp[0].w_strb;
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_last       = w_trs_item_bp[0].w_last;
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_user       = w_trs_item_bp[0].w_user;
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_latency    = w_trs_item_bp[0].w_latency;
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_start_time = w_trs_item_bp[0].w_start_time;
-            w_trs_queue[axi_item.aw_id][i].mon_req.w_trs_status = ADDR_DATA_COMPLETE;
+         do begin
+            w_trs_queue[axi_item.m_id][index].m_data.push_back(w_trs_item_bp[0].m_data[0]);
+            w_trs_queue[axi_item.m_id][index].m_wstrb.push_back(w_trs_item_bp[0].m_wstrb[0]);
+            w_trs_queue[axi_item.m_id][index].m_last.push_back(w_trs_item_bp[0].m_last[0]);
+            w_trs_queue[axi_item.m_id][index].m_user       = w_trs_item_bp[0].m_user;
+            w_trs_queue[axi_item.m_id][index].m_trs_status = ADDR_DATA_COMPLETE;
             last_w_req = new w_trs_item_bp[0];
             w_trs_item_bp.delete(0);
-            i++;
+            index++;
+         end while(w_trs_item_bp.size() > 0 && !last_w_req.m_last[0]);
 
-         end while(w_trs_item_bp.size() > 0 && !last_w_req.w_last);
-
-         if(last_w_req.w_last == 1) begin
-            w_finished_trs_id.push_back(w_trs_queue[axi_item.aw_id][i-1].mon_req.aw_id);
-            w_trs_id[w_trs_queue[axi_item.aw_id][i-1].mon_req.aw_id].push_back(axi_item.write_trs_id);
+         if(last_w_req.m_last[0] == 1) begin
             w_trs_class.delete(0);
          end
       end
-   end
-
-   if(axi_item.w_valid && axi_item.w_ready) begin
-      if(w_trs_queue.size() > 0 && w_trs_queue[w_trs_class[0]].size() > 0 && w_trs_queue[w_trs_class[0]][$].mon_req.w_trs_status == ADDR_DATA_NOT_COMPLETE) begin
+   end else begin
+      if(w_trs_queue.size() > 0 && w_trs_queue[w_trs_class[0]].size() > 0 && w_trs_queue[w_trs_class[0]][$].m_trs_status == ADDR_DATA_NOT_COMPLETE) begin
 
          `uvm_info( "Core Test", $sformatf("NEW W_TRS"), UVM_HIGH)
          foreach(w_trs_queue[w_trs_class[0]][i]) begin
-            if(w_trs_queue[w_trs_class[0]][i].mon_req.w_trs_status == ADDR_DATA_NOT_COMPLETE) begin
+            if(w_trs_queue[w_trs_class[0]][i].m_trs_status == ADDR_DATA_NOT_COMPLETE) begin
 
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_valid      = axi_item.w_valid;
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_data       = axi_item.w_data;
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_strb       = axi_item.w_strb;
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_last       = axi_item.w_last;
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_user       = axi_item.w_user;
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_latency    = axi_item.w_latency;
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_start_time = axi_item.w_start_time;
-               w_trs_queue[w_trs_class[0]][i].mon_req.w_trs_status = ADDR_DATA_COMPLETE;
-               if(axi_item.w_last) begin
-                  w_finished_trs_id.push_back(w_trs_class[0]);
+               w_trs_queue[w_trs_class[0]][i].m_data.push_back(axi_item.m_data[0]);
+               w_trs_queue[w_trs_class[0]][i].m_wstrb.push_back(axi_item.m_wstrb[0]);
+               w_trs_queue[w_trs_class[0]][i].m_last.push_back(axi_item.m_last[0]);
+               w_trs_queue[w_trs_class[0]][i].m_user       = axi_item.m_user;
+               w_trs_queue[w_trs_class[0]][i].m_trs_status = ADDR_DATA_COMPLETE;
+               if(axi_item.m_last[0]) begin
                   w_trs_class.delete(0);
-                  w_trs_id[axi_item.aw_id].push_back(axi_item.write_trs_id);
                end
                break;
-
             end
          end
       end else begin
-
          w_trs_item_bp.push_back(axi_item);
       end
    end
    write_data();
 
-endfunction : add_w_trs
+endtask : add_w_trs
 
-function void uvma_axi_synchronizer_c::add_r_trs(uvma_axi_base_seq_item_c axi_item);
 
-   uvma_axi_slv_seq_item_c slv_rsp;
+task uvma_axi_synchronizer_c::add_r_trs(uvma_axi_transaction_c axi_ritem);
+
    longint addr, Aligned_Address, Lower_Wrap_Boundary, Upper_Wrap_Boundary;
    int Number_Bytes, dtsize;
    bit aligned;
-   slv_rsp = uvma_axi_slv_seq_item_c::type_id::create("slv_rsp");
+   uvma_axi_transaction_c axi_item;
+   longint init_data = 0;
 
-   read_trs_id++;
-   axi_item.read_trs_id = read_trs_id;
+   axi_item = uvma_axi_transaction_c::type_id::create("axi_item");
+   $cast(axi_item, axi_ritem.clone());
 
-   if(access_r_trs.size() <= axi_item.ar_id) begin
-      access_r_trs = new [axi_item.ar_id +1] (access_r_trs);
-      access_r_trs[axi_item.ar_id] = new[1];
-      access_r_trs[axi_item.ar_id][0] = 1;
-   end else begin
-      access_r_trs[axi_item.ar_id] = new[access_r_trs[axi_item.ar_id].size()+1] (access_r_trs[axi_item.ar_id]);
-      access_r_trs[axi_item.ar_id][access_r_trs[axi_item.ar_id].size()-1] = 1;
-   end
-   addr = axi_item.ar_addr; // Variable for current address
-   Number_Bytes = 2**axi_item.ar_size;
+   addr = axi_item.m_addr; // Variable for current address
+   Number_Bytes = 2**axi_item.m_size;
    Aligned_Address = (int'(addr/Number_Bytes) * Number_Bytes);
    aligned = (Aligned_Address == addr); // Check whether addr is aligned to nbytes
-   dtsize = Number_Bytes * axi_item.ar_len; // Maximum total data transaction size
-   if (axi_item.ar_burst == 2) begin
+   dtsize = Number_Bytes * axi_item.m_len; // Maximum total data transaction size
+   if (axi_item.m_burst == 2) begin
       Lower_Wrap_Boundary = (int'(addr/dtsize) * dtsize);
       // addr must be aligned for a wrapping burst
       Upper_Wrap_Boundary = Lower_Wrap_Boundary + dtsize;
    end
-   for(int i=0; i < axi_item.ar_len+1; i++) begin
 
-      axi_item.Ar_Lower_Byte_Lane = addr - (int'(addr/(AXI_ADDR_WIDTH/8))) * (AXI_ADDR_WIDTH/8);
+   for(int i=0; i < axi_item.m_len+1; i++) begin
+
+      axi_item.lower_byte_lane = addr - (int'(addr/(MAX_ADDR_WIDTH/8))) * (MAX_ADDR_WIDTH/8);
       if (aligned)
-         axi_item.Ar_Upper_Byte_Lane = axi_item.Ar_Lower_Byte_Lane + Number_Bytes - 1;
+         axi_item.upper_byte_lane = axi_item.lower_byte_lane + Number_Bytes - 1;
       else
-         axi_item.Ar_Upper_Byte_Lane = Aligned_Address + Number_Bytes - 1 - (int'(addr/(AXI_ADDR_WIDTH/8))) * (AXI_ADDR_WIDTH/8);
+         axi_item.upper_byte_lane = Aligned_Address + Number_Bytes - 1 - (int'(addr/(MAX_ADDR_WIDTH/8))) * (MAX_ADDR_WIDTH/8);
 
-      axi_item.ar_addr =  addr - addr%(AXI_ADDR_WIDTH/8);
-      if(i == axi_item.ar_len) begin
-         axi_item.r_trs_status = LAST_READ_DATA;
-      end else begin
-         axi_item.r_trs_status = READ_DATA_NOT_COMPLETE;
+      axi_item.m_addr =  addr - addr%(MAX_ADDR_WIDTH/8);
+
+      r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()] = new axi_item;
+
+      if(i == axi_item.m_len) begin
+         r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_last.push_back(1);
+         r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_trs_status = ADDR_DATA_NOT_COMPLETE;
+         end else begin
+         r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_last.push_back(0);
+         r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_trs_status = ADDR_DATA_NOT_COMPLETE;
       end
 
-      slv_rsp.mon_req = new axi_item;
-      r_trs_queue[axi_item.ar_id][r_trs_queue[axi_item.ar_id].size()] = new slv_rsp;
+      if(axi_item.m_lock) begin
+         r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_resp.push_back(1);
+         exclusive_addr[r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_addr] = 1;
+      end else r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_resp.push_back(0);
+      r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_user = 0;
+      r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_txn_type = UVMA_AXI_READ_RSP;
+      r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_data[0] = init_data;
 
       // Increment address if necessary
-      if (axi_item.ar_burst != 0) begin
+      if (axi_item.m_burst != 0) begin
          if (aligned) begin
             addr = addr + Number_Bytes;
-            if (axi_item.ar_burst == 2 && addr >= Upper_Wrap_Boundary) addr = Lower_Wrap_Boundary;
+            if (axi_item.m_burst == 2 && addr >= Upper_Wrap_Boundary) addr = Lower_Wrap_Boundary;
          end else begin
             addr = Aligned_Address + Number_Bytes;
             aligned = 1; // All transfers after the first are aligned
          end
       end
    end
-   r_finished_trs_id.push_back(axi_item.ar_id);
+   r_finished_trs_id.push_back(axi_item.m_id);
 
-endfunction : add_r_trs
+endtask : add_r_trs
 
-function void uvma_axi_synchronizer_c::write_data();
+
+task uvma_axi_synchronizer_c::write_data();
 
    longint exclusive_data;
    longint original_data;
-   uvma_axi_slv_seq_item_c ex_r_data;
+   uvma_axi_transaction_c ex_r_data;
    int last_trs = -1;
    int checkexclusive;
-   uvma_axi_access_type_enum acc_type = UVMA_AXI_ACCESS_WRITE;
 
-   ex_r_data = uvma_axi_slv_seq_item_c::type_id::create("ex_r_data");
+   ex_r_data = uvma_axi_transaction_c::type_id::create("ex_r_data");
 
    foreach(w_trs_queue[i]) begin
       for(int j = 0; j < w_trs_queue[i].size(); j++) begin
-         if(w_trs_queue[i][j].mon_req.w_trs_status == ADDR_DATA_COMPLETE) begin
 
-            `uvm_info(get_type_name(), $sformatf("write request ready with id = %d", w_trs_queue[i][j].mon_req.aw_id), UVM_HIGH)
-            if(w_trs_queue[i][j].mon_req.aw_lock == 1 && cfg.axi_lock_enabled) begin
+         if(w_trs_queue[i][j].m_trs_status == ADDR_DATA_COMPLETE) begin
+            if(exclusive_addr[w_trs_queue[i][j].m_addr] == 1) exclusive_addr[w_trs_queue[i][j].m_addr] = -1;
+            if(w_trs_queue[i][j].m_lock == 1 && cfg.axi_lock_enabled) begin
 
                `uvm_info(get_type_name(), $sformatf("EXCLUSIVE ACCESS"), UVM_HIGH)
+               checkexclusive = 1;
 
-               exclusive_w_access[w_trs_queue[i][j].mon_req.aw_id][exclusive_w_access[w_trs_queue[i][j].mon_req.aw_id].size()] = new w_trs_queue[i][j];
-               for(int k = w_trs_queue[i][j].mon_req.Aw_Lower_Byte_Lane; k <= w_trs_queue[i][j].mon_req.Aw_Upper_Byte_Lane; k++) begin
-                  exclusive_data[((k+1)*8-1)-:8] = cntxt.mem.read(w_trs_queue[i][j].mon_req.aw_addr + k);
+               if(exclusive_w_access[w_trs_queue[i][j].m_id].size() > 0) begin
+                  if(exclusive_w_access[w_trs_queue[i][j].m_id][$].m_last[0] == 1) begin
+                     exclusive_w_access[w_trs_queue[i][j].m_id].delete();
+                     exclusive_w_access[w_trs_queue[i][j].m_id].push_back(w_trs_queue[i][j]);
+                  end
+               end else begin
+                  exclusive_w_access[w_trs_queue[i][j].m_id].push_back(w_trs_queue[i][j]);
                end
 
-               foreach(exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id][k]) begin
-                  ex_r_data = new exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id][k];
-                  if(ex_r_data.mon_req.ar_addr == w_trs_queue[i][j].mon_req.aw_addr && ex_r_data.mon_req.Ar_Lower_Byte_Lane == w_trs_queue[i][j].mon_req.Aw_Lower_Byte_Lane && ex_r_data.mon_req.Ar_Upper_Byte_Lane == w_trs_queue[i][j].mon_req.Aw_Upper_Byte_Lane) begin
-                     original_data = ex_r_data.r_data;
+               foreach(exclusive_r_access[w_trs_queue[i][j].m_id][k]) begin
+                  ex_r_data = new exclusive_r_access[w_trs_queue[i][j].m_id][k];
+                  if(ex_r_data.m_addr == w_trs_queue[i][j].m_addr && ex_r_data.lower_byte_lane == w_trs_queue[i][j].lower_byte_lane && ex_r_data.upper_byte_lane == w_trs_queue[i][j].upper_byte_lane) begin
+                     original_data = ex_r_data.m_data[0];
                      last_trs = k;
                      `uvm_info(get_type_name(), $sformatf("find first match trs req"), UVM_HIGH)
                      break;
                   end
                end
                checkexclusive = 1;
-
-               for(int k = w_trs_queue[i][j].mon_req.Aw_Lower_Byte_Lane; k <= w_trs_queue[i][j].mon_req.Aw_Upper_Byte_Lane; k++) begin
-                  `uvm_info(get_type_name(), $sformatf("DATA CHECK ITERATION = %d", k), UVM_HIGH)
-                  if(exclusive_data[((k+1)*8-1)-:8] != original_data[((k+1)*8-1)-:8]) begin
-                     checkexclusive = 0;
-                     `uvm_info(get_type_name(), $sformatf("Data in the request addr not match exclusive read data (exclusive_data = %h et  original_data = %h", exclusive_data[((k+1)*8-1)-:8], original_data[((k+1)*8-1)-:8]), UVM_HIGH)
-                     break;
-                  end
-               end
+               if(exclusive_addr[w_trs_queue[i][j].m_addr] == -1) checkexclusive = 0;
 
                if(last_trs == -1) begin
                   checkexclusive = -1;
                end
 
                if(checkexclusive == 1) begin
-                  exclusive_w_access[w_trs_queue[i][j].mon_req.aw_id][exclusive_w_access[w_trs_queue[i][j].mon_req.aw_id].size()-1].b_resp = 1;
-                  foreach(exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id][k]) begin
-                     if(k >= last_trs && last_trs != -1 && k < (exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id].size()-1)) begin
-                        exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id][k] =  exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id][k+1];
+                  exclusive_w_access[w_trs_queue[i][j].m_id][exclusive_w_access[w_trs_queue[i][j].m_id].size()-1].m_resp.push_back(1);
+                  foreach(exclusive_r_access[w_trs_queue[i][j].m_id][k]) begin
+                     if(k >= last_trs && last_trs != -1 && k < (exclusive_r_access[w_trs_queue[i][j].m_id].size()-1)) begin
+                        exclusive_r_access[w_trs_queue[i][j].m_id][k] =  exclusive_r_access[w_trs_queue[i][j].m_id][k+1];
                      end
                   end
-                  exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id].delete(exclusive_r_access[w_trs_queue[i][j].mon_req.aw_id].size()-1);
+                  exclusive_r_access[w_trs_queue[i][j].m_id].delete(exclusive_r_access[w_trs_queue[i][j].m_id].size()-1);
                end else begin
-                  exclusive_w_access[w_trs_queue[i][j].mon_req.aw_id][exclusive_w_access[w_trs_queue[i][j].mon_req.aw_id].size()-1].b_resp = 0;
+                  exclusive_w_access[w_trs_queue[i][j].m_id][exclusive_w_access[w_trs_queue[i][j].m_id].size()-1].m_resp.push_back(0);
                end
                last_trs = -1;
             end else begin
                `uvm_info(get_type_name(), $sformatf("NORMAL ACCESS"), UVM_HIGH)
                checkexclusive = 1;
             end
+            w_trs_queue[i][j].m_trs_status = WAITING_RESP;
 
-            if(check_memory_access(w_trs_queue[i][j].mon_req, acc_type) == 1) begin
-
+            if(check_memory_access(w_trs_queue[i][j]) == 1) begin
                if(checkexclusive == 1) begin
-                  for(int k = w_trs_queue[i][j].mon_req.Aw_Lower_Byte_Lane; k <= w_trs_queue[i][j].mon_req.Aw_Upper_Byte_Lane; k++) begin
-                      if(w_trs_queue[i][j].mon_req.w_strb[k]) cntxt.mem.write(w_trs_queue[i][j].mon_req.aw_addr + k, w_trs_queue[i][j].mon_req.w_data[((k+1)*8-1)-:8]);
+                  if(cfg.external_mem) begin
+                     if(w_trs_queue[i][j].m_last[0] == 1) begin
+                        if(j > 0 && w_trs_queue[i][j-1].m_last[$] == 0) begin
+                           w_trs_queue[i][j-1].m_data.push_back(w_trs_queue[i][j].m_data[0]);
+                           w_trs_queue[i][j-1].m_last.push_back(w_trs_queue[i][j].m_last[0]);
+                           w_trs_queue[i][j-1].m_wstrb.push_back(w_trs_queue[i][j].m_wstrb[0]);
+                            w_trs_queue[i].delete(j);
+                           memory_write_access_api(w_trs_queue[i][j-1]);
+                        end else begin
+                           memory_write_access_api(w_trs_queue[i][j]);
+                        end
+                        w_finished_trs_id.push_back(w_trs_queue[i][j].m_id);
+                     end else begin
+                        if(j > 0 && w_trs_queue[i][j-1].m_last[$] == 0) begin
+                            w_trs_queue[i][j-1].m_data.push_back(w_trs_queue[i][j].m_data[0]);
+                            w_trs_queue[i][j-1].m_last.push_back(w_trs_queue[i][j].m_last[0]);
+                            w_trs_queue[i][j-1].m_wstrb.push_back(w_trs_queue[i][j].m_wstrb[0]);
+                            w_trs_queue[i].delete(j);
+                        end
+                     end
+                  end else begin
+                     for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
+                        if(w_trs_queue[i][j].m_wstrb[0][k]) cntxt.mem.write(w_trs_queue[i][j].m_addr + k, w_trs_queue[i][j].m_data[0][((k+1)*8-1)-:8]);
+                     end
+                     if(w_trs_queue[i][j].m_last[0] == 1)  w_finished_trs_id.push_back(w_trs_queue[i][j].m_id);
                   end
                end else if(checkexclusive == 0) begin
                   `uvm_error(get_full_name(), "The memory location has been modified by another master");
                end else begin
                   `uvm_error(get_full_name(), "We cannot find any read exclusive access with the same parameters");
                end
-            end else if(check_memory_access(w_trs_queue[i][j].mon_req, acc_type) == 0) begin
-               `uvm_info(get_type_name(), " No need to write data in this memory location", UVM_LOW)
             end else begin
                `uvm_error(get_full_name(), "YOU CAN NOT WRITE DATA IN THIS ADDRESS LOCATION")
             end
-            w_trs_queue[i][j].mon_req.w_trs_status = WAITING_RESP;
-
          end
       end
    end
 
-endfunction : write_data
+endtask : write_data
 
 
-function void uvma_axi_synchronizer_c::write_burst_complete(int selected_id, uvma_axi_slv_seq_item_c slv_resp);
+function void uvma_axi_synchronizer_c::write_burst_complete(int selected_id);
 
-   uvma_axi_base_seq_item_c mon_req;
-   uvma_axi_slv_seq_item_c slv_exc_resp;
-   int j = -1;
-
-   mon_req      = uvma_axi_base_seq_item_c::type_id::create("mon_req");
-   slv_exc_resp = uvma_axi_slv_seq_item_c::type_id::create("slv_exc_resp");
-
-   access_w_trs[selected_id] = new[access_w_trs[selected_id].size()-1] (access_w_trs[selected_id]);
-
-   foreach(w_trs_queue[selected_id][i]) begin
-      if(w_trs_queue[selected_id][i].mon_req.w_last) begin
-         w_trs_queue[selected_id][i].b_id         = slv_resp.b_id;
-         w_trs_queue[selected_id][i].b_valid      = slv_resp.b_valid;
-         w_trs_queue[selected_id][i].b_resp       = slv_resp.b_resp;
-         w_trs_queue[selected_id][i].b_user       = slv_resp.b_user;
-         w_trs_queue[selected_id][i].b_start_time = $time;
-         break;
-      end
-   end
-
-   axi_w_transaction = uvma_axi_transaction_c::type_id::create("axi_w_transaction");
-
-   axi_w_transaction.access_type   = UVMA_AXI_ACCESS_WRITE;
-   axi_w_transaction.aw_lock       = w_trs_queue[selected_id][0].mon_req.aw_lock;
-   axi_w_transaction.aw_id         = w_trs_queue[selected_id][0].mon_req.aw_id;
-   axi_w_transaction.aw_addr       = w_trs_queue[selected_id][0].mon_req.aw_addr;
-   axi_w_transaction.aw_len        = w_trs_queue[selected_id][0].mon_req.aw_len;
-   axi_w_transaction.aw_size       = w_trs_queue[selected_id][0].mon_req.aw_size;
-   axi_w_transaction.aw_burst      = w_trs_queue[selected_id][0].mon_req.aw_burst;
-   axi_w_transaction.aw_cache      = w_trs_queue[selected_id][0].mon_req.aw_cache;
-   axi_w_transaction.aw_atop       = w_trs_queue[selected_id][0].mon_req.aw_atop;
-   axi_w_transaction.aw_delay      = w_trs_queue[selected_id][0].mon_req.aw_latency;
-   axi_w_transaction.aw_start_time = w_trs_queue[selected_id][0].mon_req.aw_start_time;
-
-   do begin
-      j++;
-      axi_w_transaction.w_data_trs[j].w_data       = w_trs_queue[selected_id][j].mon_req.w_data;
-      axi_w_transaction.w_data_trs[j].w_last       = w_trs_queue[selected_id][j].mon_req.w_last;
-      axi_w_transaction.w_data_trs[j].w_strb       = w_trs_queue[selected_id][j].mon_req.w_strb;
-      axi_w_transaction.w_data_trs[j].w_delay      = w_trs_queue[selected_id][j].mon_req.w_latency;
-      axi_w_transaction.w_data_trs[j].w_start_time = w_trs_queue[selected_id][j].mon_req.w_start_time;
-   end while(!w_trs_queue[selected_id][j].mon_req.w_last);
-
-   axi_w_transaction.b_id         = w_trs_queue[selected_id][j].b_id;
-   axi_w_transaction.b_resp       = w_trs_queue[selected_id][j].b_resp;
-   axi_w_transaction.b_start_time = w_trs_queue[selected_id][j].b_start_time;
-
-   uvma_sqr_trs_port.write(axi_w_transaction);
+   int length;
 
    if(check_exclusive_resp(selected_id) == 1 || check_exclusive_resp(selected_id) == 0) begin
       `uvm_info(get_type_name(), $sformatf("Finish exclusive transaction"), UVM_HIGH)
-      do begin
-         slv_exc_resp = new exclusive_w_access[selected_id][0];
-         exclusive_w_access[selected_id].delete(0);
-      end while(!slv_exc_resp.mon_req.w_last);
+      exclusive_w_access[selected_id].delete();
    end
 
    foreach(w_finished_trs_id[i]) begin
@@ -497,112 +441,64 @@ function void uvma_axi_synchronizer_c::write_burst_complete(int selected_id, uvm
       end
    end
 
-   do begin
-      mon_req = new w_trs_queue[selected_id][0].mon_req;
-      void'(w_trs_queue[selected_id].pop_front());
-   end while(!mon_req.w_last);
+   length = w_trs_queue[selected_id][0].m_len;
+   for(int i = 0; i <= length; i++) begin
+      w_trs_queue[selected_id].delete(0);
+   end
 
 endfunction : write_burst_complete
 
 
-function void uvma_axi_synchronizer_c::read_data_complete(int selected_id, uvma_axi_slv_seq_item_c slv_resp);
-
-   int size;
+function void uvma_axi_synchronizer_c::read_data_complete(int selected_id);
 
    foreach(r_trs_queue[selected_id][i]) begin
-      if(r_trs_queue[selected_id][i].mon_req.r_trs_status == READ_DATA_NOT_COMPLETE) begin
-
-         r_trs_queue[selected_id][i].mon_req.r_trs_status = READ_DATA_COMPLETE;
-         r_trs_queue[selected_id][i].r_id         = slv_resp.r_id;
-         r_trs_queue[selected_id][i].r_data       = slv_resp.r_data;
-         r_trs_queue[selected_id][i].r_last       = slv_resp.r_last;
-         r_trs_queue[selected_id][i].r_valid      = slv_resp.r_valid;
-         r_trs_queue[selected_id][i].r_resp       = slv_resp.r_resp;
-         r_trs_queue[selected_id][i].r_user       = slv_resp.r_user;
-         r_trs_queue[selected_id][i].r_start_time = $time;
-         if(r_trs_queue[selected_id][i].mon_req.ar_lock) begin
-            if(exclusive_r_access[slv_resp.r_id].size() > 0) begin
-               if(exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size() - 1].r_last == 1) begin
-                  exclusive_r_access[slv_resp.r_id].delete();
-                  exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size()] = new r_trs_queue[selected_id][i];
+      if(r_trs_queue[selected_id][i].m_trs_status == WAITING_RESP) begin
+         r_trs_queue[selected_id][i].m_trs_status = ADDR_DATA_COMPLETE;
+         if(r_trs_queue[selected_id][i].m_lock) begin
+            if(exclusive_r_access[selected_id].size() > 0) begin
+               if(exclusive_r_access[selected_id][exclusive_r_access[selected_id].size() - 1].m_last[0] == 1) begin
+                  exclusive_r_access[selected_id].delete();
+                  exclusive_r_access[selected_id][exclusive_r_access[selected_id].size()] = new r_trs_queue[selected_id][i];
                end else begin
-                  exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size()] = new r_trs_queue[selected_id][i];
+                  exclusive_r_access[selected_id][exclusive_r_access[selected_id].size()] = new r_trs_queue[selected_id][i];
                end
             end else begin
-               exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size()] = new r_trs_queue[selected_id][i];
+               exclusive_r_access[selected_id][exclusive_r_access[selected_id].size()] = new r_trs_queue[selected_id][i];
             end
-            `uvm_info( "uvma_axi_synchronizer_c", $sformatf("add exclyusive read trs with id = %d", slv_resp.r_id), UVM_HIGH)
+            `uvm_info( "uvma_axi_synchronizer_c", $sformatf("add exclyusive read trs with id = %d", selected_id), UVM_HIGH)
          end
          break;
-
       end
    end
 
 endfunction : read_data_complete
 
-function void uvma_axi_synchronizer_c::read_burst_complete(int selected_id, uvma_axi_slv_seq_item_c slv_resp);
+function void uvma_axi_synchronizer_c::read_burst_complete(int selected_id);
 
-   int j = -1;
-   int size;
-   int lenght;
-
-   access_r_trs[selected_id] = new[access_r_trs[selected_id].size()-1] (access_r_trs[selected_id]);
+   int length;
 
    foreach(r_trs_queue[selected_id][i]) begin
-      if(r_trs_queue[selected_id][i].mon_req.r_trs_status == LAST_READ_DATA) begin
-
-         r_trs_queue[selected_id][i].r_id         = slv_resp.r_id;
-         r_trs_queue[selected_id][i].r_data       = slv_resp.r_data;
-         r_trs_queue[selected_id][i].r_last       = slv_resp.r_last;
-         r_trs_queue[selected_id][i].r_valid      = slv_resp.r_valid;
-         r_trs_queue[selected_id][i].r_resp       = slv_resp.r_resp;
-         r_trs_queue[selected_id][i].r_user       = slv_resp.r_user;
-         r_trs_queue[selected_id][i].r_start_time = $time;
-         if(r_trs_queue[selected_id][i].mon_req.ar_lock) begin
-            if(exclusive_r_access[slv_resp.r_id].size() > 0) begin
-               if(exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size() - 1].r_last == 1) begin
-                  exclusive_r_access[slv_resp.r_id].delete();
-                  exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size()] = new r_trs_queue[selected_id][i];
+      if(r_trs_queue[selected_id][i].m_trs_status == WAITING_RESP) begin
+         if(r_trs_queue[selected_id][i].m_lock) begin
+            if(exclusive_r_access[selected_id].size() > 0) begin
+               if(exclusive_r_access[selected_id][exclusive_r_access[selected_id].size() - 1].m_last[0] == 1) begin
+                  exclusive_r_access[selected_id].delete();
+                  exclusive_r_access[selected_id][exclusive_r_access[selected_id].size()] = new r_trs_queue[selected_id][i];
                end else begin
-                  exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size()] = new r_trs_queue[selected_id][i];
+                  exclusive_r_access[selected_id][exclusive_r_access[selected_id].size()] = new r_trs_queue[selected_id][i];
                end
             end
             else begin
-               exclusive_r_access[slv_resp.r_id][exclusive_r_access[slv_resp.r_id].size()] = new r_trs_queue[selected_id][i];
+               exclusive_r_access[selected_id][exclusive_r_access[selected_id].size()] = new r_trs_queue[selected_id][i];
             end
-            `uvm_info( "uvma_axi_synchronizer_c", $sformatf("add exclyusive read trs with id = %d", slv_resp.r_id), UVM_HIGH)
+            `uvm_info( "uvma_axi_synchronizer_c", $sformatf("add exclyusive read trs with id = %d", selected_id), UVM_HIGH)
          end
          break;
-
       end
    end
 
-   axi_r_transaction = uvma_axi_transaction_c::type_id::create("axi_r_transaction");
-
-   axi_r_transaction.access_type   = UVMA_AXI_ACCESS_READ;
-   axi_r_transaction.ar_lock       = r_trs_queue[selected_id][0].mon_req.ar_lock;
-   axi_r_transaction.ar_id         = r_trs_queue[selected_id][0].mon_req.ar_id;
-   axi_r_transaction.ar_addr       = r_trs_queue[selected_id][0].mon_req.ar_addr;
-   axi_r_transaction.ar_len        = r_trs_queue[selected_id][0].mon_req.ar_len;
-   axi_r_transaction.ar_size       = r_trs_queue[selected_id][0].mon_req.ar_size;
-   axi_r_transaction.ar_burst      = r_trs_queue[selected_id][0].mon_req.ar_burst;
-   axi_r_transaction.ar_delay      = r_trs_queue[selected_id][0].mon_req.ar_latency;
-   axi_r_transaction.ar_start_time = r_trs_queue[selected_id][0].mon_req.ar_start_time;
-
-   do begin
-      j++;
-      size = axi_r_transaction.r_data_trs.size();
-      axi_r_transaction.r_data_trs[size].r_data       = r_trs_queue[selected_id][j].r_data;
-      axi_r_transaction.r_data_trs[size].r_last       = r_trs_queue[selected_id][j].r_last;
-      axi_r_transaction.r_data_trs[size].r_id         = r_trs_queue[selected_id][j].r_id;
-      axi_r_transaction.r_data_trs[size].r_resp       = r_trs_queue[selected_id][j].r_resp;
-      axi_r_transaction.r_data_trs[size].r_start_time = r_trs_queue[selected_id][j].r_start_time;
-   end while(!r_trs_queue[selected_id][j].r_last);
-
-   uvma_sqr_trs_port.write(axi_r_transaction);
-
-   lenght = r_trs_queue[selected_id][0].mon_req.ar_len;
-   for(int i = 0; i <= lenght; i++) begin
+   length = r_trs_queue[selected_id][0].m_len;
+   for(int i = 0; i <= length; i++) begin
       r_trs_queue[selected_id].delete(0);
    end
 
@@ -619,77 +515,302 @@ endfunction : read_burst_complete
 function int uvma_axi_synchronizer_c::check_exclusive_resp(int selected_id);
    int exc_resp = -1;
 
-   if(w_trs_queue[selected_id][0].mon_req.aw_lock == 1) begin
-
+   if(w_trs_queue[selected_id][0].m_lock == 1) begin
       exc_resp = 1;
       foreach(exclusive_w_access[selected_id][i]) begin
-         if(exclusive_w_access[selected_id][i].b_resp != 1) begin
+         if(exclusive_w_access[selected_id][i].m_resp[0] != 1) begin
             exc_resp = 0;
             `uvm_info(get_type_name(), $sformatf("Find resp don't match"), UVM_HIGH)
             break;
          end
-         if(exclusive_w_access[selected_id][i].mon_req.w_last) begin
+         if(exclusive_w_access[selected_id][i].m_last[0]) begin
             break;
          end
       end
-
    end
+
    return exc_resp;
 
 endfunction : check_exclusive_resp
 
-function int uvma_axi_synchronizer_c::select_id(int tab[]);
-
-   int id;
-   if(tab.size() > 0) begin
-      id = tab[0];
-   end else begin
-      id = -1;
-   end
-   return id;
-
-endfunction : select_id
 
 function int uvma_axi_synchronizer_c::w_select_id(int tab[]);
 
-   return select_id(tab);
+   int selected;
+   int ind_slct;
+   case (cfg.ordering_write_mode)
+      UVMA_AXI_ORDERING_MODE_RANDOM : begin
+         if(tab.size() >= cfg.max_outstanding_write_trs) begin
+            ind_slct = $urandom_range(0, tab.size() - 1);
+            selected = tab[ind_slct];
+            outstanding_write_call_times = 0;
+         end else begin
+            selected = -1;
+            if(tab.size() < cfg.max_outstanding_write_trs && tab.size() != 0) begin
+               outstanding_write_call_times++;
+               if(outstanding_write_call_times == cfg.max_write_response_latency) begin
+                  selected = tab[0];
+                  outstanding_write_call_times = 0;
+               end
+            end
+         end
+      end
+      UVMA_AXI_OUTSTANDING_MODE : begin
+
+         if(tab.size() >= cfg.max_outstanding_write_trs) begin
+
+            `uvm_info(get_type_name(), $sformatf("double transaction ready"), UVM_HIGH)
+            outstanding_write_call_times = 0;
+            selected = tab[0];
+
+         end else begin
+
+            selected = -1;
+            if(tab.size() < cfg.max_outstanding_write_trs && tab.size() != 0) begin
+               outstanding_write_call_times++;
+               if(outstanding_write_call_times == cfg.max_write_response_latency) begin
+                  selected = tab[0];
+                  outstanding_write_call_times = 0;
+               end
+            end
+
+         end
+      end
+
+      UVMA_AXI_ORDERING_MODE_FIFO : begin
+
+         selected = -1;
+         if (tab.size() > 0) begin
+            selected = tab[0];
+         end
+
+      end
+   endcase
+   return selected;
 
 endfunction : w_select_id
 
-function int uvma_axi_synchronizer_c::r_select_id(int tab[]);
 
-   return select_id(tab);
+task uvma_axi_synchronizer_c::r_select_id(int tab[], output int selected);
 
-endfunction : r_select_id
-
-function int uvma_axi_synchronizer_c::check_memory_access(uvma_axi_base_seq_item_c item, uvma_axi_access_type_enum type_access);
-
-   int access = 1;
-
-   //TODO: check the memory region attribute for each access to a memory location
-   case (type_access)
-
-      UVMA_AXI_ACCESS_WRITE: begin
-         foreach(access_w_trs[i]) begin
-            if(i == item.aw_id) begin
-               access = access_w_trs[i][0];
-               break;
+   int ind_slct;
+   case (cfg.ordering_read_mode)
+      UVMA_AXI_INTERLEAVING_MODE : begin
+         if(tab.size() >= cfg.max_outstanding_read_trs) begin
+            ind_slct = $urandom_range(0, tab.size() - 1);
+            selected = tab[ind_slct];
+            outstanding_read_call_times = 0;
+         end else begin
+            selected = -1;
+            if(tab.size() < cfg.max_outstanding_read_trs && tab.size() != 0) begin
+               outstanding_read_call_times++;
+               if(outstanding_read_call_times == cfg.max_read_response_latency) begin
+                  selected = tab[0];
+                  outstanding_read_call_times = 0;
+               end
             end
          end
       end
 
-      UVMA_AXI_ACCESS_READ: begin
-         foreach(access_r_trs[i]) begin
-            if(i == item.ar_id) begin
-               access = access_r_trs[i][0];
-               break;
+      UVMA_AXI_ORDERING_MODE_RANDOM : begin
+         if(tab.size() >= cfg.max_outstanding_read_trs) begin
+            if(last_outoforder_if == -1) begin
+               ind_slct = $urandom_range(0, tab.size() - 1);
+               selected = tab[ind_slct];
+               last_outoforder_if = selected;
+               outstanding_read_call_times = 0;
+               count_outoforder++;
+               if(r_trs_queue[selected][0].m_len == count_outoforder) begin
+                  last_outoforder_if = -1;
+                  count_outoforder = -1;
+               end
+            end else begin
+               selected = last_outoforder_if;
+               count_outoforder++;
+               if(r_trs_queue[selected][0].m_len == count_outoforder) begin
+                  last_outoforder_if = -1;
+                  count_outoforder = -1;
+               end
+            end
+         end else begin
+            selected = -1;
+            if(tab.size() < cfg.max_outstanding_read_trs && tab.size() != 0) begin
+               outstanding_read_call_times++;
+               if(outstanding_read_call_times == cfg.max_read_response_latency) begin
+                  selected = tab[0];
+                  last_outoforder_if = selected;
+                  count_outoforder++;
+                  if(r_trs_queue[selected][0].m_len == count_outoforder) begin
+                     last_outoforder_if = -1;
+                     count_outoforder = -1;
+                  end
+                  outstanding_read_call_times = 0;
+               end
             end
          end
       end
 
+      UVMA_AXI_OUTSTANDING_MODE : begin
+
+         if(tab.size() >= cfg.max_outstanding_read_trs) begin
+
+            `uvm_info(get_type_name(), $sformatf("double transaction ready"), UVM_HIGH)
+            outstanding_read_call_times = 0;
+            selected = tab[0];
+
+         end else begin
+            `uvm_info(get_type_name(), $sformatf("max_write_response_latency", cfg.max_read_response_latency), UVM_HIGH)
+            selected = -1;
+            if(tab.size() < cfg.max_outstanding_read_trs && tab.size() != 0) begin
+
+               `uvm_info(get_type_name(), $sformatf("one transaction ready"), UVM_HIGH)
+               outstanding_read_call_times++;
+               if(outstanding_read_call_times == cfg.max_read_response_latency) begin
+                  selected = tab[0];
+                  outstanding_read_call_times = 0;
+               end
+
+            end
+         end
+      end
+
+      UVMA_AXI_ORDERING_MODE_FIFO : begin
+         selected = -1;
+         if (tab.size() != 0) begin
+            selected = tab[0];
+         end
+      end
    endcase
 
-   return access;
+   read_data(selected);
+
+endtask : r_select_id
+
+
+task uvma_axi_synchronizer_c::read_data(int selected_id);
+   int length;
+
+   foreach(r_trs_queue[selected_id][i]) begin
+      if(r_trs_queue[selected_id][i].m_trs_status == ADDR_DATA_NOT_COMPLETE) begin
+         if(check_memory_access(r_trs_queue[selected_id][i]) == 1) begin
+            r_trs_queue[selected_id][i].m_trs_status = WAITING_RESP;
+            if(cfg.external_mem) begin
+               length = r_trs_queue[selected_id][i].m_len;
+               r_trs_queue[selected_id][i].m_len = 0;
+               memory_read_access_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
+               r_trs_queue[selected_id][i].m_len = length;
+            end else begin
+               for(int j = r_trs_queue[selected_id][i].lower_byte_lane; j <= r_trs_queue[selected_id][i].upper_byte_lane; j++) begin
+                  r_trs_queue[selected_id][i].m_data[0][((j+1)*8-1)-:8]   = cntxt.mem.read(r_trs_queue[selected_id][i].m_addr + j);
+                  //[(j*8)+:7]
+               end
+            end
+         end else begin
+            `uvm_error(get_full_name(), "YOU CAN NOT WRITE DATA IN THIS ADDRESS LOCATION")
+         end
+         break;
+      end
+   end
+
+endtask : read_data
+
+task uvma_axi_synchronizer_c::memory_read_access_api(uvma_axi_transaction_c axi_item, output uvma_axi_sig_data_t read_data);
+
+   read_data = 0;
+   #5;
+   for(int j = axi_item.lower_byte_lane; j <= axi_item.upper_byte_lane; j++) begin
+      read_data[((j+1)*8-1)-:8]   = cntxt.mem.read(axi_item.m_addr + j);
+      //[(j*8)+:7]
+   end
+
+endtask : memory_read_access_api
+
+task uvma_axi_synchronizer_c::memory_write_access_api(uvma_axi_transaction_c axi_item);
+
+   #10;
+   for(int i = 0; i <= axi_item.m_len; i++) begin
+      for(int k = axi_item.lower_byte_lane; k <= axi_item.upper_byte_lane; k++) begin
+         if(axi_item.m_wstrb[i][k]) cntxt.mem.write(axi_item.m_addr + k, axi_item.m_data[i][((k+1)*8-1)-:8]);
+      end
+   end
+
+endtask : memory_write_access_api
+
+
+function int uvma_axi_synchronizer_c::check_memory_access(uvma_axi_transaction_c axi_item);
+
+   int access      = 1;
+   bit prot_access = 1;
+   bit m_access    = 1;
+   int region_index;
+
+   case (axi_item.m_txn_type)
+      UVMA_AXI_WRITE_REQ  : begin
+
+         if(cfg.axi_region_enabled) begin
+            m_access = cfg.m_part_st[axi_item.m_region].m_type_access[1];
+            if(cfg.axi_prot_enabled) begin
+               prot_access = cfg.m_part_st[axi_item.m_region].axi_prot_type_access && axi_item.m_prot;
+            end
+         end else begin
+            foreach(cfg.m_part_st[i]) begin
+               if( i == cfg.m_part_st.size() -1) begin
+                  if(cfg.m_part_st[i].m_part_addr_start <= axi_item.m_addr && cfg.m_addr_end > axi_item.m_addr) begin
+                     region_index = i;
+                     break;
+                  end
+               end else begin
+                  if(cfg.m_part_st[i].m_part_addr_start <= axi_item.m_addr && cfg.m_part_st[i+1].m_part_addr_start > axi_item.m_addr) begin
+                     region_index = i;
+                     break;
+                  end
+               end
+            end
+            m_access = cfg.m_part_st[region_index].m_type_access[1];
+            if(cfg.axi_prot_enabled) begin
+               prot_access = cfg.m_part_st[region_index].axi_prot_type_access && axi_item.m_prot;
+            end
+         end
+
+      end
+
+      UVMA_AXI_READ_REQ  : begin
+
+         if(cfg.axi_region_enabled) begin
+            m_access = cfg.m_part_st[axi_item.m_region].m_type_access[0];
+            if(cfg.axi_prot_enabled) begin
+               prot_access = cfg.m_part_st[axi_item.m_region].axi_prot_type_access && axi_item.m_prot;
+            end
+         end else begin
+            foreach(cfg.m_part_st[i]) begin
+               if( i == cfg.m_part_st.size() -1) begin
+                  if(cfg.m_part_st[i].m_part_addr_start <= axi_item.m_addr && cfg.m_addr_end > axi_item.m_addr) begin
+                     region_index = i;
+                     break;
+                  end
+               end else begin
+                  if(cfg.m_part_st[i].m_part_addr_start <= axi_item.m_addr && cfg.m_part_st[i+1].m_part_addr_start > axi_item.m_addr) begin
+                     region_index = i;
+                     break;
+                  end
+               end
+            end
+            m_access = cfg.m_part_st[region_index].m_type_access[0];
+            if(cfg.axi_prot_enabled) begin
+               prot_access = cfg.m_part_st[region_index].axi_prot_type_access && axi_item.m_prot;
+            end
+         end
+
+      end
+   endcase
+
+   access = m_access && prot_access;
+
+   if(access == 0) begin
+      return -1;
+   end else begin
+      return 1;
+   end
 
 endfunction : check_memory_access
 

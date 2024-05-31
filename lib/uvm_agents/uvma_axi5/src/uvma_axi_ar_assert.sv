@@ -129,7 +129,7 @@ module  uvma_axi_ar_assert (uvma_axi_intf axi_assert);
 
    // check if The size of a read transfer does not exceed the width of the data interface (Section A3.4.1)
    property AXI_ERRM_ARSIZE;
-      @(posedge axi_assert.clk && axi_assert.ar_assertion_enabled) disable iff (!axi_assert.rst_n) axi_assert.psv_axi_cb.ar_valid  |-> (8*(2**axi_assert.psv_axi_cb.ar_size) <= `UVMA_AXI_DATA_MAX_WIDTH);
+      @(posedge axi_assert.clk && axi_assert.ar_assertion_enabled) disable iff (!axi_assert.rst_n) axi_assert.psv_axi_cb.ar_valid  |-> (8*(2**axi_assert.psv_axi_cb.ar_size) <= $size(axi_assert.w_data));
    endproperty
 
    // check if burst crosses 4KB boundaries (Section A3.4.1)

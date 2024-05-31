@@ -94,29 +94,34 @@ class uvma_axi_cfg_c extends uvm_object;
       soft axi_region_enabled          == 0;
       soft axi_prot_enabled            == 0;
       soft preload_mem                 == 0;
-      soft pure_mode_agent             == 0;
-      soft max_outstanding_write_trs   == 2;
-      soft max_outstanding_read_trs    == 2;
-      soft max_write_response_latency  == 15;
-      soft max_read_response_latency   == 15;
+      soft pure_mode_agent             == 1;
       soft driver_idle_value_cfg       == RANDOM;
      }
 
    constraint pure_config {
       if(pure_mode_agent) {
-         soft randomization_enabled       == 0;
-         soft rand_channel_delay_enabled  == 0;
-         soft ordering_read_mode          == UVMA_AXI_ORDERING_MODE_FIFO;
-         soft ordering_write_mode         == UVMA_AXI_ORDERING_MODE_FIFO;
-         soft external_mem                == 1;
+         randomization_enabled       == 0;
+         rand_channel_delay_enabled  == 0;
+         ordering_read_mode          == UVMA_AXI_ORDERING_MODE_RANDOM;
+         ordering_write_mode         == UVMA_AXI_OUTSTANDING_MODE;
+         max_outstanding_write_trs   == 0;
+         max_outstanding_read_trs    == 0;
+         max_write_response_latency  == 0;
+         max_read_response_latency   == 0;
+         external_mem                == 1;
       } else {
-         soft randomization_enabled       == 0;
-         soft rand_channel_delay_enabled  == 1;
-         soft ordering_read_mode          == UVMA_AXI_ORDERING_MODE_RANDOM;
-         soft ordering_write_mode         == UVMA_AXI_OUTSTANDING_MODE;
-         soft external_mem                == 0;
+         randomization_enabled       == 0;
+         rand_channel_delay_enabled  == 0;
+         ordering_read_mode          == UVMA_AXI_ORDERING_MODE_RANDOM;
+         ordering_write_mode         == UVMA_AXI_OUTSTANDING_MODE;
+         max_outstanding_write_trs   == 2;
+         max_outstanding_read_trs    == 2;
+         max_write_response_latency  == 15;
+         max_read_response_latency   == 15;
+         external_mem                == 0;
       }
      }
+  
 
    // Number of RAM partitions
    constraint part_numb_const {

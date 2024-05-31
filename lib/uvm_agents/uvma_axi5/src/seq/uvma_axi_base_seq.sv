@@ -17,7 +17,7 @@
  * sequences must extend. Subclasses must be run on AXI
  * sequencer (uvma_axi_vsqr_c) instance.
  */
-class uvma_axi_base_seq_c extends uvm_sequence#(uvma_axi_base_seq_item_c);
+class uvma_axi_base_seq_c extends uvm_sequence#(uvma_axi_transaction_c);
 
    // Agent handles
    uvma_axi_cfg_c    cfg;

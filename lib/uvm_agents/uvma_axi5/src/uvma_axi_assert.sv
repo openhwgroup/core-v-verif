@@ -18,7 +18,7 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
 
    // Check if, During reset, Manager interface drive aw_valid, ar_valid and w_valid LOW (Section A3.1.2)
    property AXI4_RESET ;
-     @(posedge axi_assert.clk && axi_assert.axi_assertion_enabled) !axi_assert.rst_n |-> (!axi_assert.psv_axi_cb.aw_valid && !axi_assert.psv_axi_cb.ar_valid && !axi_assert.psv_axi_cb.w_valid && !axi_assert.psv_axi_cb.b_valid && !axi_assert.psv_axi_cb.r_valid);
+     @(posedge axi_assert.clk && axi_assert.axi_assertion_enabled) !axi_assert.rst_n |-> (!axi_assert.aw_valid && !axi_assert.ar_valid && !axi_assert.w_valid && !axi_assert.b_valid && !axi_assert.r_valid);
    endproperty
 
    axi_reset                 : assert property (AXI4_RESET)
@@ -35,7 +35,7 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
    int ass_aw_id;   //Store aw_id every clock cycle
    int ass_b_id;   //Store b_id every clock cycle
    int tr_count[$];   // Count the number of write transfer
-   int tr_len[$];   // Store the lenght of every transaction
+   int tr_len[$];   // Store the length of every transaction
    longint start_add[$];   // Store the address of every transaction
    bit[7:0] strb_req[$];   //
    int tr_size[$];   // Store the size of every transaction
@@ -231,7 +231,7 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
 // *************************** Read Data channel ************************** //
 
    int ar_id_tr[];   //Store the number of transaction
-   int ar_len_tr[][];   //Store the lenght of every burst
+   int ar_len_tr[][];   //Store the length of every burst
    int tab[];
    int ass_ar_id;   //Store ar_id every clock cycle
    int ass_r_id;   //Store ar_id every clock cycle

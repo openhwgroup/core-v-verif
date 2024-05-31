@@ -34,7 +34,7 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
    /**
     * Writes contents of t to disk.
     */
-   virtual function void write(uvma_axi_transaction_c t);
+   virtual function void write(T_TRN t);
       if(cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET)begin
 
          string aw_access_type  = "";
@@ -61,27 +61,27 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
          string r_access_complet = "";
          string r_err    = "";
 
-         if(t.access_type == UVMA_AXI_ACCESS_WRITE) begin
+         if(t.m_txn_type == UVMA_AXI_WRITE_REQ) begin
 
-            aw_id_str = $sformatf("%b", t.aw_id);
-            if(t.aw_lock) begin
+            aw_id_str = $sformatf("%b", t.m_id);
+            if(t.m_lock) begin
                aw_access_type = "Exclusive_access";
             end else begin
                aw_access_type = "Normal_access";
             end
 
-            write_addr_starting_time = $sformatf("%d", t.aw_start_time);
-            aw_address = $sformatf("%h", t.aw_addr);
+            write_addr_starting_time = $sformatf("%d", t.m_timestamp_ax);
+            aw_address = $sformatf("%h", t.m_addr);
 
             fwrite($sformatf("----------------------/ WRITE ACCESS | ID : %s | ACCESS TYPE : %s \----------------------", aw_id_str, aw_access_type));
 
             fwrite($sformatf("----> WRITE ADDRESS START AT TIME %s | ADDRESS : %s", write_addr_starting_time, aw_address));
 
-            foreach(t.w_data_trs[i]) begin
+            for(int i = 0; i < t.m_len+1; i++) begin
 
-               write_data_starting_time = $sformatf("%d", t.w_data_trs[i].w_start_time);
-               w_data = $sformatf("%h", t.w_data_trs[i].w_data);
-               if(t.w_data_trs[i].w_last) begin
+               write_data_starting_time = $sformatf("%d", t.m_timestamp_x[i]);
+               w_data = $sformatf("%h", t.m_data[i]);
+               if(t.m_last[i]) begin
                   w_access_complet = "Yes";
                end else begin
                   w_access_complet = "No";
@@ -89,76 +89,52 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
                fwrite($sformatf("----> WRITE DATA START AT TIME %s | DATA : %s | LAST DATA : %s ", write_addr_starting_time, w_data, w_access_complet));
 
             end
+         end
 
-            write_response_starting_time = $sformatf("%d", t.b_start_time);
-            case (t.b_resp)
-               00 : begin
-                  if(aw_access_type == "Exclusive_access") b_err = "Err";
-                  else b_err = "No Err";
-               end
-               01 : b_err  = "Err";
-               10 : b_err  = "Err";
-               11 : begin
-                  if(aw_access_type == "Exclusive_access") b_err = "NO Err";
-                  else b_err = "Err";
-               end
+         if(t.m_txn_type == UVMA_AXI_WRITE_RSP) begin
+            write_response_starting_time = $sformatf("%d", t.m_timestamp_b);
+            case (t.m_resp[0])
+               00 : b_err = "OKEY";
+               01 : b_err = "EXOKEY";
+               10 : b_err = "SLVERR";
+               11 : b_err = "DECERR";
                default : b_err = " ? ";
             endcase
 
             fwrite($sformatf("----> WRITE RESPONSE START AT TIME %s | RESP : %s ", write_response_starting_time, b_err));
 
-         end else begin
-
-            aw_access_type  = "";
-            aw_id_str     = "";
-
-            write_addr_starting_time = "";
-            aw_address   = "";
-
-            write_data_starting_time = "";
-            w_data  = "";
-            w_access_complet   = "";
-
-            write_response_starting_time = "";
-            b_err  = "";
-
          end
 
-         if(t.access_type == UVMA_AXI_ACCESS_READ) begin
+         if(t.m_txn_type == UVMA_AXI_READ_REQ) begin
 
-            ar_id_str = $sformatf("%b", t.ar_id);
-            if(t.ar_lock) begin
+            ar_id_str = $sformatf("%b", t.m_id);
+            if(t.m_lock) begin
                ar_access_type = "Exclusive_access";
             end else begin
                ar_access_type = "Normal_access";
             end
 
-            read_addr_starting_time = $sformatf("%d", t.ar_start_time);
-            ar_address = $sformatf("%h", t.ar_addr);
+            read_addr_starting_time = $sformatf("%d", t.m_timestamp_ax);
+            ar_address = $sformatf("%h", t.m_addr);
 
             fwrite($sformatf("----------------------/ READ ACCESS | ID : %s | ACCESS TYPE : %s \----------------------", ar_id_str, ar_access_type));
 
             fwrite($sformatf("----> READ ADDRESS START AT TIME %s | ADDRESS : %s", read_addr_starting_time, ar_address));
+         end
 
-            foreach(t.r_data_trs[i]) begin
-
-               read_data_starting_time = $sformatf("%d", t.r_data_trs[i].r_start_time);
-               r_data = $sformatf("%h", t.r_data_trs[i].r_data);
-               case (t.r_data_trs[i].r_resp)
-                  00 : begin
-                     if(aw_access_type == "Exclusive_access") r_err = "Err";
-                     else r_err = "No Err";
-                  end
-                  01 : r_err  = "Err";
-                  10 : r_err  = "Err";
-                  11 : begin
-                     if(aw_access_type == "Exclusive_access") r_err = "NO Err";
-                     else r_err = "Err";
-                  end
+         if(t.m_txn_type == UVMA_AXI_READ_RSP) begin
+            for(int i = 0; i < t.m_len+1; i++) begin
+               read_data_starting_time = $sformatf("%d", t.m_timestamp_x[i]);
+               r_data = $sformatf("%h", t.m_data[i]);
+               case (t.m_resp[i])
+                  00 : r_err = "OKEY";
+                  01 : r_err = "EXOKEY";
+                  10 : r_err = "SLVERR";
+                  11 : r_err = "DECERR";
                   default : r_err = " ? ";
                endcase
 
-               if(t.r_data_trs[i].r_last) begin
+               if(t.m_last[i]) begin
                   r_access_complet = "Yes";
                end else begin
                   r_access_complet = "No";
@@ -166,19 +142,6 @@ class uvma_axi_seq_item_logger_c extends uvml_logs_seq_item_logger_c #(
                fwrite($sformatf("----> READ DATA START AT TIME %s | DATA : %s | RESP : %s | LAST DATA : %s ", read_data_starting_time, r_data, r_err, r_access_complet));
 
             end
-
-         end else begin
-
-            ar_access_type  = "";
-            ar_id_str     = "";
-
-            read_addr_starting_time = "";
-            ar_address   = "";
-
-            read_data_starting_time = "";
-            r_data  = "";
-            b_err  = "";
-            r_access_complet   = "";
 
          end
       end

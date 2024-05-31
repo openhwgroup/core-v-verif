@@ -5,10 +5,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Omar HOUTI (omar.houti@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
-// Co-Author: Alae Eddine EZ ZEJJARI
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
 
-/**** AXI4 slave AW driver  ****/
+/**** AXI driver  ****/
 
 `ifndef __UVMA_AXI_DRV_SV__
 `define __UVMA_AXI_DRV_SV__
@@ -16,7 +15,7 @@
 /**
  * Component driving a AXI virtual interface (uvma_axi_intf).
  */
-class uvma_axi_drv_c extends uvm_driver #(uvma_axi_slv_seq_item_c);
+class uvma_axi_drv_c extends uvm_driver #(uvma_axi_transaction_c);
 
    `uvm_component_utils(uvma_axi_drv_c)
 
@@ -27,9 +26,21 @@ class uvma_axi_drv_c extends uvm_driver #(uvma_axi_slv_seq_item_c);
    // Handles to virtual interface modport
    virtual uvma_axi_intf.slave        slave_mp;
 
+   event reset_asserted ;
+   event reset_deasserted ;
+
+   // Queue for storing transactions
+   uvma_axi_transaction_c   ar_txn_queue[$];
+   uvma_axi_transaction_c   r_txn_queue[$];
+   uvma_axi_transaction_c   aw_txn_queue[$];
+   uvma_axi_transaction_c   w_txn_queue[$];
+   uvma_axi_transaction_c   b_txn_queue[$];
+
    int aw_latency_status = 0;
-   int w_latency_status = 0;
+   int w_latency_status  = 0;
    int ar_latency_status = 0;
+   int r_latency_status  = 0;
+   int b_latency_status  = 0;
 
    /**
     * Default constructor.
@@ -50,258 +61,404 @@ class uvma_axi_drv_c extends uvm_driver #(uvma_axi_slv_seq_item_c);
    /**
     * Called by run_phase() while agent is in pre-reset state.
     */
-   extern task     drv_pre_reset();
+   extern virtual  task pre_reset_phase(uvm_phase phase);
 
    /**
     * Called by run_phase() while agent is in reset state.
     */
-   extern task     drv_in_reset();
+   extern virtual  task reset_phase(uvm_phase phase);
 
    /**
     * Called by run_phase() while agent is in post-reset state.
     */
-   extern task     drv_post_reset();
+   extern virtual  task post_reset_phase(uvm_phase phase);
 
    /**
     * Drives the AW channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
     */
-   extern task     aw_drv(uvma_axi_slv_seq_item_c item);
+   extern task     get_item();
+
+   /**
+    * Drives the AW channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
+    */
+   extern task     aw_drv();
 
    /**
     * Drives the W channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
     */
-   extern task     w_drv(uvma_axi_slv_seq_item_c item);
-
-   /**
-    * Drives the B channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
-    */
-   extern task     ar_drv(uvma_axi_slv_seq_item_c item);
-
-   /**
-    * Drives the AR channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
-    */
-   extern task     r_drv(uvma_axi_slv_seq_item_c item);
+   extern task     w_drv();
 
    /**
     * Drives the R channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
     */
-   extern task     b_drv(uvma_axi_slv_seq_item_c item);
+   extern task     b_drv();
+
+   /**
+    * Drives the B channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
+    */
+   extern task     ar_drv();
+
+   /**
+    * Drives the AR channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
+    */
+   extern task     r_drv();
+
+    /**
+    * Drive R channel signals
+    */
+   extern task drive_R_channel_signals( uvma_axi_transaction_c  r_txn = null );
+
+   /**
+    * Drives the B channel signals
+    */
+   extern task drive_B_channel_signals( uvma_axi_transaction_c  b_txn = null );
+
+   /**
+    * Drives the R channel of the AXI virtual interface's (cntxt.vif) signals using item's contents.
+    */
+   extern task finish();
 
 endclass: uvma_axi_drv_c
+
 
 function uvma_axi_drv_c::new(string name = "uvma_axi_drv_c", uvm_component parent);
    super.new(name, parent);
 endfunction
 
+
 function void uvma_axi_drv_c::build_phase(uvm_phase phase);
+
    super.build_phase(phase);
+
    if(!uvm_config_db#(uvma_axi_cntxt_c)::get(this, "", "cntxt", cntxt)) begin
       `uvm_fatal("build_phase", "driver reset cntxt class failed")
    end
-
-   this.slave_mp = this.cntxt.axi_vi.slave;
 
    void'(uvm_config_db#(uvma_axi_cfg_c)::get(this, "", "cfg", cfg));
    if (cfg == null) begin
       `uvm_fatal("CFG", "Configuration handle is null")
    end
 
+   this.slave_mp = this.cntxt.axi_vi.slave;
+
 endfunction
 
+// ------------------------------------------------------------------------
+// Pre reset phase
+// ------------------------------------------------------------------------
+task uvma_axi_drv_c::pre_reset_phase(uvm_phase phase);
+
+   `uvm_info(get_type_name(), $sformatf("start drv_pre_reset"), UVM_DEBUG)
+
+   @(reset_asserted);
+   this.slave_mp.slv_axi_cb.aw_ready <= 0;
+   this.slave_mp.slv_axi_cb.w_ready  <= 0;
+   this.slave_mp.slv_axi_cb.ar_ready <= 0;
+   this.slave_mp.slv_axi_cb.r_id     <= 0;
+   this.slave_mp.slv_axi_cb.r_resp   <= 0;
+   this.slave_mp.slv_axi_cb.r_user   <= 0;
+   this.slave_mp.slv_axi_cb.r_valid  <= 0;
+   this.slave_mp.slv_axi_cb.r_user   <= 0;
+   this.slave_mp.slv_axi_cb.b_id     <= 0;
+   this.slave_mp.slv_axi_cb.b_resp   <= 0;
+   this.slave_mp.slv_axi_cb.b_user   <= 0;
+   this.slave_mp.slv_axi_cb.b_valid  <= 0;
+   this.slave_mp.slv_axi_cb.b_user   <= 0;
+   aw_latency_status = 0;
+   w_latency_status  = 0;
+   ar_latency_status = 0;
+   r_latency_status = 0;
+   b_latency_status = 0;
+   `uvm_info(get_type_name(), "Pre Reset stage complete.", UVM_DEBUG)
+endtask : pre_reset_phase
+
+// ------------------------------------------------------------------------
+// Reset phase
+// ------------------------------------------------------------------------
+task uvma_axi_drv_c::reset_phase(uvm_phase phase);
+   super.reset_phase(phase);
+
+   this.slave_mp.slv_axi_cb.aw_ready <= 0;
+   this.slave_mp.slv_axi_cb.w_ready  <= 0;
+   this.slave_mp.slv_axi_cb.ar_ready <= 0;
+   this.slave_mp.slv_axi_cb.r_id     <= 0;
+   this.slave_mp.slv_axi_cb.r_resp   <= 0;
+   this.slave_mp.slv_axi_cb.r_user   <= 0;
+   this.slave_mp.slv_axi_cb.r_valid  <= 0;
+   this.slave_mp.slv_axi_cb.r_user   <= 0;
+   this.slave_mp.slv_axi_cb.b_id     <= 0;
+   this.slave_mp.slv_axi_cb.b_resp   <= 0;
+   this.slave_mp.slv_axi_cb.b_user   <= 0;
+   this.slave_mp.slv_axi_cb.b_valid  <= 0;
+   this.slave_mp.slv_axi_cb.b_user   <= 0;
+   aw_latency_status = 0;
+   w_latency_status  = 0;
+   ar_latency_status = 0;
+   b_latency_status = 0;
+   r_latency_status = 0;
+
+   `uvm_info(get_type_name(), "Reset stage complete.", UVM_DEBUG)
+endtask
+
+// ------------------------------------------------------------------------
+// Post reset phase
+// ------------------------------------------------------------------------
+task uvma_axi_drv_c::post_reset_phase(uvm_phase phase);
+  -> reset_deasserted;
+  `uvm_info(get_type_name(), "Post Reset stage complete.", UVM_DEBUG)
+endtask : post_reset_phase
+
+// -----------------------------------------------------------------------
+// Run Phase
+// -----------------------------------------------------------------------
 task uvma_axi_drv_c::run_phase(uvm_phase phase);
-   super.run_phase(phase);
 
    forever begin
-      case (cntxt.reset_state)
-         UVMA_AXI_RESET_STATE_PRE_RESET  : drv_pre_reset ();
-         UVMA_AXI_RESET_STATE_IN_RESET   : drv_in_reset  ();
-         UVMA_AXI_RESET_STATE_POST_RESET : drv_post_reset();
+      @(reset_deasserted);
 
-         default: `uvm_fatal("AXI_DRV", $sformatf("Invalid reset_state: %0d", cntxt.reset_state))
-      endcase
+	  fork
+         get_item();
+	  join_none
+
+      if ( cfg.is_slave ) begin
+         fork // Slave tasks
+               ar_drv();
+               r_drv();
+               aw_drv();
+               w_drv();
+               b_drv();
+         join_none
+      end else begin
+
+      end
+
+      @(reset_asserted);
+      disable fork;
    end
-endtask: run_phase
 
-task uvma_axi_drv_c::drv_pre_reset();
+endtask : run_phase
 
-   `uvm_info(get_type_name(), $sformatf("start drv_pre_reset"), UVM_HIGH)
 
-   this.slave_mp.slv_axi_cb.aw_ready <= 0;
-   this.slave_mp.slv_axi_cb.w_ready  <= 0;
-   this.slave_mp.slv_axi_cb.ar_ready <= 0;
-   this.slave_mp.slv_axi_cb.r_id     <= 0;
-   this.slave_mp.slv_axi_cb.r_resp   <= 0;
-   this.slave_mp.slv_axi_cb.r_user   <= 0;
-   this.slave_mp.slv_axi_cb.r_valid  <= 0;
-   this.slave_mp.slv_axi_cb.r_user   <= 0;
-   this.slave_mp.slv_axi_cb.b_id     <= 0;
-   this.slave_mp.slv_axi_cb.b_resp   <= 0;
-   this.slave_mp.slv_axi_cb.b_user   <= 0;
-   this.slave_mp.slv_axi_cb.b_valid  <= 0;
-   this.slave_mp.slv_axi_cb.b_user   <= 0;
-   aw_latency_status = 0;
-   w_latency_status  = 0;
-   ar_latency_status = 0;
-   @(slave_mp.slv_axi_cb);
+task uvma_axi_drv_c::get_item();
 
-endtask: drv_pre_reset
+   forever begin
+      uvma_axi_transaction_c txn_queue = uvma_axi_transaction_c::type_id::create("txn_queue");
+      seq_item_port.get_next_item(req);
+      `uvm_info(get_type_name(), $sformatf("get item %s", req.m_txn_type), UVM_HIGH)
 
-task uvma_axi_drv_c::drv_in_reset();
+      $cast(txn_queue, req.clone());
 
-   `uvm_info(get_type_name(), $sformatf("start drv_in_reset"), UVM_HIGH)
+      if ( cfg.is_slave ) begin
+         case ( txn_queue.m_txn_type )
+            UVMA_AXI_READ_REQ       : ar_txn_queue.push_back(txn_queue);
+            UVMA_AXI_READ_RSP       : r_txn_queue.push_back(txn_queue);
+            UVMA_AXI_WRITE_ADD_REQ  : aw_txn_queue.push_back(txn_queue);
+            UVMA_AXI_WRITE_DATA_REQ : w_txn_queue.push_back(txn_queue);
+            UVMA_AXI_WRITE_RSP      : b_txn_queue.push_back(txn_queue);
+         endcase
+      end else begin
+         //TODO :
+      end
 
-   this.slave_mp.slv_axi_cb.aw_ready <= 0;
-   this.slave_mp.slv_axi_cb.w_ready  <= 0;
-   this.slave_mp.slv_axi_cb.ar_ready <= 0;
-   this.slave_mp.slv_axi_cb.r_id     <= 0;
-   this.slave_mp.slv_axi_cb.r_resp   <= 0;
-   this.slave_mp.slv_axi_cb.r_user   <= 0;
-   this.slave_mp.slv_axi_cb.r_valid  <= 0;
-   this.slave_mp.slv_axi_cb.r_user   <= 0;
-   this.slave_mp.slv_axi_cb.b_id     <= 0;
-   this.slave_mp.slv_axi_cb.b_resp   <= 0;
-   this.slave_mp.slv_axi_cb.b_user   <= 0;
-   this.slave_mp.slv_axi_cb.b_valid  <= 0;
-   this.slave_mp.slv_axi_cb.b_user   <= 0;
-   aw_latency_status = 0;
-   w_latency_status  = 0;
-   ar_latency_status = 0;
-   @(slave_mp.slv_axi_cb);
+      seq_item_port.item_done();
+   end
 
-endtask: drv_in_reset
+endtask
 
-task uvma_axi_drv_c::drv_post_reset();
 
-   `uvm_info(get_type_name(), $sformatf("start drv_post_reset"), UVM_HIGH)
-	      seq_item_port.get_next_item(req);
-    `uvm_info(get_type_name(), $sformatf("start getting sequence"), UVM_HIGH)
+task uvma_axi_drv_c:: ar_drv();
 
-       fork
-          begin
-             if(aw_latency_status == 0) begin
-                `uvm_info(get_type_name(), $sformatf("start driving aw"), UVM_HIGH)
-                aw_drv(req);
-             end
-	      end
-       join_none
+   forever begin
+      `uvm_info(get_type_name(), $sformatf("read address, response by ar_ready"), UVM_HIGH)
+      wait ( ar_txn_queue.size() != 0 );
 
-       fork
-          begin
-             if(w_latency_status == 0) begin
-                `uvm_info(get_type_name(), $sformatf("start driving w"), UVM_HIGH)
-                w_drv(req);
-             end
-          end
-       join_none
+      repeat (ar_txn_queue[0].ready_delay_cycle_chan_ax) begin
+         @(slave_mp.slv_axi_cb);
+      end
 
-       fork
-          begin
-             `uvm_info(get_type_name(), $sformatf("start driving b"), UVM_HIGH)
-             b_drv(req);
-          end
-       join_none
-
-       fork
-          begin
-             if(ar_latency_status == 0) begin
-                `uvm_info(get_type_name(), $sformatf("start driving ar"), UVM_HIGH)
-                ar_drv(req);
-             end
-          end
-       join_none
-
-       fork
-          begin
-             `uvm_info(get_type_name(), $sformatf("start driving r"), UVM_HIGH)
-             r_drv(req);
-          end
-       join_none
-
-	seq_item_port.item_done();
-
-endtask : drv_post_reset
-
-task uvma_axi_drv_c::aw_drv(uvma_axi_slv_seq_item_c item);
-
-   `uvm_info(get_type_name(), $sformatf("read address, response by aw_ready"), UVM_HIGH)
-   aw_latency_status = 1;
-   repeat (item.aw_delay) begin
+      this.slave_mp.slv_axi_cb.ar_ready <= 1'b1;
       @(slave_mp.slv_axi_cb);
+
+      this.slave_mp.slv_axi_cb.ar_ready <= 1'b0;
+      ar_txn_queue.delete(0);
+      `uvm_info(get_type_name(), $sformatf("finish driving arready"), UVM_HIGH)
    end
-   slave_mp.slv_axi_cb.aw_ready <= 1'b1;
-   @(slave_mp.slv_axi_cb);
-
-   slave_mp.slv_axi_cb.aw_ready <= 1'b0;
-   aw_latency_status = 0;
-
-   `uvm_info(get_type_name(), $sformatf("finish driving awready"), UVM_HIGH)
 
 endtask
 
-task uvma_axi_drv_c:: w_drv(uvma_axi_slv_seq_item_c item);
 
-   `uvm_info(get_type_name(), $sformatf("write w_data driver start"), UVM_HIGH)
-   w_latency_status = 1;
-   repeat (item.w_delay) begin
+task uvma_axi_drv_c:: r_drv();
+
+   forever begin
+      `uvm_info(get_type_name(),$sformatf("response, start driving read response"), UVM_HIGH)
+      drive_R_channel_signals();
+      wait ( r_txn_queue.size() != 0 );
+
+      if(cfg.external_mem) begin
+         @(slave_mp.slv_axi_cb);
+      end
+      repeat (r_txn_queue[0].m_delay_cycle_flits[0]) begin
+         @(slave_mp.slv_axi_cb);
+      end
+
+      drive_R_channel_signals(r_txn_queue.pop_front());
+      do begin
+         this.slave_mp.slv_axi_cb.r_valid <= 1;
+         @(slave_mp.slv_axi_cb);
+      end while ( this.slave_mp.slv_axi_cb.r_ready == 0 );
+
+      this.slave_mp.slv_axi_cb.r_valid <= 0;
+
+      `uvm_info(get_type_name(), $sformatf("finish driving r_item"), UVM_HIGH)
+   end
+
+endtask
+
+
+task uvma_axi_drv_c:: aw_drv();
+
+   forever begin
+      `uvm_info(get_type_name(), $sformatf("read address, response by aw_ready"), UVM_HIGH)
+      wait ( aw_txn_queue.size() != 0 );
+      repeat (aw_txn_queue[0].ready_delay_cycle_chan_ax) begin
+         @(slave_mp.slv_axi_cb);
+      end
+
+      this.slave_mp.slv_axi_cb.aw_ready <= 1'b1;
       @(slave_mp.slv_axi_cb);
+
+      this.slave_mp.slv_axi_cb.aw_ready <= 1'b0;
+      aw_txn_queue.delete(0);
+      `uvm_info(get_type_name(), $sformatf("finish driving awready"), UVM_HIGH)
    end
-   this.slave_mp.slv_axi_cb.w_ready <= 1'b1;
-   @(slave_mp.slv_axi_cb);
-
-   this.slave_mp.slv_axi_cb.w_ready <= 1'b0;
-   w_latency_status = 0;
-
-   `uvm_info(get_type_name(), $sformatf("finish driving wready"), UVM_HIGH)
 
 endtask
 
-task uvma_axi_drv_c:: ar_drv(uvma_axi_slv_seq_item_c item);
 
-   `uvm_info(get_type_name(), $sformatf("read address, response by ar_ready"), UVM_HIGH)
-   ar_latency_status = 1;
-   repeat (item.ar_delay) begin
+task uvma_axi_drv_c:: w_drv();
+
+   forever begin
+      `uvm_info(get_type_name(), $sformatf("read address, response by w_ready"), UVM_HIGH)
+      wait ( w_txn_queue.size() != 0 );
+      repeat (w_txn_queue[0].ready_delay_cycle_chan_w[0]) begin
+         @(slave_mp.slv_axi_cb);
+      end
+
+      this.slave_mp.slv_axi_cb.w_ready <= 1'b1;
       @(slave_mp.slv_axi_cb);
+
+      this.slave_mp.slv_axi_cb.w_ready <= 1'b0;
+      w_txn_queue.delete(0);
+      `uvm_info(get_type_name(), $sformatf("finish driving wready"), UVM_HIGH)
    end
-   this.slave_mp.slv_axi_cb.ar_ready <= 1'b1;
-   @(slave_mp.slv_axi_cb);
-
-   this.slave_mp.slv_axi_cb.ar_ready <= 1'b0;
-   ar_latency_status = 0;
-
-   `uvm_info(get_type_name(), $sformatf("finish driving arready"), UVM_HIGH)
 
 endtask
 
-task uvma_axi_drv_c:: r_drv(uvma_axi_slv_seq_item_c item);
 
-   `uvm_info(get_type_name(),$sformatf("response, send r_data to DUT"), UVM_HIGH)
+task uvma_axi_drv_c:: b_drv();
 
-   this.slave_mp.slv_axi_cb.r_id    <= item.r_id;
-   this.slave_mp.slv_axi_cb.r_resp  <= item.r_resp;
-   this.slave_mp.slv_axi_cb.r_user  <= item.r_user;
-   this.slave_mp.slv_axi_cb.r_last  <= item.r_last;
-   this.slave_mp.slv_axi_cb.r_valid <= item.r_valid;
-   this.slave_mp.slv_axi_cb.r_data  <= item.r_data;
-   @(slave_mp.slv_axi_cb);
+   forever begin
+      `uvm_info(get_type_name(),$sformatf("response, start driving write response"), UVM_HIGH)
 
-   `uvm_info(get_type_name(), $sformatf("finish driving r_item"), UVM_HIGH)
+      drive_B_channel_signals();
+      wait ( b_txn_queue.size() != 0 );
+
+      if(cfg.external_mem) begin
+         @(slave_mp.slv_axi_cb);
+      end
+
+      repeat (b_txn_queue[0].m_delay_cycle_chan_X) begin
+         @(slave_mp.slv_axi_cb);
+      end
+      drive_B_channel_signals(b_txn_queue.pop_front());
+
+      do begin
+         this.slave_mp.slv_axi_cb.b_valid <= 1;
+         @(slave_mp.slv_axi_cb);
+      end while ( slave_mp.slv_axi_cb.b_ready == 0 );
+
+      // End of the first flit transaction
+      this.slave_mp.slv_axi_cb.b_valid <= 0;
+
+      `uvm_info(get_type_name(), $sformatf("finish driving b_item"), UVM_HIGH)
+   end
 
 endtask
 
-task uvma_axi_drv_c:: b_drv(uvma_axi_slv_seq_item_c item);
 
-   `uvm_info(get_type_name(),$sformatf("response, send resp to DUT"), UVM_HIGH)
+task uvma_axi_drv_c::drive_R_channel_signals( uvma_axi_transaction_c  r_txn = null );
 
-   this.slave_mp.slv_axi_cb.b_id    <= item.b_id;
-   this.slave_mp.slv_axi_cb.b_resp  <= item.b_resp;
-   this.slave_mp.slv_axi_cb.b_user  <= item.b_user;
-   this.slave_mp.slv_axi_cb.b_user  <= item.b_user;
-   this.slave_mp.slv_axi_cb.b_valid <= item.b_valid;
-   @(slave_mp.slv_axi_cb);
+   if ( ( r_txn == null ) && ( cfg.driver_idle_value_cfg == RANDOM ) ) begin
+     r_txn = new();
+     r_txn.m_txn_config = cfg.txn_config;
+     if (!r_txn.randomize() with 
+       { m_txn_type    == UVMA_AXI_READ_RSP ;
+       } )
+       `uvm_error(get_type_name(),"Error randomizing the read response metadata");
+   end
 
-   `uvm_info(get_type_name(), $sformatf("finish driving b_item"), UVM_HIGH)
+   if ( r_txn != null ) begin
+     this.slave_mp.slv_axi_cb.r_id      <= r_txn.m_id      ;
+     this.slave_mp.slv_axi_cb.r_data    <= r_txn.m_data[0] ;
+     this.slave_mp.slv_axi_cb.r_resp    <= uvma_axi_sig_resp_t'(r_txn.m_resp[0]) ;
+     this.slave_mp.slv_axi_cb.r_last    <= r_txn.m_last[0] ;
+     this.slave_mp.slv_axi_cb.r_user    <= r_txn.m_user    ;
+     this.slave_mp.slv_axi_cb.r_datachk <= r_txn.m_datachk ;
+     this.slave_mp.slv_axi_cb.r_poison  <= r_txn.m_poison  ;
+     this.slave_mp.slv_axi_cb.r_trace   <= r_txn.m_trace   ;
+     this.slave_mp.slv_axi_cb.r_loop    <= r_txn.m_loop    ;
+     this.slave_mp.slv_axi_cb.r_idunq   <= r_txn.m_idunq   ;
+   end else begin
+     // Payload
+     this.slave_mp.slv_axi_cb.r_id      <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_data    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_resp    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_last    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_user    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_datachk <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_poison  <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_trace   <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_loop    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.r_idunq   <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+   end
 
-endtask
+   // Control signal
+   this.slave_mp.slv_axi_cb.r_valid <= 0 ;
+
+endtask // drive_idle_R_channel
+
+
+task uvma_axi_drv_c::drive_B_channel_signals( uvma_axi_transaction_c  b_txn = null );
+
+   if ( ( b_txn == null ) && ( cfg.driver_idle_value_cfg == RANDOM ) ) begin
+     b_txn = new();
+     b_txn.m_txn_config = cfg.txn_config;
+     if (!b_txn.randomize() with
+       { m_txn_type    == UVMA_AXI_WRITE_RSP ;
+       } )
+       `uvm_error(get_type_name(),"Error randomizing the write response metadata");
+   end
+
+   if ( b_txn != null ) begin
+     this.slave_mp.slv_axi_cb.b_id    <= b_txn.m_id      ;
+     this.slave_mp.slv_axi_cb.b_resp  <= uvma_axi_sig_resp_t'(b_txn.m_resp[0]) ;
+     this.slave_mp.slv_axi_cb.b_user  <= b_txn.m_user    ;
+     this.slave_mp.slv_axi_cb.b_trace <= b_txn.m_trace   ;
+     this.slave_mp.slv_axi_cb.b_loop  <= b_txn.m_loop    ;
+     this.slave_mp.slv_axi_cb.b_idunq <= b_txn.m_idunq   ;
+   end else begin
+     // Payload
+     this.slave_mp.slv_axi_cb.b_id      <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.b_resp    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.b_user    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.b_trace   <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.b_loop    <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+     this.slave_mp.slv_axi_cb.b_idunq   <= ( cfg.driver_idle_value_cfg == UNDEFINED  ) ? 'hx : 0 ;
+   end
+
+   // Control signal
+   this.slave_mp.slv_axi_cb.b_valid <= 0 ;
+
+endtask // drive_idle_B_channel
 
 `endif   // __UVMA_AXI_DRV_SV__
-
