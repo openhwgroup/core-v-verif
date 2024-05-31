@@ -84,7 +84,7 @@ class uvmt_cv32e40p_riscof_firmware_test_c extends uvmt_cv32e40p_base_test_c;
     /**
      *  Enable program execution, wait for completion.
      */
-    extern virtual task run_phase(uvm_phase phase);
+    extern virtual task main_phase(uvm_phase phase);
 
     extern function void write_riscof_signature();
 
@@ -139,12 +139,12 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::post_randomize();
 endfunction : post_randomize
 
 
-task uvmt_cv32e40p_riscof_firmware_test_c::run_phase(uvm_phase phase);
+task uvmt_cv32e40p_riscof_firmware_test_c::main_phase(uvm_phase phase);
 
-    super.run_phase(phase);
+    super.main_phase(phase);
 
     phase.raise_objection(this);
-    @(posedge env_cntxt.clknrst_cntxt.vif.reset_n);
+    //@(posedge env_cntxt.clknrst_cntxt.vif.reset_n);
     repeat (33) @(posedge env_cntxt.clknrst_cntxt.vif.clk);
     `uvm_info("TEST", "Started RUN", UVM_NONE)
 
@@ -162,7 +162,7 @@ task uvmt_cv32e40p_riscof_firmware_test_c::run_phase(uvm_phase phase);
 
     phase.drop_objection(this);
 
-endtask : run_phase
+endtask : main_phase
 
 function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
     bit[31:0]     mem_read;
