@@ -141,11 +141,13 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
             }
 
             // If it is set or clear we need to inject also the value in the CSR
-            if ((rvfi.insn & MASK_CSRRC) == MATCH_CSRRC ||
-                (rvfi.insn & MASK_CSRRS) == MATCH_CSRRS) {
-                if (reference->csr_valid[read_csr]) {
-                    this->put_csr(read_csr, reference->csr_wdata[read_csr]);
-                    rvfi.csr_wdata[read_csr] = reference->csr_wdata[read_csr];
+            if ((rvfi.insn & MASK_CSRRC) == MATCH_CSRRC   ||
+                (rvfi.insn & MASK_CSRRS) == MATCH_CSRRS   ||
+                (rvfi.insn & MASK_CSRRCI) == MATCH_CSRRCI ||
+                (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI) {
+                if (reference->csr_valid[INDEX_CSR(read_csr)]) {
+                    this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
+                    rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
                 }
             }
             break;
