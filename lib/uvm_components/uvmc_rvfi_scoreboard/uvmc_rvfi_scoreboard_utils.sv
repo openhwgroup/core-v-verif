@@ -135,7 +135,7 @@ import "DPI-C" function void spike_set_default_params(string profile);
         if (t_core.trap[0] | t_reference_model.trap[0]) begin
             if (t_core.trap[0] !== t_reference_model.trap[0]) begin
                 error = 1;
-                cause_str = $sformatf("%s\n  TRAP Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
+                cause_str = $sformatf("%s\nTRAP Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
             end
         end
         else begin
