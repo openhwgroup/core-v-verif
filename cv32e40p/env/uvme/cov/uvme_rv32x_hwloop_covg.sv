@@ -951,8 +951,7 @@ class uvme_rv32x_hwloop_covg # (
         if (enter_hwloop_sub) begin 
           enter_hwloop_sub_cnt++;
           if (is_trap && is_dbg_mode && !cv32e40p_rvvi_vif.csr_dcsr_step && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // exception trap and debug are b2b cycles (except debug step)
-            has_pending_trap_due2_dbg = 1; is_trap = 0; 
-            enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0;
+            has_pending_trap_due2_dbg = 1; 
           end // TRAP_DUETO_DBG_ENTRY
           else if (pc_is_mtvec_addr() && !is_mcause_irq()) begin : EXCEPTION_ENTRY
             for (int i=0; i<HWLOOP_NB; i++) begin
@@ -991,7 +990,13 @@ class uvme_rv32x_hwloop_covg # (
           // [optional] todo: mie has effect on irq during exception. Current hwloop tests do not exercise nested irq with mie enabled
 
           check_exception_exit();
-          if (!(is_ebreak || is_ecall || is_illegal || has_pending_trap_due2_dbg || has_pending_trap_due2_irq)) begin enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0; end
+          if (!(is_ebreak || is_ecall || is_illegal || has_pending_trap_due2_dbg || has_pending_trap_due2_irq)) begin
+            enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0; 
+          end
+          else if (has_pending_trap_due2_dbg) begin
+            enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0;
+            is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0;
+          end
           prev_pc_rdata_sub = cv32e40p_rvvi_vif.pc_rdata;
         end
 
