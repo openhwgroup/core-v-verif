@@ -393,7 +393,9 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       logic [31:0] i_imm;
       for (int i=1; i<32; i++) begin
         riscv_reg_t i_gpr = riscv_reg_t'(i);
+        // if (i_gpr inside {cfg.reserved_regs}) continue;
         if (i == int'(cfg.sp)) continue; // do not alter stack pointer
+        if (i == int'(cfg.tp)) continue; // do not alter thread pointer
         if (cfg.gen_debug_section) begin
           if (i == int'(cfg_cv32e40p.dp)) continue; // do not alter debug pointer
         end
