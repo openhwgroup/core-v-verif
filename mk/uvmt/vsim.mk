@@ -42,9 +42,9 @@ DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 
 # Default flags
 VSIM_USER_FLAGS         ?=
-VOPT_COV  				?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
-VSIM_COV 				?= -coverage
-VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
+VOPT_COV                ?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
+VSIM_COV                ?= -coverage
+VOPT_WAVES_ADV_DEBUG    ?= -designfile $(SIM_CFG_RESULTS)/design.bin
 VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
 VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
 
@@ -274,15 +274,15 @@ endif
 ################################################################################
 # Interactive simulation
 ifeq ($(call IS_YES,$(GUI)),YES)
-ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-VSIM_FLAGS += -visualizer=+designfile=../design.bin
+    ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
+        VSIM_FLAGS += -visualizer=+designfile=$(SIM_CFG_RESULTS)/design.bin
+    else
+        VSIM_FLAGS += -gui
+    endif
+    VSIM_FLAGS += -do $(VSIM_SCRIPT_DIR)/gui.tcl
 else
-VSIM_FLAGS += -gui
-endif
-VSIM_FLAGS += -do $(VSIM_SCRIPT_DIR)/gui.tcl
-else
-VSIM_FLAGS += -batch
-VSIM_FLAGS += -do $(VSIM_SCRIPT_DIR)/vsim.tcl
+    VSIM_FLAGS += -batch
+    VSIM_FLAGS += -do $(VSIM_SCRIPT_DIR)/vsim.tcl
 endif
 
 ################################################################################
