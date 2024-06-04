@@ -7,6 +7,7 @@ uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
 description: >
     Random debug in fp instruction stream
 plusargs: >
-    +gen_random_debug 
-    # +gen_reduced_rand_dbg_req -> produce not many dbg_req
+    +gen_reduced_rand_dbg_req 
+    +num_debug_req=1000 
+    # +gen_reduced_rand_dbg_req -> produce not many dbg_req, use num_debug_req to indicate intended repetitive number
     # +gen_random_debug -> produce many dbg_req 
