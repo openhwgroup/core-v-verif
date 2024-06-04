@@ -140,6 +140,19 @@ package cv32e40p_instr_test_pkg;
     end
   endfunction : push_gpr_to_debugger_stack
 
+  // workaround for issue of debug entry during test_done by preventing load instr uses same xreg that having print_port value
+  // note: this function must be called after push_gpr_to_debugger_stack()
+  function automatic void rand_xreg_after_push_gpr_to_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
+                                                                     ref string instr[$]);
+    int unsigned  total_gpr = 32;
+    for(int i = 1; i < total_gpr; i++) begin
+      logic [3:0] rand_nibble = $urandom_range(0,15);
+      if (i inside {cfg_corev.reserved_regs}) continue;
+      // set the xregs into higher ram space (refer .map file)
+      instr.push_back($sformatf("lui x%0d, 0x003F%1h000 >> 12 # rand_xreg_after_push_gpr_to_debugger_stack ", i, rand_nibble));
+    end
+  endfunction : rand_xreg_after_push_gpr_to_debugger_stack
+
   // Push floating point registers to the debugger stack
   function automatic void push_fpr_to_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
                                                      ref string instr[$],

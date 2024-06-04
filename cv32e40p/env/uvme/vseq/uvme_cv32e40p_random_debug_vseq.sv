@@ -69,7 +69,7 @@ class uvme_cv32e40p_reduced_rand_debug_req_c extends uvme_cv32e40p_random_debug_
 
     constraint default_dly_c {
         if (num_of_debug_req == 1) dly inside {[200:2000]};
-        else dly inside {[500:10000]};
+        else dly inside {[2500:10000]};
     }
 
     constraint num_dgb_req_c {
@@ -85,12 +85,13 @@ function uvme_cv32e40p_reduced_rand_debug_req_c::new(string name="uvme_cv32e40p_
     super.new(name);
     if ($value$plusargs("num_debug_req=%0d",num_of_debug_req)) begin
         num_of_debug_req.rand_mode(0);
+        num_dgb_req_c.constraint_mode(0);
     end
 endfunction : new
 
 task uvme_cv32e40p_reduced_rand_debug_req_c::rand_delay();
-    if (! std::randomize(dly) with {  dly inside {[1:10000]}; } ) begin
-        `uvm_fatal("RAND_DEBUG_RAND_DELAY", "Cannot randomize dly")
+    if (!std::randomize(dly) with {dly inside {[2500:10000]};}) begin
+        `uvm_fatal("RAND_DEBUG_RAND_DELAY", "Randomization dly Failed")
     end
     #(dly);
 endtask : rand_delay

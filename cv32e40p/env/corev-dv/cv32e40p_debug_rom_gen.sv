@@ -72,6 +72,8 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
             end
             // Need to save off GPRs to avoid modifying program flow
             push_gpr_to_debugger_stack(cfg_corev, debug_main);
+            // workaround to handle issue if debug entry during test_done by preventing load instr uses xreg with print_port value
+            rand_xreg_after_push_gpr_to_debugger_stack(cfg_corev, debug_main);
 
             // Need to save off FPRs incase f-extension instructions are used to avoid modifying program flow
             if(cfg.enable_floating_point && !cfg.enable_fp_in_x_regs) begin
