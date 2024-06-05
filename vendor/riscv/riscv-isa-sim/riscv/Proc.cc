@@ -20,8 +20,14 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
   this->taken_trap = false;
   this->which_trap = 0;
 
-  rvfi.pc_rdata = this->get_state()->pc;
+  // Store the state before stepping
+  state_t prev_state = *this->get_state();
+
   processor_t::step(n);
+
+  rvfi.pc_rdata = this->last_pc;
+
+  rvfi.pc_wdata = this->get_state()->pc; // Next predicted PC
 
   rvfi.mode = this->get_state()->last_inst_priv;
   rvfi.insn =
@@ -29,6 +35,8 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
 
   // TODO FIXME Handle multiple/zero writes in a single insn.
   auto &reg_commits = this->get_state()->log_reg_write;
+  auto &mem_write_commits = this->get_state()->log_mem_write;
+  auto &mem_read_commits = this->get_state()->log_mem_read;
   int xlen = this->get_state()->last_inst_xlen;
   int flen = this->get_state()->last_inst_flen;
 
@@ -37,13 +45,69 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
   rvfi.rs2_addr = this->get_state()->last_inst_fetched.rs2();
   // TODO add rs2_value
 
-  rvfi.trap = this->taken_trap;
-  rvfi.trap |= (this->which_trap << 1);
 
+  if(this->next_rvfi_intr){
+    rvfi.intr = next_rvfi_intr;
+    this->next_rvfi_intr = 0;
+
+  }
+  
+  // Output dbg caused from EBREAK the previous instruction
+  if(this->next_debug) {
+    rvfi.dbg = this->next_debug;
+    this->next_debug = 0;
+  }
+
+  if(this->state.debug_mode  && (prev_state.debug_mode == 0)){
+    // New external debug request
+    if((this->halt_request != HR_NONE)){ 
+      rvfi.dbg = this->get_state()->dcsr->cause;
+      rvfi.dbg_mode = 1;
+
+    // EBREAK
+    } else if(this->get_state()->dcsr->cause == DCSR_CAUSE_SWBP) {
+      // EBREAK will set debug_mode to 1, but we should report this at the next instruction
+      rvfi.trap |= 1 << 0; //trap [0]
+      rvfi.trap |= 1 << 2; //debug [2]
+      rvfi.trap |= 0xE00 & ((DCSR_CAUSE_SWBP) << 9); //debug cause [11:9]
+      
+      this->next_debug = DCSR_CAUSE_SWBP;
+    }
+  }
+
+  // Set dbg_mode to 1 the first instruction in debug mode, but delay turning 
+  // off dbg_mode to the next instruction after turning off to keep dbg_mode on for dret
+  if( (this->halt_request != HR_NONE)  && (prev_state.debug_mode == 0)) {
+    rvfi.dbg_mode = 1;
+  } else {
+    rvfi.dbg_mode = prev_state.debug_mode;
+  }
+
+
+  if(this->taken_trap) {
+    //interrrupts are marked with the msb high in which_trap
+    if(this->which_trap & ((reg_t)1 << (isa->get_max_xlen() - 1))) { 
+      //Since spike steps two times to take an interrupt, we store the intr value to the next step to return with rvfi
+      this->next_rvfi_intr |= 1 << 0; //intr [0]
+      this->next_rvfi_intr |= 1 << 2; //interrupt [2]
+      this->next_rvfi_intr |= 0x3FF8 & ((this->which_trap & 0xFF) << 3); //cause[13:3]
+    } else{
+      rvfi.trap |= 1 << 0; //trap [0]
+      rvfi.trap |= 1 << 1; //exception [1]
+      rvfi.trap |= 0x1F8 & ((this->which_trap) << 3); //exception_cause [8:3]
+      //TODO:
+      //debug_cause     [11:9] debug cause
+      //cause_type      [13:12]
+      //clicptr         [14]  CLIC interrupt pending
+      this->next_rvfi_intr = rvfi.trap; //store value to return with rvfi.intr on the next step
+    }
+  }
+
+  uint64_t last_rd_addr = 0;
+  uint64_t last_rd_wdata = 0;
   bool got_commit = false;
   for (auto &reg : reg_commits) {
-      if ((reg.first >> 4) > 32) {
-          if ((reg.first >> 4) < 0xFFF) {
+    if((reg.first & 0xf) == 0x4) { //If CSR
             for (size_t i = 0; i < CSR_SIZE; i++) {
                 if (!rvfi.csr_valid[i]) {
                     rvfi.csr_valid[i] = 1;
@@ -54,14 +118,59 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
                 }
             }
           }
+    else {
+      if (got_commit) {
+        last_rd_addr = reg.first >> 4;
+        last_rd_wdata = reg.second.v[0];
+        continue;
       }
-      else {
         // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
         rvfi.rd1_addr = reg.first >> 4;
         rvfi.rd1_wdata = reg.second.v[0];
         // TODO FIXME Handle multiple register commits per cycle.
         // TODO FIXME This must be handled on the RVFI side as well.
+      got_commit = true; // Only latch first commit
+    }
+  }
+  // popret(z) should return rd1_addr = 0 instead of the SP to match with the cv32e40s core
+  if (((this->get_state()->last_inst_fetched.bits() & MASK_CM_POPRET) == MATCH_CM_POPRET) ||
+      ((this->get_state()->last_inst_fetched.bits() & MASK_CM_POPRETZ) == MATCH_CM_POPRETZ)) {
+    rvfi.rd1_addr = 0;
+    rvfi.rd1_wdata = 0;
+  }
+
+  bool mem_access = false; // TODO: support multiple memory writes/reads
+  int read_len;
+  for (auto &mem : mem_read_commits) {
+    //mem format: (addr, 0, size) (value is not stored for reads, but should be the same as rd)
+    if(!mem_access) {
+      rvfi.mem_addr = std::get<0>(mem);
+      if ((this->get_state()->last_inst_fetched.bits() & MASK_CM_POP) == MATCH_CM_POP         ||
+          (this->get_state()->last_inst_fetched.bits() & MASK_CM_POPRET) == MATCH_CM_POPRET   ||
+          (this->get_state()->last_inst_fetched.bits() & MASK_CM_POPRETZ) == MATCH_CM_POPRETZ ){    
+        rvfi.mem_rdata = last_rd_wdata; // During pop, rd1 returns sp, so instead return value read from memory 
+      } else {
+        rvfi.mem_rdata = rvfi.rd1_wdata; 
       }
+      //mem_rmask should hold a bitmask of which bytes in mem_rdata contain valid data
+      read_len = std::get<2>(mem);
+      rvfi.mem_rmask = (1 << read_len) - 1;
+      mem_access = true;
+    }
+  }
+
+  int write_len;
+  for (auto &mem : mem_write_commits) {
+    //mem format: (addr, value, size)
+    if(!mem_access) {
+      rvfi.mem_addr = std::get<0>(mem);
+      rvfi.mem_wdata = std::get<1>(mem); // value
+      //mem_wmask should hold a bitmask of which bytes in mem_wdata contain valid data
+      write_len = std::get<2>(mem);
+      rvfi.mem_wmask = (1 << write_len) - 1;
+      mem_access = true;
+    }
+
   }
 
   if (csr_counters_injection) {
@@ -107,6 +216,12 @@ Processor::Processor(
   Params::parse_params(base, this->params, params);
 
   string isa_str = this->params[base + "isa"].a_string;
+
+  // Add _xdummy to enable bit 23 in MISA if non standard extensions are used
+  if( (this->params[base+"nonstd_ext"]).a_bool) {
+    isa_str = isa_str + "_xdummy";
+  }
+
   string priv_str = this->params[base + "priv"].a_string;
   std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str << std::endl;
   this->isa =
@@ -192,6 +307,9 @@ Processor::Processor(
   bool misa_we = (this->params[base + "misa_we"]).a_bool;
   if (misa_we_enable)
     this->state.misa->set_we(misa_we);
+
+  this->next_rvfi_intr = 0;
+
 }
 
 void Processor::take_trap(trap_t &t, reg_t epc) {
@@ -242,6 +360,10 @@ void Processor::default_params(string base, openhw::Params &params) {
 
   params.set_bool(base, "csr_counters_injection", false, "false",
              "Allow to set CSRs getting values from a DPI");
+
+  params.set_bool(base, "nonstd_ext", false, "false",
+             "Non-standard extension used");
+
 }
 
 inline void Processor::set_XPR(reg_t num, reg_t value) {

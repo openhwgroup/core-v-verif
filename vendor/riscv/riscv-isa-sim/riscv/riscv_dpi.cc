@@ -51,6 +51,38 @@ extern "C" void spike_set_default_params(const char *profile) {
     params.set_string("/top/core/0/", "name", std::string("cva6"));
     params.set_string("/top/core/0/", "isa", std::string("RV64GC"));
   }
+  else if (strcmp(profile, "cv32e40s") == 0)
+  {
+    params.set_string("/top/", "isa", std::string("RV32I"));
+    params.set_string("/top/", "priv", std::string("MU"));
+    params.set_uint64_t("/top/", "num_procs", 0x1UL);
+    params.set_bool("/top/", "bootrom", false);
+    params.set_bool("/top/", "generic_core_config", true);
+    params.set_uint64_t("/top/", "dram_base", 0x00000000UL);
+    params.set_uint64_t("/top/", "dram_size", 0x400000UL);
+    params.set_bool("/top/", "max_steps_enabled", false);
+    params.set_uint64_t("/top/", "max_steps", 2000000UL);
+    params.set_bool("/top/", "dtb_enabled", false);
+
+
+    params.set_bool("/top/", "dbg", true);
+    params.set_uint64_t("/top/", "dbg_base", 0x1a110800UL);
+    params.set_uint64_t("/top/", "dbg_size", 0x1000UL);
+
+    //Virtual peripherals
+    params.set_bool("/top/", "vp", true);
+    params.set_uint64_t("/top/", "vp_base", 0x00800000UL);
+    params.set_uint64_t("/top/", "vp_size", 0x1000UL);
+
+
+    params.set_string("/top/core/0/", "name", std::string("cv32e40s"));
+    params.set_string("/top/core/0/", "isa", std::string("RV32I"));
+
+    params.set_uint64_t("/top/core/0/", "marchid", 0x15UL);
+    params.set_uint64_t("/top/core/0/", "misa", 0x40901104UL);
+    params.set_uint64_t("/top/core/0/", "mvendorid", 0x602UL);
+    params.set_uint64_t("/top/core/0/", "mcountinhibit", 0x5UL);
+  }
 }
 
 extern "C" void spike_set_param_uint64_t(const char *base, const char *name,

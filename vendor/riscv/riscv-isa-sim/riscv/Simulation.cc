@@ -52,6 +52,18 @@ void Simulation::default_params(openhw::Params &params) {
   params.set_uint64_t("/top/", "dram_size", 0x400UL * 1024 * 1024,
              "0x40000000", "DRAM size");
 
+  params.set_bool("/top/", "dbg", false, "false", "DBG enable");
+  params.set_uint64_t("/top/", "dbg_base", 0x1a110800UL,
+             "0x80000000", "DBG base address");
+  params.set_uint64_t("/top/", "dbg_size", 0x1000UL,
+             "0x40000000", "DBG size");
+
+  params.set_bool("/top/", "vp", false, "false", "Virtual peripherals enable");
+  params.set_uint64_t("/top/", "vp_base", 0x00800000UL,
+             "0x80000000", "VP base address");
+  params.set_uint64_t("/top/", "vp_size", 0x1000UL,
+             "0x40000000", "VP size");
+
   params.set_bool("/top/", "log_commits", true, "True",
              "Log commit enable");
 
@@ -59,6 +71,9 @@ void Simulation::default_params(openhw::Params &params) {
              "Maximum steps enable");
   params.set_uint64_t("/top/", "max_steps", 200000UL, "200000",
              "Maximum steps that the simulation can do ");
+
+  params.set_bool("/top/", "dtb_enabled", true, "True",
+             "dtb_enabled");
 
   Processor::default_params("/top/cores/", params);
 }
@@ -115,7 +130,7 @@ Simulation::Simulation(const cfg_t *cfg, string elf_path,
                  plugin_devs, std::vector<std::string>() = {elf_path},
                  dm_config,
                  "tandem.log", // log_path
-                 true,         // dtb_enabled
+                 (params["/top/dtb_enabled"]).a_bool, // dtb_enabled
                  nullptr,      // dtb_file
                  false,        // socket_enabled
                  NULL,         // cmd_file
@@ -175,6 +190,25 @@ void Simulation::make_mems(const std::vector<mem_cfg_t> &layout) {
   if (dram) {
     this->mems.push_back(std::make_pair(dram_base, new mem_t(dram_size)));
   }
+
+  //dbg
+  bool dbg = (this->params["/top/dbg"]).a_bool;
+  uint64_t dbg_base = (this->params["/top/dbg_base"]).a_uint64_t;
+  uint64_t dbg_size = (this->params["/top/dbg_size"]).a_uint64_t;
+  if (dbg){
+    this->mems.push_back(std::make_pair(dbg_base, new mem_t(dbg_size)));
+  }
+
+
+  //CV_VP_REGISTER 
+  bool vp = (this->params["/top/vp"]).a_bool;
+  uint64_t vp_base = (this->params["/top/vp_base"]).a_uint64_t;
+  uint64_t vp_size = (this->params["/top/vp_size"]).a_uint64_t;
+  if (vp) {
+    this->mems.push_back(std::make_pair(vp_base, new mem_t(vp_size)));
+  }
+
+  
 }
 
 std::vector<st_rvfi> Simulation::step(size_t n,
