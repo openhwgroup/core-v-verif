@@ -144,7 +144,7 @@ task uvmt_cv32e40p_riscof_firmware_test_c::main_phase(uvm_phase phase);
     super.main_phase(phase);
 
     phase.raise_objection(this);
-    
+    wait(env_cntxt.clknrst_cntxt.vif.reset_n === 1'b1);
     repeat (33) @(posedge env_cntxt.clknrst_cntxt.vif.clk);
     `uvm_info("TEST", "Started RUN", UVM_NONE)
 
