@@ -50,7 +50,7 @@ extern "C" void spike_set_default_params(const char *profile) {
 
     params.set_string("/top/core/0/", "name", std::string("cva6"));
     params.set_string("/top/core/0/", "isa", std::string("RV64GC"));
-  }
+  } 
   else if (strcmp(profile, "cv32e40s") == 0)
   {
     params.set_string("/top/", "isa", std::string("RV32I"));
@@ -82,6 +82,8 @@ extern "C" void spike_set_default_params(const char *profile) {
     params.set_uint64_t("/top/core/0/", "misa", 0x40901104UL);
     params.set_uint64_t("/top/core/0/", "mvendorid", 0x602UL);
     params.set_uint64_t("/top/core/0/", "mcountinhibit", 0x5UL);
+
+    params.set_uint64_t("/top/core/0/", "num_prev_states_stored", 4UL);
   }
 }
 
@@ -212,4 +214,19 @@ extern "C" void spike_step_svLogic(svLogicVecVal* reference,
   sv2rvfi(reference_rvfi, reference);
   spike_step_struct(reference_rvfi, spike_rvfi);
   rvfi2sv(spike_rvfi, spike);
+}
+
+extern "C" bool spike_interrupt(uint32_t mip, uint32_t mie, uint32_t revert_steps, bool interrupt_allowed)
+{
+  return sim->interrupt(mip, mie, revert_steps, interrupt_allowed);
+}
+
+extern "C" bool spike_set_debug(bool debug_req, uint32_t revert_steps, bool debug_allowed)
+{
+  return sim->set_debug_req(debug_req, revert_steps, debug_allowed);
+}
+
+extern "C" void spike_revert_state(int num_steps)
+{
+  sim->revert_state(num_steps);
 }

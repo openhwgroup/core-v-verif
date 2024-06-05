@@ -1,6 +1,7 @@
 #include "Proc.h"
 #include "disasm.h"
 #include "extension.h"
+#include "mmu.h"
 #include <algorithm>
 #include <assert.h>
 #include <cinttypes>
@@ -16,6 +17,8 @@ namespace openhw {
 st_rvfi Processor::step(size_t n, st_rvfi reference) {
   st_rvfi rvfi;
   memset(&rvfi, 0, sizeof(st_rvfi));
+  commit_log_reg_t prev_commit_log_reg = this->get_state()->log_reg_write;
+
 
   this->taken_trap = false;
   this->which_trap = 0;
@@ -23,9 +26,20 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
   // Store the state before stepping
   state_t prev_state = *this->get_state();
 
+  // Disable WFI to handle the timing outside of spike.
+  in_wfi = false;
   processor_t::step(n);
 
   rvfi.pc_rdata = this->last_pc;
+
+  // Add overwritten values from memory writes during the step
+  prev_changes_t prev_changes(prev_state, this->get_state()->log_mem_pre_write);
+  if(max_previous_states > 0) {
+    previous_states.push_front(prev_changes);
+  }
+  if(previous_states.size() > max_previous_states) {
+    previous_states.pop_back();
+  }
 
   rvfi.pc_wdata = this->get_state()->pc; // Next predicted PC
 
@@ -50,6 +64,8 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
     rvfi.intr = next_rvfi_intr;
     this->next_rvfi_intr = 0;
 
+    //Add csr changes that happened during first interrupt step
+    reg_commits.insert(prev_commit_log_reg.begin(), prev_commit_log_reg.end());
   }
   
   // Output dbg caused from EBREAK the previous instruction
@@ -108,27 +124,27 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
   bool got_commit = false;
   for (auto &reg : reg_commits) {
     if((reg.first & 0xf) == 0x4) { //If CSR
-            for (size_t i = 0; i < CSR_SIZE; i++) {
-                if (!rvfi.csr_valid[i]) {
-                    rvfi.csr_valid[i] = 1;
-                    rvfi.csr_addr[i] = reg.first >> 4;
-                    rvfi.csr_wdata[i] = reg.second.v[0];
-                    rvfi.csr_wmask[i] = -1;
-                    break;
-                }
-            }
+      for (size_t i = 0; i < CSR_SIZE; i++) {
+          if (!rvfi.csr_valid[i]) {
+              rvfi.csr_valid[i] = 1;
+              rvfi.csr_addr[i] = reg.first >> 4;
+              rvfi.csr_wdata[i] = reg.second.v[0];
+              rvfi.csr_wmask[i] = -1;
+              break;
           }
+      }
+    }
     else {
       if (got_commit) {
         last_rd_addr = reg.first >> 4;
         last_rd_wdata = reg.second.v[0];
         continue;
       }
-        // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
-        rvfi.rd1_addr = reg.first >> 4;
-        rvfi.rd1_wdata = reg.second.v[0];
-        // TODO FIXME Handle multiple register commits per cycle.
-        // TODO FIXME This must be handled on the RVFI side as well.
+      // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
+      rvfi.rd1_addr = reg.first >> 4;
+      rvfi.rd1_wdata = reg.second.v[0];
+      // TODO FIXME Handle multiple register commits per cycle.
+      // TODO FIXME This must be handled on the RVFI side as well.
       got_commit = true; // Only latch first commit
     }
   }
@@ -172,7 +188,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
     }
 
   }
-
+  
   if (csr_counters_injection) {
     // Inject values comming from the reference
     if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS) {
@@ -200,6 +216,144 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
   }
   return rvfi;
 }
+
+void Processor::revert_step(uint32_t num_steps) {
+  FILE *log_file = this->get_log_file();
+
+
+  if (previous_states.size() < num_steps) {
+    throw std::runtime_error("Cannot revert more states than stored");
+  }
+
+  for(auto state: previous_states) {
+    fprintf(log_file, "pc: %lx | ", std::get<0>(state).pc);
+  }
+  fprintf(log_file, "\n");
+
+
+
+  fprintf(log_file, "revert %d steps from PC: %lx", num_steps, this->state.pc);
+
+  prev_changes_t prev_changes = previous_states[num_steps];
+  this->state = std::get<0>(prev_changes);
+
+  fprintf(log_file, " to PC: %lx\n", this->state.pc);
+
+  for (uint32_t i = 0; i <= num_steps; i++) {
+    prev_changes_t prev_changes = previous_states.front();
+    previous_states.pop_front();
+
+    commit_log_mem_t log_mem_pre_write = std::get<1>(prev_changes);
+    fprintf(log_file, "revert mem pc: %lx num: %ld\n", std::get<0>(prev_changes).pc, log_mem_pre_write.size());
+
+    for (auto mem_write : log_mem_pre_write) {
+      fprintf(log_file, "revert mem: addr: %lx val: %lx size: %x", std::get<0>(mem_write), std::get<1>(mem_write), std::get<2>(mem_write));
+      switch (std::get<2>(mem_write))
+      {
+      case 1:
+        this->get_mmu()->store<uint8_t>(std::get<0>(mem_write), (uint8_t)std::get<1>(mem_write),0);
+        break;
+      case 2:
+        this->get_mmu()->store<uint16_t>(std::get<0>(mem_write), (uint16_t)std::get<1>(mem_write),0);
+        break;
+      case 4:
+        this->get_mmu()->store<uint32_t>(std::get<0>(mem_write), (uint32_t)std::get<1>(mem_write),0);
+        break;
+      
+      default:
+        break;
+      }
+      fprintf(log_file, " OK\n");
+    }
+  }
+
+  //Clear commit logs since they contain information from the reverted steps
+  this->get_state()->log_mem_write.clear();
+  this->get_state()->log_reg_write.clear();
+  this->get_state()->log_mem_read.clear();
+  this->get_state()->log_mem_pre_write.clear();
+}
+
+bool Processor::will_trigger_interrupt(reg_t mip) {
+  state_t *state = this->get_state();
+
+  uint32_t old_mip = state->mip->read();
+  uint32_t mie = state->mie->read();
+  uint32_t mstatus = state->mstatus->read();
+  uint32_t old_en_irq = old_mip & mie;
+  uint32_t new_en_irq = mip & mie;
+
+
+  // Only take interrupt if interrupt is enabled, not in debug mode, does not have a halt request, 
+  // and the interrupt is new and not zero
+  if( get_field(mstatus, MSTATUS_MIE) &&
+      !state->debug_mode  &&
+      (this->halt_request != processor_t::HR_REGULAR) &&
+      //(old_en_irq == 0 ) && 
+      (new_en_irq != 0)) 
+  {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool Processor::interrupt(reg_t mip, reg_t mie, uint32_t revert_steps, bool interrupt_allowed) {
+  state_t *state = this->get_state();
+
+  reg_t mask = 0xFFFF0888; // TODO: automatically generate this
+
+  st_rvfi vref; //Passed to step, but not used
+
+  this->interrupt_allowed = interrupt_allowed;
+
+  state->mie->write_with_mask(mask, mie);
+
+  if(interrupt_allowed && will_trigger_interrupt(mip)) {
+    fprintf(this->get_log_file(), "interrupt mip %lx\n", mip);
+
+    this->revert_step(revert_steps);
+
+    state->mip->write_with_mask(mask, mip);
+
+    // This step only sets the correct state for the interrupt, but does not actually execute an instruction
+    // Another step needs to be taken to actually step through the instruction
+    // Therefore we discard the rvfi values returned from this step
+    this->step(1, vref);
+
+    return true;
+  } else {
+    state->mip->write_with_mask(mask, mip);
+    return false;
+  }
+ 
+}
+
+bool Processor::set_debug(bool debug_req, uint32_t revert_steps, bool debug_allowed){
+  bool debug_taken = false; 
+
+  // NOTE: This is a workaround to allow the new debug to take over while the ebreak is still in the pipeline
+  // If a new debug request is made while debug is allowed and a ebreak caused debug is active, disable debug mode to take the new debug.
+  // When the ebread retires from the pipeline shell, debug_allowed will be 0, so this will only happen while the ebreak is still in the pipeline
+  if(debug_req && debug_allowed && (this->state.dcsr->cause == DCSR_CAUSE_SWBP)) {
+    this->state.debug_mode = 0; // Set debug mode to 0, to allow external debug to overwrite potetial ebreak caused debug
+  }
+
+  if(!(this->state.debug_mode) && debug_req && debug_allowed && (this->halt_request == HR_NONE)){
+    this->halt_request = HR_REGULAR;
+    debug_taken = true;
+  } else if (this->state.debug_mode) {
+    this->halt_request = HR_NONE;
+  }
+  
+
+  if(debug_taken) {
+    this->revert_step(revert_steps);
+  }
+
+  return debug_taken;
+}
+
 
 Processor::Processor(
     const isa_parser_t *isa, const cfg_t *cfg, simif_t *sim, uint32_t id,
@@ -310,6 +464,8 @@ Processor::Processor(
 
   this->next_rvfi_intr = 0;
 
+  this->max_previous_states = (this->params[base + "num_prev_states_stored"]).a_uint64_t;
+
 }
 
 void Processor::take_trap(trap_t &t, reg_t epc) {
@@ -363,6 +519,9 @@ void Processor::default_params(string base, openhw::Params &params) {
 
   params.set_bool(base, "nonstd_ext", false, "false",
              "Non-standard extension used");
+
+  params.set_uint64_t(base, "num_prev_states_stored", 0UL, "0",
+             "The number of previous states stored for reverting");
 
 }
 

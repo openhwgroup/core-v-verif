@@ -94,7 +94,7 @@ Simulation::Simulation(
   // FIXME TODO: Use actual cache configuration (on/off, # of ways/sets).
   // FIXME TODO: Support multiple cores.
   get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
-
+  
   Params::parse_params("/top/", this->params, params);
 
   const std::vector<mem_cfg_t> layout;
@@ -234,6 +234,19 @@ std::vector<st_rvfi> Simulation::step(size_t n,
     }
   }
   return vspike;
+}
+
+
+bool Simulation::interrupt(reg_t mip, reg_t mie, uint32_t revert_steps, bool interrupt_allowed) {
+  return ((Processor *)procs[0])->interrupt(mip, mie, revert_steps, interrupt_allowed);
+}
+
+bool Simulation::set_debug_req(bool debug_req, uint32_t revert_steps, bool debug_allowed) {
+  return ((Processor *)procs[0])->set_debug(debug_req, revert_steps, debug_allowed);
+}
+
+void Simulation::revert_state(int num_steps) {
+  ((Processor *)procs[0])->revert_step(num_steps);
 }
 
 #if 0 // FORNOW Unused code, disable until needed.

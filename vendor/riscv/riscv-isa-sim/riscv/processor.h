@@ -173,6 +173,7 @@ struct state_t
   commit_log_reg_t log_reg_write;
   commit_log_mem_t log_mem_read;
   commit_log_mem_t log_mem_write;
+  commit_log_mem_t log_mem_pre_write;
   reg_t last_inst_priv;
   int last_inst_xlen;
   int last_inst_flen;
@@ -322,6 +323,7 @@ protected:
   bool check_triggers_icount;
   std::vector<bool> impl_table;
   openhw::Params params;
+  bool interrupt_allowed;
 
   // Note: does not include single-letter extensions in misa
   std::bitset<NUM_ISA_EXTENSIONS> extension_enable_table;

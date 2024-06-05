@@ -525,6 +525,7 @@ void state_t::reset(processor_t* const proc, reg_t max_isa)
   log_reg_write.clear();
   log_mem_read.clear();
   log_mem_write.clear();
+  log_mem_pre_write.clear();
   last_inst_priv = 0;
   last_inst_xlen = 0;
   last_inst_flen = 0;
@@ -643,7 +644,7 @@ void processor_t::set_mmu_capability(int cap)
 void processor_t::take_interrupt(reg_t pending_interrupts)
 {
   // Do nothing if no pending interrupts
-  if (!pending_interrupts) {
+  if (!pending_interrupts || !interrupt_allowed) {
     return;
   }
 
@@ -670,9 +671,41 @@ void processor_t::take_interrupt(reg_t pending_interrupts)
 
   const bool nmie = !(state.mnstatus && !get_field(state.mnstatus->read(), MNSTATUS_NMIE));
   if (!state.debug_mode && nmie && enabled_interrupts) {
-    // nonstandard interrupts have highest priority
-    if (enabled_interrupts >> (IRQ_M_EXT + 1))
-      enabled_interrupts = enabled_interrupts >> (IRQ_M_EXT + 1) << (IRQ_M_EXT + 1);
+    //// nonstandard interrupts have highest priority
+    if (enabled_interrupts & (1 << 31))
+      enabled_interrupts = (1 << 31);
+    else if (enabled_interrupts & (1 << 30))
+      enabled_interrupts = (1 << 30);
+    else if (enabled_interrupts & (1 << 29))
+      enabled_interrupts = (1 << 29);
+    else if (enabled_interrupts & (1 << 28))
+      enabled_interrupts = (1 << 28);
+    else if (enabled_interrupts & (1 << 27))
+      enabled_interrupts = (1 << 27);
+    else if (enabled_interrupts & (1 << 26))
+      enabled_interrupts = (1 << 26);
+    else if (enabled_interrupts & (1 << 25))
+      enabled_interrupts = (1 << 25);
+    else if (enabled_interrupts & (1 << 24))
+      enabled_interrupts = (1 << 24);
+    else if (enabled_interrupts & (1 << 23))
+      enabled_interrupts = (1 << 23);
+    else if (enabled_interrupts & (1 << 22))
+      enabled_interrupts = (1 << 22);
+    else if (enabled_interrupts & (1 << 21))
+      enabled_interrupts = (1 << 21);
+    else if (enabled_interrupts & (1 << 20))
+      enabled_interrupts = (1 << 20);
+    else if (enabled_interrupts & (1 << 19))
+      enabled_interrupts = (1 << 19);
+    else if (enabled_interrupts & (1 << 18))
+      enabled_interrupts = (1 << 18);
+    else if (enabled_interrupts & (1 << 17))
+      enabled_interrupts = (1 << 17);
+    else if (enabled_interrupts & (1 << 16))
+      enabled_interrupts = (1 << 16);
+    //if (enabled_interrupts >> (IRQ_M_EXT + 1))
+    //  enabled_interrupts = enabled_interrupts >> (IRQ_M_EXT + 1) << (IRQ_M_EXT + 1);
     // standard interrupt priority is MEI, MSI, MTI, SEI, SSI, STI
     else if (enabled_interrupts & MIP_MEIP)
       enabled_interrupts = MIP_MEIP;

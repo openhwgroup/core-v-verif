@@ -1,0 +1,604 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index ce0078c..2727d99 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -1,6 +1,7 @@
+ #include "Proc.h"
+ #include "disasm.h"
+ #include "extension.h"
++#include "mmu.h"
+ #include <algorithm>
+ #include <assert.h>
+ #include <cinttypes>
+@@ -16,6 +17,8 @@ namespace openhw {
+ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+   st_rvfi rvfi;
+   memset(&rvfi, 0, sizeof(st_rvfi));
++  commit_log_reg_t prev_commit_log_reg = this->get_state()->log_reg_write;
++
+ 
+   this->taken_trap = false;
+   this->which_trap = 0;
+@@ -23,10 +26,21 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+   // Store the state before stepping
+   state_t prev_state = *this->get_state();
+ 
++  // Disable WFI to handle the timing outside of spike.
++  in_wfi = false;
+   processor_t::step(n);
+ 
+   rvfi.pc_rdata = this->last_pc;
+ 
++  // Add overwritten values from memory writes during the step
++  prev_changes_t prev_changes(prev_state, this->get_state()->log_mem_pre_write);
++  if(max_previous_states > 0) {
++    previous_states.push_front(prev_changes);
++  }
++  if(previous_states.size() > max_previous_states) {
++    previous_states.pop_back();
++  }
++
+   rvfi.pc_wdata = this->get_state()->pc; // Next predicted PC
+ 
+   rvfi.mode = this->get_state()->last_inst_priv;
+@@ -50,6 +64,8 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+     rvfi.intr = next_rvfi_intr;
+     this->next_rvfi_intr = 0;
+ 
++    //Add csr changes that happened during first interrupt step
++    reg_commits.insert(prev_commit_log_reg.begin(), prev_commit_log_reg.end());
+   }
+   
+   // Output dbg caused from EBREAK the previous instruction
+@@ -108,27 +124,27 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+   bool got_commit = false;
+   for (auto &reg : reg_commits) {
+     if((reg.first & 0xf) == 0x4) { //If CSR
+-            for (size_t i = 0; i < CSR_SIZE; i++) {
+-                if (!rvfi.csr_valid[i]) {
+-                    rvfi.csr_valid[i] = 1;
+-                    rvfi.csr_addr[i] = reg.first >> 4;
+-                    rvfi.csr_wdata[i] = reg.second.v[0];
+-                    rvfi.csr_wmask[i] = -1;
+-                    break;
+-                }
+-            }
++      for (size_t i = 0; i < CSR_SIZE; i++) {
++          if (!rvfi.csr_valid[i]) {
++              rvfi.csr_valid[i] = 1;
++              rvfi.csr_addr[i] = reg.first >> 4;
++              rvfi.csr_wdata[i] = reg.second.v[0];
++              rvfi.csr_wmask[i] = -1;
++              break;
+           }
++      }
++    }
+     else {
+       if (got_commit) {
+         last_rd_addr = reg.first >> 4;
+         last_rd_wdata = reg.second.v[0];
+         continue;
+       }
+-        // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
+-        rvfi.rd1_addr = reg.first >> 4;
+-        rvfi.rd1_wdata = reg.second.v[0];
+-        // TODO FIXME Handle multiple register commits per cycle.
+-        // TODO FIXME This must be handled on the RVFI side as well.
++      // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
++      rvfi.rd1_addr = reg.first >> 4;
++      rvfi.rd1_wdata = reg.second.v[0];
++      // TODO FIXME Handle multiple register commits per cycle.
++      // TODO FIXME This must be handled on the RVFI side as well.
+       got_commit = true; // Only latch first commit
+     }
+   }
+@@ -172,7 +188,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+     }
+ 
+   }
+-
++  
+   if (csr_counters_injection) {
+     // Inject values comming from the reference
+     if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS) {
+@@ -201,6 +217,144 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+   return rvfi;
+ }
+ 
++void Processor::revert_step(uint32_t num_steps) {
++  FILE *log_file = this->get_log_file();
++
++
++  if (previous_states.size() < num_steps) {
++    throw std::runtime_error("Cannot revert more states than stored");
++  }
++
++  for(auto state: previous_states) {
++    fprintf(log_file, "pc: %lx | ", std::get<0>(state).pc);
++  }
++  fprintf(log_file, "\n");
++
++
++
++  fprintf(log_file, "revert %d steps from PC: %lx", num_steps, this->state.pc);
++
++  prev_changes_t prev_changes = previous_states[num_steps];
++  this->state = std::get<0>(prev_changes);
++
++  fprintf(log_file, " to PC: %lx\n", this->state.pc);
++
++  for (uint32_t i = 0; i <= num_steps; i++) {
++    prev_changes_t prev_changes = previous_states.front();
++    previous_states.pop_front();
++
++    commit_log_mem_t log_mem_pre_write = std::get<1>(prev_changes);
++    fprintf(log_file, "revert mem pc: %lx num: %ld\n", std::get<0>(prev_changes).pc, log_mem_pre_write.size());
++
++    for (auto mem_write : log_mem_pre_write) {
++      fprintf(log_file, "revert mem: addr: %lx val: %lx size: %x", std::get<0>(mem_write), std::get<1>(mem_write), std::get<2>(mem_write));
++      switch (std::get<2>(mem_write))
++      {
++      case 1:
++        this->get_mmu()->store<uint8_t>(std::get<0>(mem_write), (uint8_t)std::get<1>(mem_write),0);
++        break;
++      case 2:
++        this->get_mmu()->store<uint16_t>(std::get<0>(mem_write), (uint16_t)std::get<1>(mem_write),0);
++        break;
++      case 4:
++        this->get_mmu()->store<uint32_t>(std::get<0>(mem_write), (uint32_t)std::get<1>(mem_write),0);
++        break;
++      
++      default:
++        break;
++      }
++      fprintf(log_file, " OK\n");
++    }
++  }
++
++  //Clear commit logs since they contain information from the reverted steps
++  this->get_state()->log_mem_write.clear();
++  this->get_state()->log_reg_write.clear();
++  this->get_state()->log_mem_read.clear();
++  this->get_state()->log_mem_pre_write.clear();
++}
++
++bool Processor::will_trigger_interrupt(reg_t mip) {
++  state_t *state = this->get_state();
++
++  uint32_t old_mip = state->mip->read();
++  uint32_t mie = state->mie->read();
++  uint32_t mstatus = state->mstatus->read();
++  uint32_t old_en_irq = old_mip & mie;
++  uint32_t new_en_irq = mip & mie;
++
++
++  // Only take interrupt if interrupt is enabled, not in debug mode, does not have a halt request, 
++  // and the interrupt is new and not zero
++  if( get_field(mstatus, MSTATUS_MIE) &&
++      !state->debug_mode  &&
++      (this->halt_request != processor_t::HR_REGULAR) &&
++      //(old_en_irq == 0 ) && 
++      (new_en_irq != 0)) 
++  {
++    return true;
++  } else {
++    return false;
++  }
++}
++
++bool Processor::interrupt(reg_t mip, reg_t mie, uint32_t revert_steps, bool interrupt_allowed) {
++  state_t *state = this->get_state();
++
++  reg_t mask = 0xFFFF0888; // TODO: automatically generate this
++
++  st_rvfi vref; //Passed to step, but not used
++
++  this->interrupt_allowed = interrupt_allowed;
++
++  state->mie->write_with_mask(mask, mie);
++
++  if(interrupt_allowed && will_trigger_interrupt(mip)) {
++    fprintf(this->get_log_file(), "interrupt mip %lx\n", mip);
++
++    this->revert_step(revert_steps);
++
++    state->mip->write_with_mask(mask, mip);
++
++    // This step only sets the correct state for the interrupt, but does not actually execute an instruction
++    // Another step needs to be taken to actually step through the instruction
++    // Therefore we discard the rvfi values returned from this step
++    this->step(1, vref);
++
++    return true;
++  } else {
++    state->mip->write_with_mask(mask, mip);
++    return false;
++  }
++ 
++}
++
++bool Processor::set_debug(bool debug_req, uint32_t revert_steps, bool debug_allowed){
++  bool debug_taken = false; 
++
++  // NOTE: This is a workaround to allow the new debug to take over while the ebreak is still in the pipeline
++  // If a new debug request is made while debug is allowed and a ebreak caused debug is active, disable debug mode to take the new debug.
++  // When the ebread retires from the pipeline shell, debug_allowed will be 0, so this will only happen while the ebreak is still in the pipeline
++  if(debug_req && debug_allowed && (this->state.dcsr->cause == DCSR_CAUSE_SWBP)) {
++    this->state.debug_mode = 0; // Set debug mode to 0, to allow external debug to overwrite potetial ebreak caused debug
++  }
++
++  if(!(this->state.debug_mode) && debug_req && debug_allowed && (this->halt_request == HR_NONE)){
++    this->halt_request = HR_REGULAR;
++    debug_taken = true;
++  } else if (this->state.debug_mode) {
++    this->halt_request = HR_NONE;
++  }
++  
++
++  if(debug_taken) {
++    this->revert_step(revert_steps);
++  }
++
++  return debug_taken;
++}
++
++
+ Processor::Processor(
+     const isa_parser_t *isa, const cfg_t *cfg, simif_t *sim, uint32_t id,
+     bool halt_on_reset, FILE *log_file, std::ostream &sout_,
+@@ -310,6 +464,8 @@ Processor::Processor(
+ 
+   this->next_rvfi_intr = 0;
+ 
++  this->max_previous_states = (this->params[base + "num_prev_states_stored"]).a_uint64_t;
++
+ }
+ 
+ void Processor::take_trap(trap_t &t, reg_t epc) {
+@@ -364,6 +520,9 @@ void Processor::default_params(string base, openhw::Params &params) {
+   params.set_bool(base, "nonstd_ext", false, "false",
+              "Non-standard extension used");
+ 
++  params.set_uint64_t(base, "num_prev_states_stored", 0UL, "0",
++             "The number of previous states stored for reverting");
++
+ }
+ 
+ inline void Processor::set_XPR(reg_t num, reg_t value) {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index 12533f2..1661567 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -3,6 +3,7 @@
+ #include "processor.h"
+ 
+ namespace openhw {
++typedef std::tuple<state_t, commit_log_mem_t> prev_changes_t;
+ class Processor : public processor_t {
+ public:
+   Processor(const isa_parser_t *isa, const cfg_t *cfg, simif_t *sim,
+@@ -12,6 +13,10 @@ public:
+                              // need both
+   ~Processor();
+   st_rvfi step(size_t n, st_rvfi reference);
++  void revert_step(uint32_t num_steps);
++  bool will_trigger_interrupt(reg_t mip);
++  bool interrupt(reg_t mip, reg_t mie, uint32_t revert_steps, bool interrupt_allowed);
++  bool set_debug(bool debug_req, uint32_t revert_steps, bool debug_allowed);
+ 
+   static void default_params(string base, openhw::Params &params);
+ 
+@@ -19,6 +24,8 @@ public:
+   inline void set_FPR(reg_t num, float128_t value);
+ 
+ protected:
++  std::deque<prev_changes_t> previous_states;
++  uint64_t max_previous_states;
+   bool csr_counters_injection;
+   bool taken_trap;
+   uint32_t which_trap;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+index 946268e..4820967 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+@@ -94,7 +94,7 @@ Simulation::Simulation(
+   // FIXME TODO: Use actual cache configuration (on/off, # of ways/sets).
+   // FIXME TODO: Support multiple cores.
+   get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
+-
++  
+   Params::parse_params("/top/", this->params, params);
+ 
+   const std::vector<mem_cfg_t> layout;
+@@ -236,6 +236,19 @@ std::vector<st_rvfi> Simulation::step(size_t n,
+   return vspike;
+ }
+ 
++
++bool Simulation::interrupt(reg_t mip, reg_t mie, uint32_t revert_steps, bool interrupt_allowed) {
++  return ((Processor *)procs[0])->interrupt(mip, mie, revert_steps, interrupt_allowed);
++}
++
++bool Simulation::set_debug_req(bool debug_req, uint32_t revert_steps, bool debug_allowed) {
++  return ((Processor *)procs[0])->set_debug(debug_req, revert_steps, debug_allowed);
++}
++
++void Simulation::revert_state(int num_steps) {
++  ((Processor *)procs[0])->revert_step(num_steps);
++}
++
+ #if 0 // FORNOW Unused code, disable until needed.
+ void Simulation::set_debug(bool value)
+ {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+index 9ade57a..7254da5 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+@@ -60,6 +60,32 @@ public:
+   std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi> &vreference);
+ 
+   /*
++   * Set the MIP register
++   * *
++   * * @param mask:  The value to be set
++   * * @param revert_steps: Number of steps to revert if the interrupt will be taken 
++   * * @param interrupt_allowed: True if interrupt is allowed to be taken 
++   * * @return:  True if interrupt will be taken, false if not
++   * */
++  bool interrupt(reg_t mask, reg_t mie, uint32_t revert_steps, bool interrupt_allowed);
++
++  /*
++   * Set the debug request
++   * * 
++   * * @param debug_req:  True if debug request is set
++   * * @param revert_steps: Number of steps to revert if the debug request is taken
++   * * @param debug_allowed: True if debug is allowed to be taken
++   */
++  bool set_debug_req(bool debug_req, uint32_t revert_steps, bool debug_allowed);
++
++  /*
++   * Revert the state  
++   * *
++   * * @param num_steps:  number of steps to revert
++   * */
++  void revert_state(int num_steps);
++
++  /*
+    * Proposed constuctor for the Simulation class
+    * *
+    * * @param params: parameters to configure the simulation behaviour
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
+index 28695eb..597d187 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
+@@ -734,12 +734,13 @@ mie_csr_t::mie_csr_t(processor_t* const proc, const reg_t addr):
+ }
+ 
+ reg_t mie_csr_t::write_mask() const noexcept {
++  const reg_t custom_ints = 0xffff0000;
+   const reg_t supervisor_ints = proc->extension_enabled('S') ? MIP_SSIP | MIP_STIP | MIP_SEIP : 0;
+   const reg_t lscof_int = proc->extension_enabled(EXT_SSCOFPMF) ? MIP_LCOFIP : 0;
+   const reg_t hypervisor_ints = proc->extension_enabled('H') ? MIP_HS_MASK : 0;
+   const reg_t coprocessor_ints = (reg_t)proc->any_custom_extensions() << IRQ_COP;
+   const reg_t delegable_ints = supervisor_ints | coprocessor_ints | lscof_int;
+-  const reg_t all_ints = delegable_ints | hypervisor_ints | MIP_MSIP | MIP_MTIP | MIP_MEIP;
++  const reg_t all_ints = delegable_ints | hypervisor_ints | MIP_MSIP | MIP_MTIP | MIP_MEIP | custom_ints;
+   return all_ints;
+ }
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/execute.cc b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
+index d922857..20f9b57 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/execute.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
+@@ -12,6 +12,7 @@ static void commit_log_reset(processor_t* p)
+   p->get_state()->log_reg_write.clear();
+   p->get_state()->log_mem_read.clear();
+   p->get_state()->log_mem_write.clear();
++  p->get_state()->log_mem_pre_write.clear();
+ }
+ 
+ static void commit_log_stash_privilege(processor_t* p)
+@@ -67,6 +68,7 @@ static void commit_log_print_insn(processor_t *p, reg_t pc, insn_t insn)
+   auto& reg = p->get_state()->log_reg_write;
+   auto& load = p->get_state()->log_mem_read;
+   auto& store = p->get_state()->log_mem_write;
++  auto& prev = p->get_state()->log_mem_pre_write;
+   int priv = p->get_state()->last_inst_priv;
+   int xlen = p->get_state()->last_inst_xlen;
+   int flen = p->get_state()->last_inst_flen;
+@@ -148,6 +150,14 @@ static void commit_log_print_insn(processor_t *p, reg_t pc, insn_t insn)
+     fprintf(log_file, " ");
+     commit_log_print_value(log_file, std::get<2>(item) << 3, std::get<1>(item));
+   }
++
++  for (auto item : prev) {
++    fprintf(log_file, " pre mem ");
++    commit_log_print_value(log_file, xlen, std::get<0>(item));
++    fprintf(log_file, " ");
++    commit_log_print_value(log_file, std::get<2>(item) << 3, std::get<1>(item));
++
++  }
+   fprintf(log_file, "\n");
+ }
+ 
+@@ -329,6 +339,7 @@ void processor_t::step(size_t n)
+     catch(trap_debug_mode&)
+     {
+       enter_debug_mode(DCSR_CAUSE_SWBP);
++      instret++; // Count the EBREAK instruction as executed to return rvfi for the instruction
+     }
+     catch (wait_for_interrupt_t &t)
+     {
+@@ -343,12 +354,12 @@ void processor_t::step(size_t n)
+     }
+ 
+     if(!(this->get_csr(CSR_MCOUNTINHIBIT) & 0x4)) {
+-    state.minstret->bump(instret);
++      state.minstret->bump(instret);
+     }
+ 
+     // Model a hart whose CPI is 1.
+     if(!(this->get_csr(CSR_MCOUNTINHIBIT) & 0x1)) {
+-    state.mcycle->bump(instret);
++      state.mcycle->bump(instret);
+     }
+ 
+     n -= instret;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/mmu.h b/vendor/riscv/riscv-isa-sim/riscv/mmu.h
+index ef054cf..425a3d1 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/mmu.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/mmu.h
+@@ -94,16 +94,25 @@ public:
+     reg_t vpn = addr >> PGSHIFT;
+     bool aligned = (addr & (sizeof(T) - 1)) == 0;
+     bool tlb_hit = tlb_store_tag[vpn % TLB_ENTRIES] == vpn;
++    target_endian<T> previous_value;
+ 
+     if (xlate_flags == 0 && likely(aligned && tlb_hit)) {
++      //Store previous value before writing
++      previous_value = *(target_endian<T>*)(tlb_data[vpn % TLB_ENTRIES].host_offset + addr);
++
+       *(target_endian<T>*)(tlb_data[vpn % TLB_ENTRIES].host_offset + addr) = to_target(val);
+     } else {
++      //Store previous value before writing
++      load_slow_path(addr, sizeof(T), (uint8_t*)&previous_value, xlate_flags);
++
+       target_endian<T> target_val = to_target(val);
+       store_slow_path(addr, sizeof(T), (const uint8_t*)&target_val, xlate_flags, true, false);
+     }
+ 
+-    if (unlikely(proc && proc->get_log_commits_enabled()))
++    if (unlikely(proc && proc->get_log_commits_enabled())) {
+       proc->state.log_mem_write.push_back(std::make_tuple(addr, val, sizeof(T)));
++      proc->state.log_mem_pre_write.push_back(std::make_tuple(addr, from_target(previous_value), sizeof(T)));
++    }
+   }
+ 
+   template<typename T>
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.cc b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+index c8260eb..d6ec7f7 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+@@ -525,6 +525,7 @@ void state_t::reset(processor_t* const proc, reg_t max_isa)
+   log_reg_write.clear();
+   log_mem_read.clear();
+   log_mem_write.clear();
++  log_mem_pre_write.clear();
+   last_inst_priv = 0;
+   last_inst_xlen = 0;
+   last_inst_flen = 0;
+@@ -643,7 +644,7 @@ void processor_t::set_mmu_capability(int cap)
+ void processor_t::take_interrupt(reg_t pending_interrupts)
+ {
+   // Do nothing if no pending interrupts
+-  if (!pending_interrupts) {
++  if (!pending_interrupts || !interrupt_allowed) {
+     return;
+   }
+ 
+@@ -670,9 +671,41 @@ void processor_t::take_interrupt(reg_t pending_interrupts)
+ 
+   const bool nmie = !(state.mnstatus && !get_field(state.mnstatus->read(), MNSTATUS_NMIE));
+   if (!state.debug_mode && nmie && enabled_interrupts) {
+-    // nonstandard interrupts have highest priority
+-    if (enabled_interrupts >> (IRQ_M_EXT + 1))
+-      enabled_interrupts = enabled_interrupts >> (IRQ_M_EXT + 1) << (IRQ_M_EXT + 1);
++    //// nonstandard interrupts have highest priority
++    if (enabled_interrupts & (1 << 31))
++      enabled_interrupts = (1 << 31);
++    else if (enabled_interrupts & (1 << 30))
++      enabled_interrupts = (1 << 30);
++    else if (enabled_interrupts & (1 << 29))
++      enabled_interrupts = (1 << 29);
++    else if (enabled_interrupts & (1 << 28))
++      enabled_interrupts = (1 << 28);
++    else if (enabled_interrupts & (1 << 27))
++      enabled_interrupts = (1 << 27);
++    else if (enabled_interrupts & (1 << 26))
++      enabled_interrupts = (1 << 26);
++    else if (enabled_interrupts & (1 << 25))
++      enabled_interrupts = (1 << 25);
++    else if (enabled_interrupts & (1 << 24))
++      enabled_interrupts = (1 << 24);
++    else if (enabled_interrupts & (1 << 23))
++      enabled_interrupts = (1 << 23);
++    else if (enabled_interrupts & (1 << 22))
++      enabled_interrupts = (1 << 22);
++    else if (enabled_interrupts & (1 << 21))
++      enabled_interrupts = (1 << 21);
++    else if (enabled_interrupts & (1 << 20))
++      enabled_interrupts = (1 << 20);
++    else if (enabled_interrupts & (1 << 19))
++      enabled_interrupts = (1 << 19);
++    else if (enabled_interrupts & (1 << 18))
++      enabled_interrupts = (1 << 18);
++    else if (enabled_interrupts & (1 << 17))
++      enabled_interrupts = (1 << 17);
++    else if (enabled_interrupts & (1 << 16))
++      enabled_interrupts = (1 << 16);
++    //if (enabled_interrupts >> (IRQ_M_EXT + 1))
++    //  enabled_interrupts = enabled_interrupts >> (IRQ_M_EXT + 1) << (IRQ_M_EXT + 1);
+     // standard interrupt priority is MEI, MSI, MTI, SEI, SSI, STI
+     else if (enabled_interrupts & MIP_MEIP)
+       enabled_interrupts = MIP_MEIP;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.h b/vendor/riscv/riscv-isa-sim/riscv/processor.h
+index 618c4d5..82679b1 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.h
+@@ -173,6 +173,7 @@ struct state_t
+   commit_log_reg_t log_reg_write;
+   commit_log_mem_t log_mem_read;
+   commit_log_mem_t log_mem_write;
++  commit_log_mem_t log_mem_pre_write;
+   reg_t last_inst_priv;
+   int last_inst_xlen;
+   int last_inst_flen;
+@@ -322,6 +323,7 @@ protected:
+   bool check_triggers_icount;
+   std::vector<bool> impl_table;
+   openhw::Params params;
++  bool interrupt_allowed;
+ 
+   // Note: does not include single-letter extensions in misa
+   std::bitset<NUM_ISA_EXTENSIONS> extension_enable_table;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+index 873b4bd..0784534 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -50,7 +50,7 @@ extern "C" void spike_set_default_params(const char *profile) {
+ 
+     params.set_string("/top/core/0/", "name", std::string("cva6"));
+     params.set_string("/top/core/0/", "isa", std::string("RV64GC"));
+-  }
++  } 
+   else if (strcmp(profile, "cv32e40s") == 0)
+   {
+     params.set_string("/top/", "isa", std::string("RV32I"));
+@@ -82,6 +82,8 @@ extern "C" void spike_set_default_params(const char *profile) {
+     params.set_uint64_t("/top/core/0/", "misa", 0x40901104UL);
+     params.set_uint64_t("/top/core/0/", "mvendorid", 0x602UL);
+     params.set_uint64_t("/top/core/0/", "mcountinhibit", 0x5UL);
++
++    params.set_uint64_t("/top/core/0/", "num_prev_states_stored", 4UL);
+   }
+ }
+ 
+@@ -213,3 +215,18 @@ extern "C" void spike_step_svLogic(svLogicVecVal* reference,
+   spike_step_struct(reference_rvfi, spike_rvfi);
+   rvfi2sv(spike_rvfi, spike);
+ }
++
++extern "C" bool spike_interrupt(uint32_t mip, uint32_t mie, uint32_t revert_steps, bool interrupt_allowed)
++{
++  return sim->interrupt(mip, mie, revert_steps, interrupt_allowed);
++}
++
++extern "C" bool spike_set_debug(bool debug_req, uint32_t revert_steps, bool debug_allowed)
++{
++  return sim->set_debug_req(debug_req, revert_steps, debug_allowed);
++}
++
++extern "C" void spike_revert_state(int num_steps)
++{
++  sim->revert_state(num_steps);
++}

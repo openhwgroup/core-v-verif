@@ -12,6 +12,7 @@ static void commit_log_reset(processor_t* p)
   p->get_state()->log_reg_write.clear();
   p->get_state()->log_mem_read.clear();
   p->get_state()->log_mem_write.clear();
+  p->get_state()->log_mem_pre_write.clear();
 }
 
 static void commit_log_stash_privilege(processor_t* p)
@@ -67,6 +68,7 @@ static void commit_log_print_insn(processor_t *p, reg_t pc, insn_t insn)
   auto& reg = p->get_state()->log_reg_write;
   auto& load = p->get_state()->log_mem_read;
   auto& store = p->get_state()->log_mem_write;
+  auto& prev = p->get_state()->log_mem_pre_write;
   int priv = p->get_state()->last_inst_priv;
   int xlen = p->get_state()->last_inst_xlen;
   int flen = p->get_state()->last_inst_flen;
@@ -147,6 +149,14 @@ static void commit_log_print_insn(processor_t *p, reg_t pc, insn_t insn)
     commit_log_print_value(log_file, xlen, std::get<0>(item));
     fprintf(log_file, " ");
     commit_log_print_value(log_file, std::get<2>(item) << 3, std::get<1>(item));
+  }
+
+  for (auto item : prev) {
+    fprintf(log_file, " pre mem ");
+    commit_log_print_value(log_file, xlen, std::get<0>(item));
+    fprintf(log_file, " ");
+    commit_log_print_value(log_file, std::get<2>(item) << 3, std::get<1>(item));
+
   }
   fprintf(log_file, "\n");
 }
@@ -329,6 +339,7 @@ void processor_t::step(size_t n)
     catch(trap_debug_mode&)
     {
       enter_debug_mode(DCSR_CAUSE_SWBP);
+      instret++; // Count the EBREAK instruction as executed to return rvfi for the instruction
     }
     catch (wait_for_interrupt_t &t)
     {
@@ -343,12 +354,12 @@ void processor_t::step(size_t n)
     }
 
     if(!(this->get_csr(CSR_MCOUNTINHIBIT) & 0x4)) {
-    state.minstret->bump(instret);
+      state.minstret->bump(instret);
     }
 
     // Model a hart whose CPI is 1.
     if(!(this->get_csr(CSR_MCOUNTINHIBIT) & 0x1)) {
-    state.mcycle->bump(instret);
+      state.mcycle->bump(instret);
     }
 
     n -= instret;

@@ -734,12 +734,13 @@ mie_csr_t::mie_csr_t(processor_t* const proc, const reg_t addr):
 }
 
 reg_t mie_csr_t::write_mask() const noexcept {
+  const reg_t custom_ints = 0xffff0000;
   const reg_t supervisor_ints = proc->extension_enabled('S') ? MIP_SSIP | MIP_STIP | MIP_SEIP : 0;
   const reg_t lscof_int = proc->extension_enabled(EXT_SSCOFPMF) ? MIP_LCOFIP : 0;
   const reg_t hypervisor_ints = proc->extension_enabled('H') ? MIP_HS_MASK : 0;
   const reg_t coprocessor_ints = (reg_t)proc->any_custom_extensions() << IRQ_COP;
   const reg_t delegable_ints = supervisor_ints | coprocessor_ints | lscof_int;
-  const reg_t all_ints = delegable_ints | hypervisor_ints | MIP_MSIP | MIP_MTIP | MIP_MEIP;
+  const reg_t all_ints = delegable_ints | hypervisor_ints | MIP_MSIP | MIP_MTIP | MIP_MEIP | custom_ints;
   return all_ints;
 }
 
