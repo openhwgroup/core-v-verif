@@ -158,15 +158,16 @@
     }
 
   // Overhead instruction to set fpr with specific value
-  `define SET_FPR_VALUE(FRD,IMM) \
+  `define SET_FPR_VALUE(FRD,IMM,XREG) \
     begin\
       riscv_instr                 m_instr;\
       riscv_pseudo_instr          p_instr;\
       riscv_floating_point_instr  f_instr;\
+      assert(``XREG`` != ZERO) else begin `uvm_error("SET_FPR_VALUE", $sformatf("XREG is %s", ``XREG``.name())); end \
       p_instr = riscv_pseudo_instr::type_id::create("p_instr");\
       `DV_CHECK_RANDOMIZE_WITH_FATAL(p_instr,\
         pseudo_instr_name == LI;\
-        rd  == T2;\
+        rd  == ``XREG``;\
       );\
       p_instr.imm = ``IMM``;\
       p_instr.update_imm_str();\
@@ -176,7 +177,7 @@
       override_instr(\
         .f_instr  (f_instr),\
         .fd       (``FRD``),\
-        .rs1      (T2)\
+        .rs1      (``XREG``)\
       );\
       instr_list.push_back(f_instr);\
       instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [SET REG TO 32'h%8h] `", ``IMM``)};\
