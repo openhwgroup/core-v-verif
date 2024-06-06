@@ -132,13 +132,13 @@ import "DPI-C" function void spike_set_default_params(string profile);
             `COMPARE(dbg[2:0] , "Debug cause")
         end
         else if (0 && t_core.intr[0] | t_reference_model.intr[0]) begin
-            `COMPARE(intr[0], " Intr bit")
+            `COMPARE(intr[0], "INTR bit")
             else begin
                 `uvm_info("scoreboard_utils", $sformatf("             INTR correctly compared core %h iss %h", t_reference_model.intr, t_core.intr), UVM_MEDIUM)
             end
         end
         else if (t_core.trap[0] | t_reference_model.trap[0]) begin
-            `COMPARE(trap[0], "Exception Mismatch")
+            `COMPARE(trap[0], "TRAP Mismatch")
         end
         else begin
             if (t_core.insn !== t_reference_model.insn) begin
@@ -146,19 +146,10 @@ import "DPI-C" function void spike_set_default_params(string profile);
                 cause_str = $sformatf("%s\nINSN Mismatch    [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.insn, t_core.insn);
             end
             if (t_core.rd1_addr != 0 || t_reference_model.rd1_addr != 0) begin
-                if (t_core.rd1_addr[4:0] !== t_reference_model.rd1_addr[4:0]) begin
-                    error = 1;
-                    cause_str = $sformatf("%s\nRD ADDR Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.rd1_addr[4:0], t_core.rd1_addr[4:0]);
-                end
-                if (t_core.rd1_wdata !== t_reference_model.rd1_wdata) begin
-                    error = 1;
-                    cause_str = $sformatf("%s\nRD VAL Mismatch  [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.rd1_wdata, t_core.rd1_wdata);
-                end
+                `COMPARE(rd1_addr[4:0], "RD ADDR")
+                `COMPARE(rd1_wdata, "RD VAL")
             end
-            if (t_core.mode !== t_reference_model.mode) begin
-                error = 1;
-                cause_str = $sformatf("%s\nPRIV Mismatch    [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.mode, t_core.mode);
-            end
+            `COMPARE(mode, "PRIV")
             if (core_pc64 !== reference_model_pc64) begin
                 error = 1;
                 cause_str = $sformatf("%s\nPC Mismatch      [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, reference_model_pc64, core_pc64);
@@ -206,7 +197,7 @@ import "DPI-C" function void spike_set_default_params(string profile);
 
             `uvm_info("spike_tandem", {cause_str}, UVM_NONE);
             `uvm_info("spike_tandem", {instr_rm}, UVM_NONE);
-            `uvm_fatal("spike_tandem", {instr_core, " <- CORE\n"});
+            `uvm_error("spike_tandem", {instr_core, " <- CORE\n"});
         end
         else begin
             `uvm_info("spike_tandem", rvfi_print_struct(t_reference_model) , UVM_MEDIUM)
