@@ -307,7 +307,6 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 		+incdir+$(RISCVDV_PKG)/user_extension \
 		+incdir+$(COREVDV_PKG) \
 		+incdir+$(CV_CORE_COREVDV_PKG) \
-		-f $(CV_CORE_MANIFEST) \
 		$(CFG_COMPILE_FLAGS) \
 		-f $(COREVDV_PKG)/manifest.f \
 		-l vcs.log

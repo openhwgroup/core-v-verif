@@ -361,7 +361,6 @@ vlog_corev-dv:
 			+incdir+$(COREVDV_PKG) \
 			+incdir+$(CV_CORE_COREVDV_PKG) \
 			$(CFG_COMPILE_FLAGS) \
-			-f $(CV_CORE_MANIFEST) \
 			-f $(COREVDV_PKG)/manifest.f \
 			$(CFG_PLUSARGS) \
 			-l vlog.log
