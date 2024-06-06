@@ -207,14 +207,15 @@ class cv32e40p_xpulp_single_hwloop_stream_directed extends cv32e40p_xpulp_hwloop
   }
 
   constraint no_imm_hwloop_setup_instr_c {
-      use_loop_counti_inst[0] == 0;
-      use_loop_counti_inst[1] == 0;
-      use_loop_setupi_inst[0] == 0;
-      use_loop_setupi_inst[1] == 0;
+      foreach (use_loop_counti_inst[i]) {
+        use_loop_counti_inst[i] == 0;
+        use_loop_setupi_inst[i] == 0;
+      }
   }
 
   constraint num_hwloop_instr_c {
     solve use_loop_endi_inst before num_hwloop_instr;
+    solve num_hwloop_instr   before num_fill_instr_loop_ctrl_to_loop_start;
     foreach (num_hwloop_instr[i]) {
       // the max setting of Uimm[11:0] is 4092 however the the hwloop start label is not immediately following after cv.endi, 
       // there is randomize numberof instr inserted between cv.endi and hwloop start label we need to keep some buffer from 
@@ -224,7 +225,11 @@ class cv32e40p_xpulp_single_hwloop_stream_directed extends cv32e40p_xpulp_hwloop
       } else {
         num_hwloop_instr[i] dist { 3 := 1, 3074 := 5, 4092 := 1 };
       }
-      num_fill_instr_loop_ctrl_to_loop_start[i] inside {[0:7]};
+      if (num_hwloop_instr[i] > 4080) {
+        num_fill_instr_loop_ctrl_to_loop_start[i] == 0;
+      } else {
+        num_fill_instr_loop_ctrl_to_loop_start[i] inside {[0:7]};
+      }
     }
     num_fill_instr_in_loop1_till_loop0_setup == 0;
   }
