@@ -341,7 +341,7 @@ protected:
   void disasm(insn_t insn); // disassemble and print an instruction
   int paddr_bits();
 
-  void enter_debug_mode(uint8_t cause);
+  virtual void enter_debug_mode(uint8_t cause);
 
   void debug_output_log(std::stringstream *s); // either output to interactive user or write to log file
 

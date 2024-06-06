@@ -21,68 +21,82 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
   st_rvfi rvfi;
 
   this->reference = & reference_;
+  this->step_rvfi = & rvfi;
 
   bool unified_traps = (this->params[base + "unified_traps"]).a_bool;
   bool interrupts_injection = (this->params[base + "interrupts_injection"]).a_bool;
   bool debug_injection = (this->params[base + "debug_injection"]).a_bool;
   // Use mstatus as a reference
   bool inverse_csr_access = (reference->csr_addr[0x300] != 0x300);
+
 #define INDEX_CSR(INDEX) (inverse_csr_access) ? CSR_MAX_SIZE-1-INDEX : INDEX
 
   memset(&rvfi, 0, sizeof(st_rvfi));
 
   do {
-    // First intr of the trap handler
-    if (this->taken_trap) {
-        rvfi.intr = 1;
-        if (this->which_trap >> 31) {
-            this->get_state()->mip->backdoor_write(0);
-        }
-    }
-
-    rvfi.pc_rdata = this->get_state()->pc;
 
     if (this->is_waiting_for_interrupt())
         this->clear_waiting_for_interrupt();
 
-    if (reference->intr && interrupts_injection && !this->taken_trap) {
+    bool inject_interrupt = ((this->reference->intr & 0b111) == 0b101);
+
+    if (inject_interrupt && interrupts_injection && !this->taken_trap) {
         // We need to ensure this is an interrupt to inject mip
-        if (reference->csr_rdata[INDEX_CSR(CSR_MCAUSE)] >> 31) {
-            uint64_t mip = this->mcause_to_mip(reference->csr_rdata[INDEX_CSR(CSR_MCAUSE)]);
+        uint64_t mcause = reference->csr_rdata[INDEX_CSR(CSR_MCAUSE)];
+        if (mcause >> 31) {
+            uint64_t mip = this->mcause_to_mip(mcause);
             this->get_state()->mip->backdoor_write(mip);
-            this->interrupt_injected = true;
+            this->step_rvfi->intr = 0b101; // Interrupt
+            this->step_rvfi->intr |= ((mcause & 0x3FF) << 3);
+            uint64_t nmi_mcause = (this->params[base + "nmi_mcause"]).a_uint64_t;
+            if (nmi_mcause == (mcause & 0x3FF))
+                this->nmi_inject = true;
         }
     }
 
-    if (reference->trap && debug_injection && !this->halted()) {
-        uint64_t cause = reference->csr_rdata[INDEX_CSR(CSR_DCSR)] >> 6;
-        cause = cause & 0b111;
-        switch (cause) {
-            case 0x3:
-                halt_request = HR_REGULAR;
-                break;
-            default:
-                break;
+    if (reference->dbg && !this->get_state()->debug_mode && debug_injection && !this->halted()) {
+        uint64_t cause = reference->dbg;
+        if (cause) {
+            enter_debug_mode(cause);
+            rvfi.dbg = cause;
+            rvfi.trap = 0b101;
+            rvfi.trap |= (cause << 9);
         }
+    }
+
+    if (this->taken_trap && !(this->which_trap >> 31)) {
+        rvfi.intr = 0b011;
+    }
+
+    if (this->taken_debug) {
+        rvfi.dbg = this->which_debug;
     }
 
     this->taken_trap = false;
     this->which_trap = 0;
+    this->taken_debug = false;
+    this->which_debug = 0;
+
+    rvfi.pc_rdata = this->get_state()->pc;
 
     processor_t::step(n);
 
-    this->interrupt_injected = false;
+    if (this->taken_trap && (this->which_trap >> 31))
+        this->get_state()->mip->backdoor_write(0);
 
-    if (this->taken_trap) {
-        if (this->which_trap >> 31) {
-            rvfi.intr = this->taken_trap;
-            rvfi.intr |= (this->which_trap << 1);
-        }
-        else {
-            rvfi.trap = this->taken_trap;
-            rvfi.trap |= (this->which_trap << 1);
+    // First intr of the trap handler
+    if ((this->taken_trap || this->taken_debug) && !(this->which_trap >> 31)) {
+        rvfi.trap = 1;
+        if (this->get_state()->debug_mode) {
+            rvfi.trap |= 0x4;
+            rvfi.trap |= (this->which_debug & 0x7) << 0x9;
+        } else if (this->which_trap >> 31) {
+            rvfi.trap |= 0x2;
+            rvfi.trap |= (this->which_trap & 0x3F) << 0x3;
         }
     }
+
+    rvfi.dbg_mode = this->get_state()->debug_mode;
 
     rvfi.mode = this->get_state()->last_inst_priv;
     rvfi.insn =
@@ -99,9 +113,24 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
     // TODO add rs2_value
 
     bool got_commit = false;
+
+    if (rvfi.intr) {
+        for (auto &reg : last_log_reg_write) {
+            reg_t addr = reg.first >> 4;
+            rvfi.csr_valid[INDEX_CSR(addr)] = 1;
+            rvfi.csr_addr [INDEX_CSR(addr)] = addr;
+            rvfi.csr_wdata[INDEX_CSR(addr)] = reg.second.v[0];
+            rvfi.csr_wmask[INDEX_CSR(addr)] = -1;
+        }
+    }
+    last_log_reg_write.clear();
+
     for (auto &reg : reg_commits) {
         if ((reg.first >> 4) > 32) {
-            if ((reg.first >> 4) < 0xFFF) {
+            if (rvfi.trap) {
+                last_log_reg_write[reg.first] = reg.second;
+            }
+            else if ((reg.first >> 4) < 0xFFF) {
                 reg_t addr = reg.first >> 4;
                 rvfi.csr_valid[INDEX_CSR(addr)] = 1;
                 rvfi.csr_addr [INDEX_CSR(addr)] = addr;
@@ -163,7 +192,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
       rvfi.rd1_wdata &= 0xffffffffULL;
     }
 
-  } while (unified_traps && this->taken_trap == true && (this->which_trap >> 31));
+  } while (unified_traps && this->taken_trap && (this->which_trap >> 31));
 
   return rvfi;
 }
@@ -248,7 +277,19 @@ Processor::Processor(
 void Processor::take_trap(trap_t &t, reg_t epc) {
   this->taken_trap = true;
   this->which_trap = t.cause();
+
   processor_t::take_trap(t, epc);
+
+  if (state.debug_mode) {
+    uint64_t debug_handler_addr = (this->params[base + "debug_handler_addr"]).a_uint64_t;
+    uint64_t debug_exception_handler_addr = (this->params[base + "debug_exception_handler_addr"]).a_uint64_t;
+    if (this->which_trap == 0x3) {
+        state.pc = debug_handler_addr;
+        this->which_trap = 0x1; // Debug breakpoint on debug mode
+    }
+    else
+        state.pc = debug_exception_handler_addr;
+  }
 }
 
 Processor::~Processor() {
@@ -276,6 +317,13 @@ void Processor::default_params(string base, openhw::Params &params) {
   params.set_uint64_t(base, "mhartid", 0x0UL, "0x0", "MHARTID value");
   params.set_uint64_t(base, "mvendorid", 0x00000602UL, "0x00000602UL",
              "MVENDORID value");
+
+  params.set_uint64_t(base, "debug_handler_addr", 0x1a110800, "0x1a110800",
+             "Debug handler Address");
+
+  params.set_uint64_t(base, "debug_exception_handler_addr", 0x1A140000, "0x1A140000",
+             "Debug handler Address");
+
   params.set_string(base, "extensions", "", "", "Possible extensions: cv32a60x, cvxif");
 
   params.set_bool(base, "status_fs_field_we_enable", false, "false",
@@ -488,10 +536,12 @@ void Processor::take_interrupt(reg_t pending_interrupts) {
 
   processor_t::take_interrupt(pending_interrupts);
 
-  if (this->interrupt_injected && !this->taken_trap && pending_interrupts == 0) {
+  if (nmi_inject && !this->taken_trap && pending_interrupts == 0) {
+    nmi_inject = false;
     uint64_t nmi_mcause = (this->params[base + "nmi_mcause"]).a_uint64_t;
     throw trap_t(((reg_t)1 << (isa->get_max_xlen() - 1)) | nmi_mcause);
   }
+
   return;
 }
 
@@ -511,6 +561,18 @@ uint32_t Processor::mcause_to_mip(uint32_t mcause) {
         }
     }
     return 0; // Not an interrupt
+}
+
+void Processor::enter_debug_mode(uint8_t cause) {
+    processor_t::enter_debug_mode(cause);
+
+    uint64_t debug_handler_addr = (this->params[base + "debug_handler_addr"]).a_uint64_t;
+    state.pc = debug_handler_addr;
+    state.mtval->write(0x0);
+
+    this->taken_debug = true;
+    this->which_debug = cause;
+
 }
 
 std::unordered_map<uint64_t, openhw::csr_param_t> Processor::csr_params = {

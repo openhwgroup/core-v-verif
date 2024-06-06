@@ -39,7 +39,7 @@ interface uvma_rvfi_instr_if
     input [RVFI_DBG_WL-1:0]    rvfi_dbg,
     input                      rvfi_dbg_mode,
     input [RVFI_NMIP_WL-1:0]   rvfi_nmip,
-    input                      rvfi_intr,
+    input [RVFI_INTR_WL-1:0]   rvfi_intr,
     input [MODE_WL-1:0]        rvfi_mode,
     input [IXL_WL-1:0]         rvfi_ixl,
     input [XLEN-1:0]           rvfi_pc_rdata,
