@@ -971,7 +971,8 @@ class uvme_rv32x_hwloop_covg # (
               if (is_trap && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_IRQ_ENTRY // exception trap and irq are b2b cycles
                 if (hwloop_stat_main.execute_instr_in_hwloop[0] && lpend_has_pending_irq_main[0]) begin hwloop_stat_main.track_lp_cnt[0]++; lpend_has_pending_irq_main[0] = 0; end // revert lp_cnt
                 if (hwloop_stat_main.execute_instr_in_hwloop[1] && lpend_has_pending_irq_main[1]) begin hwloop_stat_main.track_lp_cnt[1]++; lpend_has_pending_irq_main[1] = 0; end // revert lp_cnt
-                has_pending_trap_due2_irq = 1; is_trap = 0;
+                has_pending_trap_due2_irq = 1; 
+                is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0;
                 enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0;
                 pending_irq = 0;
                 `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry is replaced with IRQ Entry (higher priority)"), UVM_DEBUG);
