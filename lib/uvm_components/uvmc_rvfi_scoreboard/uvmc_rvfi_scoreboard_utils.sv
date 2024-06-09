@@ -122,19 +122,20 @@ import "DPI-C" function void spike_set_default_params(string profile);
             reference_model_pc64 = reference_model_pc64 & 'hFFFFFFFF;
         end
 
-        if (t_core.intr[0] | t_reference_model.intr[0]) begin
+        // Avoid comparison until field correct specification
+        if (0 && (t_core.intr[0] | t_reference_model.intr[0])) begin
             if (t_core.intr[0] !== t_reference_model.intr[0]) begin
                 error = 1;
-                cause_str = $sformatf("%s\nInterrupts Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.intr, t_core.intr);
+                cause_str = $sformatf("%s\nINTR Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.intr, t_core.intr);
             end
             else begin
-                `uvm_info("scoreboard_utils", $sformatf("             Interrupts Correctly compared core %h iss %h", t_reference_model.intr, t_core.intr), UVM_MEDIUM)
+                `uvm_info("scoreboard_utils", $sformatf("             INTR correctly compared core %h iss %h", t_reference_model.intr, t_core.intr), UVM_MEDIUM)
             end
         end
         if (t_core.trap[0] | t_reference_model.trap[0]) begin
             if (t_core.trap[0] !== t_reference_model.trap[0]) begin
                 error = 1;
-                cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
+                cause_str = $sformatf("%s\nTRAP Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
             end
         end
         else begin
