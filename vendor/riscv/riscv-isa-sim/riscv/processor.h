@@ -323,7 +323,7 @@ protected:
   bool check_triggers_icount;
   std::vector<bool> impl_table;
   openhw::Params params;
-  bool interrupt_allowed;
+  bool interrupt_allowed = true;
 
   // Note: does not include single-letter extensions in misa
   std::bitset<NUM_ISA_EXTENSIONS> extension_enable_table;
