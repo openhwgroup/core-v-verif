@@ -99,7 +99,7 @@ class uvme_rv32x_hwloop_covg # (
   local bit [(ILEN-1):0]    insn_list_in_hwloop_``TYPE        [HWLOOP_NB][$]; \
   local bit [(ILEN-1):0]    mc_insn_list_in_hwloop_``TYPE     [HWLOOP_NB][$]; \
   local bit [31:0]          irq_vect_``TYPE                   [HWLOOP_NB][$]; \
-  local bit                 lpend_has_pending_irq_``TYPE      [HWLOOP_NB] = '{default:0}; \
+  local bit                 prev_is_lpend_``TYPE              [HWLOOP_NB] = '{default:0}; \
   local bit                 done_insn_list_capture_``TYPE     [HWLOOP_NB] = '{default:0}; \
   local bit                 done_insn_list_capture_d1_``TYPE  [HWLOOP_NB] = '{default:0}; \
   local s_hwloop_cov        hwloop_cov_``TYPE                 [HWLOOP_NB] = '{default:0};
@@ -121,9 +121,12 @@ class uvme_rv32x_hwloop_covg # (
   int           enter_hwloop_sub_cnt = 0;
   bit           pending_irq = 0;
   bit           pending_irq_ack = 0;
+  bit           is_init_mmode_mret = 0;
   logic [31:0]  valid_irq_prev = 32'h0;
   logic [31:0]  prev_irq_onehot_priority = 0, prev_irq_onehot_priority_always = 0;
   bit           prev_irq_onehot_priority_is_0 = 0;
+  bit           prev_is_trap = 0;
+  bit           irq_period = 0; // track irq handling period throught the simulation
 
   dcsr_cause_t      dcsr_cause;
   exception_code_t  exception_code;
@@ -485,11 +488,14 @@ class uvme_rv32x_hwloop_covg # (
     end // UPDATE_HWLOOP_STAT \
     for (int i=0; i<HWLOOP_NB; i++) begin : COLLECT_INSTR \
       if (hwloop_stat_``TYPE``.execute_instr_in_hwloop[i]) begin \
-        lpend_has_pending_irq_``TYPE``[i] = 0; \
+        prev_is_lpend_``TYPE``[i] = 0; \
         done_insn_list_capture_d1_``TYPE``[i] = done_insn_list_capture_``TYPE``[i]; \
         unique case (i) \
           0 : begin // nested or single is the same \
-                if (!done_insn_list_capture_``TYPE``[i]) begin \
+                if (!done_insn_list_capture_``TYPE``[i] && has_trap_due2_dbg_match_trig) begin \
+                  // bypass and do nothing \
+                end \
+                else if (!done_insn_list_capture_``TYPE``[i]) begin \
                   if (is_illegal)       insn_list_in_hwloop_``TYPE``[i].push_back(INSN_ILLEGAL); \
                   else if (is_ebreakm)  insn_list_in_hwloop_``TYPE``[i].push_back(INSN_EBREAKM); \
                   else                  insn_list_in_hwloop_``TYPE``[i].push_back(cv32e40p_rvvi_vif.insn); \
@@ -510,7 +516,7 @@ class uvme_rv32x_hwloop_covg # (
                   check_ebreakm_entry(i); \
                 end \
                 if (is_pc_equal_lpend(hwloop_stat_``TYPE``.hwloop_csr, i, 0, cv32e40p_rvvi_vif.pc_rdata) && hwloop_stat_``TYPE``.track_lp_cnt[i] != 0) begin \
-                  if (pending_irq_ack && cv32e40p_rvvi_vif.trap) lpend_has_pending_irq_``TYPE``[i] = 1; \
+                  prev_is_lpend_``TYPE``[i] = 1; \
                   hwloop_stat_``TYPE``.track_lp_cnt[i]--; \
                   done_insn_list_capture_``TYPE``[i] = 1; \
                   assert(hwloop_stat_``TYPE``.track_lp_cnt[i] >= 0); \
@@ -524,7 +530,10 @@ class uvme_rv32x_hwloop_covg # (
                 else if (hwloop_stat_``TYPE``.hwloop_type == NESTED && hwloop_stat_``TYPE``.track_lp_cnt[0] == 0 && in_nested_loop0) begin \
                   in_nested_loop0 = 0; continue; \
                 end \
-                if (!done_insn_list_capture_``TYPE``[i]) begin \
+                if (!done_insn_list_capture_``TYPE``[i] && has_trap_due2_dbg_match_trig) begin \
+                  // bypass and do nothing \
+                end \
+                else if (!done_insn_list_capture_``TYPE``[i]) begin \
                   if (is_illegal)       insn_list_in_hwloop_``TYPE``[i].push_back(INSN_ILLEGAL); \
                   else if (is_ebreakm)  insn_list_in_hwloop_``TYPE``[i].push_back(INSN_EBREAKM); \
                   else                  insn_list_in_hwloop_``TYPE``[i].push_back(cv32e40p_rvvi_vif.insn); \
@@ -545,7 +554,7 @@ class uvme_rv32x_hwloop_covg # (
                   check_ebreakm_entry(i); \
                 end \
                 if (is_pc_equal_lpend(hwloop_stat_``TYPE``.hwloop_csr, i, 0, cv32e40p_rvvi_vif.pc_rdata) && hwloop_stat_``TYPE``.track_lp_cnt[i] != 0) begin \
-                  if (pending_irq_ack && cv32e40p_rvvi_vif.trap) lpend_has_pending_irq_``TYPE``[i] = 1; \
+                  prev_is_lpend_``TYPE``[i] = 1; \
                   hwloop_stat_``TYPE``.track_lp_cnt[i]--; \
                   done_insn_list_capture_``TYPE``[i] = 1; \
                   assert(hwloop_stat_``TYPE``.track_lp_cnt[i] >= 0); \
@@ -747,7 +756,7 @@ class uvme_rv32x_hwloop_covg # (
         end \
         hwloop_evt_loc_``TYPE``[i][MC_INSN].delete(); \
         hwloop_cov_``TYPE``[i].en_cov_mc_insn = 0; \
-        lpend_has_pending_irq_``TYPE``[i]     = 0; \
+        prev_is_lpend_``TYPE``[i]             = 0; \
         done_insn_list_capture_``TYPE``[i]    = 0; \
         done_insn_list_capture_d1_``TYPE``[i] = 0; \
         hwloop_cov_``TYPE``[i]                = hwloop_cov_init[i]; \
@@ -783,7 +792,7 @@ class uvme_rv32x_hwloop_covg # (
   endfunction : check_exception_entry
 
   function void check_ebreakm_entry(int lp_idx);
-    if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == TB_INSTR_EBREAK) begin
+    if (is_ebreakm) begin
       if (lp_idx) begin `IF_CURRENT_IS_MAIN_HWLOOP(1, DBG_EBREAKM) end
       else        begin `IF_CURRENT_IS_MAIN_HWLOOP(0, DBG_EBREAKM) end 
     end
@@ -821,8 +830,8 @@ class uvme_rv32x_hwloop_covg # (
           cv32e40p_rvvi_vif.csr_trig_execute && cv32e40p_rvvi_vif.csr_trig_pc == cv32e40p_rvvi_vif.pc_rdata // debug trig match assert trap
         ) begin
           is_trap = 0;
-          wait (!cv32e40p_rvvi_vif.trap); // bypass and do nothing
           has_trap_due2_dbg_match_trig = 1;
+          wait (!cv32e40p_rvvi_vif.trap); // bypass and do nothing
         end
         else if ((cv32e40p_rvvi_vif.csr_dcsr_step || !pending_irq_ack) && !is_dbg_mode && !is_irq) begin // set excep flag only if no pending irq is serving, not in irq and not in dbg mode
           is_trap = 1;
@@ -850,7 +859,7 @@ class uvme_rv32x_hwloop_covg # (
       end
       forever begin : SET_PENDING_IRQ_ACK
         @(cv32e40p_rvvi_vif.valid_irq);
-        if (cv32e40p_rvvi_vif.valid_irq < valid_irq_prev) begin
+        if (cv32e40p_rvvi_vif.valid_irq < valid_irq_prev && !irq_period) begin // currently not cover on nested irq
           pending_irq_ack = 1;
         end
         valid_irq_prev = cv32e40p_rvvi_vif.valid_irq;
@@ -888,20 +897,24 @@ class uvme_rv32x_hwloop_covg # (
           is_irq = 0;
         end
       end // IRQ_EXIT
-      forever begin : SIGNALS_CHG_WHEN_IS_IRQ_ASSERT
-        @(posedge is_irq);
-        if (is_ebreakm) begin // TBD: will ebreakm assert trap?
-          for (int j=0; j<HWLOOP_NB; j++) begin
-            logic [31:0] discarded_insn;
-            if (hwloop_stat_main.execute_instr_in_hwloop[j] && lpend_has_pending_irq_main[j]) begin 
-              discarded_insn = insn_list_in_hwloop_main[j].pop_back();
-              assert(discarded_insn == INSN_EBREAKM);
-              void'(hwloop_evt_loc_main[j][DBG_EBREAKM].pop_back());
-              hwloop_stat_main.track_lp_cnt[j]++; lpend_has_pending_irq_main[j] = 0;
-            end
-          end // for
+      forever begin : INIT_MACHINE_MODE
+        @(posedge cv32e40p_rvvi_vif.clk);
+        if (cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.insn == TB_INSTR_MRET) begin
+          if (cv32e40p_rvvi_vif.pc_rdata < cv32e40p_rvvi_vif.mtvec_base_addr) is_init_mmode_mret = 1;
         end
-      end // SIGNALS_CHG_WHEN_IS_IRQ_ASSERT
+        // revert pending_irq_ack that triggered during init_machine_mode
+        if (is_init_mmode_mret && pending_irq_ack) begin
+          is_init_mmode_mret = 0;
+          pending_irq_ack    = 0;
+        end
+      end // INIT_MACHINE_MODE
+      forever begin : IRQ_PERIOD
+        @(posedge cv32e40p_rvvi_vif.clk);
+        if (cv32e40p_rvvi_vif.valid) begin
+          if (pc_is_mtvec_addr() && is_mcause_irq())                  irq_period = 1;
+          if (irq_period && cv32e40p_rvvi_vif.insn == TB_INSTR_MRET)  irq_period = 0;
+        end
+      end // IRQ_PERIOD
 
       forever begin : DBG_ENTRY
         // wait (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]);
@@ -936,11 +949,6 @@ class uvme_rv32x_hwloop_covg # (
           is_dbg_mode = 0; is_ebreakm = 0;
         end
       end // DBG_EXIT
-      forever begin : SIGNALS_CHG_WHEN_IS_DBG_MODE_ASSERT
-        @(posedge is_dbg_mode);
-        lpend_has_pending_irq_main[0] = 0; 
-        lpend_has_pending_irq_main[1] = 0;
-      end // SIGNALS_CHG_WHEN_IS_DBG_MODE_ASSERT
 
     join_none // Background threads - END
 
@@ -948,7 +956,7 @@ class uvme_rv32x_hwloop_covg # (
       @(posedge cv32e40p_rvvi_vif.clk);
       if (cv32e40p_rvvi_vif.valid) begin : VALID_IS_HIGH
 
-        if (enter_hwloop_sub) begin 
+        if (enter_hwloop_sub) begin : ENTER_HWLOOP_SUB
           enter_hwloop_sub_cnt++;
           if (is_trap && is_dbg_mode && !cv32e40p_rvvi_vif.csr_dcsr_step && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // exception trap and debug are b2b cycles (except debug step)
             has_pending_trap_due2_dbg = 1; 
@@ -969,8 +977,8 @@ class uvme_rv32x_hwloop_covg # (
           else if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
             if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
               if (is_trap && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_IRQ_ENTRY // exception trap and irq are b2b cycles
-                if (hwloop_stat_main.execute_instr_in_hwloop[0] && lpend_has_pending_irq_main[0]) begin hwloop_stat_main.track_lp_cnt[0]++; lpend_has_pending_irq_main[0] = 0; end // revert lp_cnt
-                if (hwloop_stat_main.execute_instr_in_hwloop[1] && lpend_has_pending_irq_main[1]) begin hwloop_stat_main.track_lp_cnt[1]++; lpend_has_pending_irq_main[1] = 0; end // revert lp_cnt
+                if (prev_is_lpend_main[0] && prev_is_trap) hwloop_stat_main.track_lp_cnt[0]++;
+                if (prev_is_lpend_main[1] && prev_is_trap) hwloop_stat_main.track_lp_cnt[1]++;
                 has_pending_trap_due2_irq = 1; 
                 is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0;
                 enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0;
@@ -999,9 +1007,10 @@ class uvme_rv32x_hwloop_covg # (
             is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0;
           end
           prev_pc_rdata_sub = cv32e40p_rvvi_vif.pc_rdata;
-        end
 
-        else begin : MAIN
+        end // ENTER_HWLOOP_SUB
+
+        else begin : ENTER_HWLOOP_MAIN
           if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
             if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
               pending_irq = 0;
@@ -1009,31 +1018,37 @@ class uvme_rv32x_hwloop_covg # (
               `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
               update_prev_irq_onehot_priority();
               `uvm_info(_header, $sformatf("DEBUG - IRQ Entry"), UVM_DEBUG);
-              if (lpend_has_pending_irq_main[0]) begin hwloop_stat_main.track_lp_cnt[0]++; lpend_has_pending_irq_main[0] = 0; end // revert lp_cnt
-              if (lpend_has_pending_irq_main[1]) begin hwloop_stat_main.track_lp_cnt[1]++; lpend_has_pending_irq_main[1] = 0; end // revert lp_cnt
+              if (prev_is_lpend_main[0] && prev_is_trap) hwloop_stat_main.track_lp_cnt[0]++;
+              if (prev_is_lpend_main[1] && prev_is_trap) hwloop_stat_main.track_lp_cnt[1]++;
               is_irq = 1; wait (!is_irq); continue; 
             end
           end // IRQ_ENTRY
-          if (has_pending_trap_due2_irq)  begin
+          if (has_pending_trap_due2_irq) begin
             assert(prev_pc_rdata_main == cv32e40p_rvvi_vif.pc_rdata);
             if (pc_is_mtvec_addr() || (cv32e40p_rvvi_vif.trap && is_trap)) begin is_trap = 1; enter_hwloop_sub = 1; has_pending_trap_due2_irq = 0; continue; end // if pc is exception related
             else begin              is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0; has_pending_trap_due2_irq = 0; continue; end // if pc is non-exception related
           end
-          if (is_dbg_mode)                begin wait (!is_dbg_mode); continue; end
+          if (is_dbg_mode) begin 
+            if (prev_is_lpend_main[0] && prev_is_trap && !is_ebreakm) hwloop_stat_main.track_lp_cnt[0]++;
+            if (prev_is_lpend_main[1] && prev_is_trap && !is_ebreakm) hwloop_stat_main.track_lp_cnt[1]++;
+            wait (!is_dbg_mode); continue;
+          end
           if (has_pending_trap_due2_dbg)  begin // e.g exception event intercept with debug step
             assert (!dcsr_cause_t'(cv32e40p_rvvi_vif.csr_dcsr_cause) != STEP); // this is not mean for step debug
             if (pc_is_mtvec_addr() || (cv32e40p_rvvi_vif.trap && is_trap)) begin is_trap = 1; enter_hwloop_sub = 1; has_pending_trap_due2_dbg = 0; continue; end // if pc is exception related
             else begin              is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0; has_pending_trap_due2_dbg = 0; continue; end // if pc is non-exception related
           end
+          if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == TB_INSTR_EBREAK) is_ebreakm = 1; else is_ebreakm = 0;
+          if (cv32e40p_rvvi_vif.trap) prev_is_trap = 1; else prev_is_trap = 0;
+          `CHECK_N_SAMPLE_CSR_HWLOOP(main);
+          `CHECK_N_SAMPLE_HWLOOP(main);
           if (has_trap_due2_dbg_match_trig) begin // e.g exception event intercept with debug trigger
             has_trap_due2_dbg_match_trig = 0;
           end
-          if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == TB_INSTR_EBREAK) is_ebreakm = 1; else is_ebreakm = 0;
-          `CHECK_N_SAMPLE_CSR_HWLOOP(main);
-          `CHECK_N_SAMPLE_HWLOOP(main);
           if (is_ebreak || is_ecall || is_illegal) enter_hwloop_sub = 1;
           prev_pc_rdata_main = cv32e40p_rvvi_vif.pc_rdata;
-        end
+
+        end // ENTER_HWLOOP_MAIN
 
       end // VALID_DETECTED
     end // forever
