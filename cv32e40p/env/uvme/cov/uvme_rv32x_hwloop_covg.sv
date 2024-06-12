@@ -801,6 +801,7 @@ class uvme_rv32x_hwloop_covg # (
   function void check_exception_exit();
     if (cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.insn == TB_INSTR_MRET && !cv32e40p_rvvi_vif.trap) begin
       is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0;
+      prev_is_trap = 0;
       `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Exit"), UVM_DEBUG);
     end
   endfunction : check_exception_exit
@@ -895,6 +896,7 @@ class uvme_rv32x_hwloop_covg # (
         if (is_irq && cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.insn == TB_INSTR_MRET) begin
           `uvm_info(_header, $sformatf("DEBUG - IRQ Exit"), UVM_DEBUG);
           is_irq = 0;
+          prev_is_trap = 0;
         end
       end // IRQ_EXIT
       forever begin : INIT_MACHINE_MODE
@@ -947,6 +949,7 @@ class uvme_rv32x_hwloop_covg # (
           @(posedge cv32e40p_rvvi_vif.clk) ; @(negedge cv32e40p_rvvi_vif.clk);
           `uvm_info(_header, $sformatf("DEBUG - Debug Mode Exit"), UVM_DEBUG);
           is_dbg_mode = 0; is_ebreakm = 0;
+          prev_is_trap = 0;
         end
       end // DBG_EXIT
 
