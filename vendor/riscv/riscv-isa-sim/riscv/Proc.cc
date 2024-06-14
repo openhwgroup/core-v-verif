@@ -235,7 +235,6 @@ Processor::Processor(
   ((cfg_t *)cfg)->misaligned =
       (this->params[base + "misaligned"]).a_bool;
 
-
   this->csr_counters_injection =
       (this->params[base + "csr_counters_injection"]).a_bool;
   string extensions_str =
@@ -326,19 +325,6 @@ void Processor::default_params(string base, openhw::Params &params) {
 
   params.set_string(base, "extensions", "", "", "Possible extensions: cv32a60x, cvxif");
 
-  params.set_bool(base, "status_fs_field_we_enable", false, "false",
-             "XSTATUS CSR FS Write Enable param enable");
-  params.set_bool(base, "status_fs_field_we", false, "false",
-             "XSTATUS CSR FS Write Enable");
-  params.set_bool(base, "status_vs_field_we_enable", false, "false",
-             "XSTATUS CSR VS Write Enable param enable");
-  params.set_bool(base, "status_vs_field_we", false, "false",
-             "XSTATUS CSR VS Write Enable");
-  params.set_bool(base, "status_xs_field_we_enable", (false), "false",
-             "XSTATUS CSR XS Write Enable param enable");
-  params.set_bool(base, "status_xs_field_we", (false), "false",
-             "XSTATUS CSR XS Write Enable");
-
   params.set_bool(base, "misaligned", false, "false",
              "Support for misaligned memory operations");
 
@@ -389,6 +375,10 @@ void Processor::default_params(string base, openhw::Params &params) {
                     csr_name +" CSR Write Enable param enable");
         params.set_bool(base, csr_name + "_we", false, "false",
                     csr_name + " CSR Write Enable value");
+      }
+      if (it->second.write_mask_param) {
+        params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
+                    csr_name + " CSR write mask");
       }
   }
 
@@ -453,7 +443,6 @@ void Processor::reset()
 
         openhw::reg* p_csr = (openhw::reg*) this->state.csrmap[it->first].get();
 
-
         if (it->second.override_mask_param) {
             uint64_t override_mask = (this->params[base + csr_name + "_override_mask"]).a_uint64_t;
             uint64_t override_value = (this->params[base + csr_name + "_override_value"]).a_uint64_t;
@@ -479,38 +468,21 @@ void Processor::reset()
             if (we_enable)
                 p_csr->set_we(we);
         }
-
+        if (it->second.write_mask_param) {
+            uint64_t write_mask = (this->params[base + csr_name + "_write_mask"]).a_uint64_t;
+            p_csr->set_param_write_mask(write_mask);
+        }
 
     }
 
     this->get_state()->debug_mode = 0;
 
-    bool fs_field_we_enable = (this->params[base + "status_fs_field_we_enable"]).a_bool;
-    bool fs_field_we = (this->params[base + "status_fs_field_we"]).a_bool;
-    bool vs_field_we_enable = (this->params[base + "status_vs_field_we_enable"]).a_bool;
-    bool vs_field_we = (this->params[base + "status_vs_field_we"]).a_bool;
-    bool xs_field_we_enable = (this->params[base + "status_xs_field_we_enable"]).a_bool;
-    bool xs_field_we = (this->params[base + "status_xs_field_we"]).a_bool;
-
-    reg_t sstatus_mask = this->state.csrmap[CSR_MSTATUS]->get_param_write_mask();
-    if (fs_field_we_enable)
-        sstatus_mask = (fs_field_we ? (sstatus_mask |  MSTATUS_FS)
-                                    : (sstatus_mask & ~MSTATUS_FS));
-    if (vs_field_we_enable)
-        sstatus_mask = (vs_field_we ? (sstatus_mask |  MSTATUS_VS)
-                                    : (sstatus_mask & ~MSTATUS_VS));
-
-    if (xs_field_we_enable)
-        sstatus_mask = (xs_field_we ? (sstatus_mask |  MSTATUS_XS)
-                                    : (sstatus_mask & ~MSTATUS_XS));
-
-    this->state.csrmap[CSR_MSTATUS]->set_param_write_mask(sstatus_mask);
-
     // Hide CSR Priv param implementation
-    bool hide_csr_priv = (this->params[base + "hide_csr_priv"]).a_bool;
+    bool hide_csr_priv = (this->params[base + "hide_csrs_based_on_priv"]).a_bool;
     std::string s = this->get_cfg().priv();
     if (hide_csr_priv) {
-        for (auto it = this->get_state()->csrmap.begin(); it != this->get_state()->csrmap.end() ; it++) {
+        auto it = this->get_state()->csrmap.begin();
+        while(it != this->get_state()->csrmap.end()) {
             bool legal = false;
             for (size_t i = 0 ; i < s.length() && !legal; i++) {
                 std::tuple <uint64_t, uint64_t> range = Processor::priv_ranges[s[i]];
@@ -518,9 +490,10 @@ void Processor::reset()
                     legal = true;
                 }
             }
-            if (!legal) {
-                this->get_state()->csrmap.erase(it);
-            }
+            if (!legal)
+                this->get_state()->csrmap.erase(it++);
+            else
+                it++;
         }
     }
 
@@ -576,15 +549,16 @@ void Processor::enter_debug_mode(uint8_t cause) {
 }
 
 std::unordered_map<uint64_t, openhw::csr_param_t> Processor::csr_params = {
-    // ADDRESS          NAME      OVERRIDE_MASKS_PARAM   PRESENCE_PARAM  WRITE_ENABLE_PARAM
-    { CSR_MSTATUS   , {"mstatus"    ,  true    ,           false       ,      true} },
-    { CSR_MISA      , {"misa"       ,  true    ,           false       ,      true} },
-    { CSR_MHARTID   , {"mhartid"    ,  true    ,           false       ,      true} },
-    { CSR_MARCHID   , {"marchid"    ,  true    ,           false       ,      true} },
-    { CSR_MVENDORID , {"mvendorid"  ,  true    ,           false       ,      true} },
-    { CSR_TDATA1    , {"tdata1"     ,  true    ,           false       ,      true} },
-    { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,      true} },
-    { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,      true} },
+    // ADDRESS          NAME      OVERRIDE_MASKS         PRESENCE        WRITE_ENABLE        WRITE_MASK
+    { CSR_MSTATUS   , {"mstatus"    ,  true    ,           false       ,   true             , true} },
+    { CSR_MISA      , {"misa"       ,  true    ,           false       ,   true             , true} },
+    { CSR_MHARTID   , {"mhartid"    ,  true    ,           false       ,   true             , true} },
+    { CSR_MARCHID   , {"marchid"    ,  true    ,           false       ,   true             , true} },
+    { CSR_MVENDORID , {"mvendorid"  ,  true    ,           false       ,   true             , true} },
+    { CSR_TDATA1    , {"tdata1"     ,  true    ,           false       ,   true             , true} },
+    { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,   true             , true} },
+    { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,   true             , true} },
+    { CSR_MTVAL     , {"mtval"      ,  true    ,           false       ,   true             , true} },
   };
 
 std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {

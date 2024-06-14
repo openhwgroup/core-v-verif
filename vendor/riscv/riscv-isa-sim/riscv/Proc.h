@@ -9,6 +9,7 @@ namespace openhw {
       bool override_mask_param;
       bool presence_param;
       bool write_enable_param;
+      bool write_mask_param;
   } csr_param_t;
 
 
