@@ -76,7 +76,7 @@ class uvmt_cv32e40p_firmware_test_c extends uvmt_cv32e40p_base_test_c;
    /**
     *  Enable program execution, wait for completion.
     */
-   extern virtual task run_phase(uvm_phase phase);
+   extern virtual task main_phase(uvm_phase phase);
 
    /**
    * Start random debug sequencer
@@ -122,10 +122,10 @@ task uvmt_cv32e40p_firmware_test_c::configure_phase(uvm_phase phase);
 endtask : configure_phase
 
 
-task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
+task uvmt_cv32e40p_firmware_test_c::main_phase(uvm_phase phase);
 
    // start_clk() and watchdog_timer() are called in the base_test
-   super.run_phase(phase);
+   super.main_phase(phase);
 
    if ($test$plusargs("gen_random_debug") || $test$plusargs("gen_reduced_rand_dbg_req")) begin
     fork
@@ -151,7 +151,7 @@ task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
    end
 
    phase.raise_objection(this);
-   @(posedge env_cntxt.clknrst_cntxt.vif.reset_n);
+   wait(env_cntxt.clknrst_cntxt.vif.reset_n === 1'b1);
    repeat (33) @(posedge env_cntxt.clknrst_cntxt.vif.clk);
    `uvm_info("TEST", "Started RUN", UVM_NONE)
    // The firmware is expected to write exit status and pass/fail indication to the Virtual Peripheral
@@ -165,7 +165,7 @@ task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
    `uvm_info("TEST", $sformatf("Finished RUN: exit status is %0h", vp_status_vif.exit_value), UVM_NONE)
    phase.drop_objection(this);
 
-endtask : run_phase
+endtask : main_phase
 
 task uvmt_cv32e40p_firmware_test_c::reset_debug();
     uvme_cv32e40p_random_debug_reset_c debug_vseq;
