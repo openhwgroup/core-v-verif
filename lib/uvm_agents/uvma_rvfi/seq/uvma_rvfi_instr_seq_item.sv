@@ -30,7 +30,7 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    rand bit [ILEN-1:0]           insn;
    rand bit [TRAP_WL-1:0]        trap;
    rand bit                      halt;
-   rand bit                      intr;
+   rand bit [RVFI_INTR_WL-1:0]   intr;
    rand uvma_rvfi_mode           mode;
    rand bit [IXL_WL-1:0]         ixl;
    rand bit [RVFI_DBG_WL-1:0]    dbg;

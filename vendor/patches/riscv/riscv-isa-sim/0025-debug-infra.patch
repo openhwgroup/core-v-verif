@@ -1,0 +1,410 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index f6140ec6f..1a26551ac 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -21,69 +21,83 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+   st_rvfi rvfi;
+ 
+   this->reference = & reference_;
++  this->step_rvfi = & rvfi;
+ 
+   bool unified_traps = (this->params[base + "unified_traps"]).a_bool;
+   bool interrupts_injection = (this->params[base + "interrupts_injection"]).a_bool;
+   bool debug_injection = (this->params[base + "debug_injection"]).a_bool;
+   // Use mstatus as a reference
+   bool inverse_csr_access = (reference->csr_addr[0x300] != 0x300);
++
+ #define INDEX_CSR(INDEX) (inverse_csr_access) ? CSR_MAX_SIZE-1-INDEX : INDEX
+ 
+   memset(&rvfi, 0, sizeof(st_rvfi));
+ 
+   do {
+-    // First intr of the trap handler
+-    if (this->taken_trap) {
+-        rvfi.intr = 1;
+-        if (this->which_trap >> 31) {
+-            this->get_state()->mip->backdoor_write(0);
+-        }
+-    }
+-
+-    rvfi.pc_rdata = this->get_state()->pc;
+ 
+     if (this->is_waiting_for_interrupt())
+         this->clear_waiting_for_interrupt();
+ 
+-    if (reference->intr && interrupts_injection && !this->taken_trap) {
++    bool inject_interrupt = ((this->reference->intr & 0b111) == 0b101);
++
++    if (inject_interrupt && interrupts_injection && !this->taken_trap) {
+         // We need to ensure this is an interrupt to inject mip
+-        if (reference->csr_rdata[INDEX_CSR(CSR_MCAUSE)] >> 31) {
+-            uint64_t mip = this->mcause_to_mip(reference->csr_rdata[INDEX_CSR(CSR_MCAUSE)]);
++        uint64_t mcause = reference->csr_rdata[INDEX_CSR(CSR_MCAUSE)];
++        if (mcause >> 31) {
++            uint64_t mip = this->mcause_to_mip(mcause);
+             this->get_state()->mip->backdoor_write(mip);
+-            this->interrupt_injected = true;
++            this->step_rvfi->intr = 0b101; // Interrupt
++            this->step_rvfi->intr |= ((mcause & 0x3FF) << 3);
++            uint64_t nmi_mcause = (this->params[base + "nmi_mcause"]).a_uint64_t;
++            if (nmi_mcause == (mcause & 0x3FF))
++                this->nmi_inject = true;
+         }
+     }
+ 
+-    if (reference->trap && debug_injection && !this->halted()) {
+-        uint64_t cause = reference->csr_rdata[INDEX_CSR(CSR_DCSR)] >> 6;
+-        cause = cause & 0b111;
+-        switch (cause) {
+-            case 0x3:
+-                halt_request = HR_REGULAR;
+-                break;
+-            default:
+-                break;
++    if (reference->dbg && !this->get_state()->debug_mode && debug_injection && !this->halted()) {
++        uint64_t cause = reference->dbg;
++        if (cause) {
++            enter_debug_mode(cause);
++            rvfi.dbg = cause;
++            rvfi.trap = 0b101;
++            rvfi.trap |= (cause << 9);
+         }
+     }
+ 
++    if (this->taken_trap && !(this->which_trap >> 31)) {
++        rvfi.intr = 0b011;
++    }
++
++    if (this->taken_debug) {
++        rvfi.dbg = this->which_debug;
++    }
++
+     this->taken_trap = false;
+     this->which_trap = 0;
++    this->taken_debug = false;
++    this->which_debug = 0;
++
++    rvfi.pc_rdata = this->get_state()->pc;
+ 
+     processor_t::step(n);
+ 
+-    this->interrupt_injected = false;
++    if (this->taken_trap && (this->which_trap >> 31))
++        this->get_state()->mip->backdoor_write(0);
+ 
+-    if (this->taken_trap) {
+-        if (this->which_trap >> 31) {
+-            rvfi.intr = this->taken_trap;
+-            rvfi.intr |= (this->which_trap << 1);
+-        }
+-        else {
+-            rvfi.trap = this->taken_trap;
+-            rvfi.trap |= (this->which_trap << 1);
++    // First intr of the trap handler
++    if ((this->taken_trap || this->taken_debug) && !(this->which_trap >> 31)) {
++        rvfi.trap = 1;
++        if (this->get_state()->debug_mode) {
++            rvfi.trap |= 0x4;
++            rvfi.trap |= (this->which_debug & 0x7) << 0x9;
++        } else if (this->which_trap >> 31) {
++            rvfi.trap |= 0x2;
++            rvfi.trap |= (this->which_trap & 0x3F) << 0x3;
+         }
+     }
+ 
++    rvfi.dbg_mode = this->get_state()->debug_mode;
++
+     rvfi.mode = this->get_state()->last_inst_priv;
+     rvfi.insn =
+         (uint32_t)(this->get_state()->last_inst_fetched.bits() & 0xffffffffULL);
+@@ -99,9 +113,24 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+     // TODO add rs2_value
+ 
+     bool got_commit = false;
++
++    if (rvfi.intr) {
++        for (auto &reg : last_log_reg_write) {
++            reg_t addr = reg.first >> 4;
++            rvfi.csr_valid[INDEX_CSR(addr)] = 1;
++            rvfi.csr_addr [INDEX_CSR(addr)] = addr;
++            rvfi.csr_wdata[INDEX_CSR(addr)] = reg.second.v[0];
++            rvfi.csr_wmask[INDEX_CSR(addr)] = -1;
++        }
++    }
++    last_log_reg_write.clear();
++
+     for (auto &reg : reg_commits) {
+         if ((reg.first >> 4) > 32) {
+-            if ((reg.first >> 4) < 0xFFF) {
++            if (rvfi.trap) {
++                last_log_reg_write[reg.first] = reg.second;
++            }
++            else if ((reg.first >> 4) < 0xFFF) {
+                 reg_t addr = reg.first >> 4;
+                 rvfi.csr_valid[INDEX_CSR(addr)] = 1;
+                 rvfi.csr_addr [INDEX_CSR(addr)] = addr;
+@@ -163,7 +192,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+       rvfi.rd1_wdata &= 0xffffffffULL;
+     }
+ 
+-  } while (unified_traps && this->taken_trap == true && (this->which_trap >> 31));
++  } while (unified_traps && this->taken_trap && (this->which_trap >> 31));
+ 
+   return rvfi;
+ }
+@@ -206,7 +235,6 @@ Processor::Processor(
+   ((cfg_t *)cfg)->misaligned =
+       (this->params[base + "misaligned"]).a_bool;
+ 
+-
+   this->csr_counters_injection =
+       (this->params[base + "csr_counters_injection"]).a_bool;
+   string extensions_str =
+@@ -248,7 +276,19 @@ Processor::Processor(
+ void Processor::take_trap(trap_t &t, reg_t epc) {
+   this->taken_trap = true;
+   this->which_trap = t.cause();
++
+   processor_t::take_trap(t, epc);
++
++  if (state.debug_mode) {
++    uint64_t debug_handler_addr = (this->params[base + "debug_handler_addr"]).a_uint64_t;
++    uint64_t debug_exception_handler_addr = (this->params[base + "debug_exception_handler_addr"]).a_uint64_t;
++    if (this->which_trap == 0x3) {
++        state.pc = debug_handler_addr;
++        this->which_trap = 0x1; // Debug breakpoint on debug mode
++    }
++    else
++        state.pc = debug_exception_handler_addr;
++  }
+ }
+ 
+ Processor::~Processor() {
+@@ -276,20 +316,14 @@ void Processor::default_params(string base, openhw::Params &params) {
+   params.set_uint64_t(base, "mhartid", 0x0UL, "0x0", "MHARTID value");
+   params.set_uint64_t(base, "mvendorid", 0x00000602UL, "0x00000602UL",
+              "MVENDORID value");
+-  params.set_string(base, "extensions", "", "", "Possible extensions: cv32a60x, cvxif");
+ 
+-  params.set_bool(base, "status_fs_field_we_enable", false, "false",
+-             "XSTATUS CSR FS Write Enable param enable");
+-  params.set_bool(base, "status_fs_field_we", false, "false",
+-             "XSTATUS CSR FS Write Enable");
+-  params.set_bool(base, "status_vs_field_we_enable", false, "false",
+-             "XSTATUS CSR VS Write Enable param enable");
+-  params.set_bool(base, "status_vs_field_we", false, "false",
+-             "XSTATUS CSR VS Write Enable");
+-  params.set_bool(base, "status_xs_field_we_enable", (false), "false",
+-             "XSTATUS CSR XS Write Enable param enable");
+-  params.set_bool(base, "status_xs_field_we", (false), "false",
+-             "XSTATUS CSR XS Write Enable");
++  params.set_uint64_t(base, "debug_handler_addr", 0x1a110800, "0x1a110800",
++             "Debug handler Address");
++
++  params.set_uint64_t(base, "debug_exception_handler_addr", 0x1A140000, "0x1A140000",
++             "Debug handler Address");
++
++  params.set_string(base, "extensions", "", "", "Possible extensions: cv32a60x, cvxif");
+ 
+   params.set_bool(base, "misaligned", false, "false",
+              "Support for misaligned memory operations");
+@@ -342,6 +376,10 @@ void Processor::default_params(string base, openhw::Params &params) {
+         params.set_bool(base, csr_name + "_we", false, "false",
+                     csr_name + " CSR Write Enable value");
+       }
++      if (it->second.write_mask_param) {
++        params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
++                    csr_name + " CSR write mask");
++      }
+   }
+ 
+   params.set_uint64_t(base, "trigger_count", 0x0000004, "0x00000004",
+@@ -405,7 +443,6 @@ void Processor::reset()
+ 
+         openhw::reg* p_csr = (openhw::reg*) this->state.csrmap[it->first].get();
+ 
+-
+         if (it->second.override_mask_param) {
+             uint64_t override_mask = (this->params[base + csr_name + "_override_mask"]).a_uint64_t;
+             uint64_t override_value = (this->params[base + csr_name + "_override_value"]).a_uint64_t;
+@@ -431,38 +468,21 @@ void Processor::reset()
+             if (we_enable)
+                 p_csr->set_we(we);
+         }
+-
++        if (it->second.write_mask_param) {
++            uint64_t write_mask = (this->params[base + csr_name + "_write_mask"]).a_uint64_t;
++            p_csr->set_param_write_mask(write_mask);
++        }
+ 
+     }
+ 
+     this->get_state()->debug_mode = 0;
+ 
+-    bool fs_field_we_enable = (this->params[base + "status_fs_field_we_enable"]).a_bool;
+-    bool fs_field_we = (this->params[base + "status_fs_field_we"]).a_bool;
+-    bool vs_field_we_enable = (this->params[base + "status_vs_field_we_enable"]).a_bool;
+-    bool vs_field_we = (this->params[base + "status_vs_field_we"]).a_bool;
+-    bool xs_field_we_enable = (this->params[base + "status_xs_field_we_enable"]).a_bool;
+-    bool xs_field_we = (this->params[base + "status_xs_field_we"]).a_bool;
+-
+-    reg_t sstatus_mask = this->state.csrmap[CSR_MSTATUS]->get_param_write_mask();
+-    if (fs_field_we_enable)
+-        sstatus_mask = (fs_field_we ? (sstatus_mask |  MSTATUS_FS)
+-                                    : (sstatus_mask & ~MSTATUS_FS));
+-    if (vs_field_we_enable)
+-        sstatus_mask = (vs_field_we ? (sstatus_mask |  MSTATUS_VS)
+-                                    : (sstatus_mask & ~MSTATUS_VS));
+-
+-    if (xs_field_we_enable)
+-        sstatus_mask = (xs_field_we ? (sstatus_mask |  MSTATUS_XS)
+-                                    : (sstatus_mask & ~MSTATUS_XS));
+-
+-    this->state.csrmap[CSR_MSTATUS]->set_param_write_mask(sstatus_mask);
+-
+     // Hide CSR Priv param implementation
+-    bool hide_csr_priv = (this->params[base + "hide_csr_priv"]).a_bool;
++    bool hide_csr_priv = (this->params[base + "hide_csrs_based_on_priv"]).a_bool;
+     std::string s = this->get_cfg().priv();
+     if (hide_csr_priv) {
+-        for (auto it = this->get_state()->csrmap.begin(); it != this->get_state()->csrmap.end() ; it++) {
++        auto it = this->get_state()->csrmap.begin();
++        while(it != this->get_state()->csrmap.end()) {
+             bool legal = false;
+             for (size_t i = 0 ; i < s.length() && !legal; i++) {
+                 std::tuple <uint64_t, uint64_t> range = Processor::priv_ranges[s[i]];
+@@ -470,9 +490,10 @@ void Processor::reset()
+                     legal = true;
+                 }
+             }
+-            if (!legal) {
+-                this->get_state()->csrmap.erase(it);
+-            }
++            if (!legal)
++                this->get_state()->csrmap.erase(it++);
++            else
++                it++;
+         }
+     }
+ 
+@@ -488,10 +509,12 @@ void Processor::take_interrupt(reg_t pending_interrupts) {
+ 
+   processor_t::take_interrupt(pending_interrupts);
+ 
+-  if (this->interrupt_injected && !this->taken_trap && pending_interrupts == 0) {
++  if (nmi_inject && !this->taken_trap && pending_interrupts == 0) {
++    nmi_inject = false;
+     uint64_t nmi_mcause = (this->params[base + "nmi_mcause"]).a_uint64_t;
+     throw trap_t(((reg_t)1 << (isa->get_max_xlen() - 1)) | nmi_mcause);
+   }
++
+   return;
+ }
+ 
+@@ -513,16 +536,29 @@ uint32_t Processor::mcause_to_mip(uint32_t mcause) {
+     return 0; // Not an interrupt
+ }
+ 
++void Processor::enter_debug_mode(uint8_t cause) {
++    processor_t::enter_debug_mode(cause);
++
++    uint64_t debug_handler_addr = (this->params[base + "debug_handler_addr"]).a_uint64_t;
++    state.pc = debug_handler_addr;
++    state.mtval->write(0x0);
++
++    this->taken_debug = true;
++    this->which_debug = cause;
++
++}
++
+ std::unordered_map<uint64_t, openhw::csr_param_t> Processor::csr_params = {
+-    // ADDRESS          NAME      OVERRIDE_MASKS_PARAM   PRESENCE_PARAM  WRITE_ENABLE_PARAM
+-    { CSR_MSTATUS   , {"mstatus"    ,  true    ,           false       ,      true} },
+-    { CSR_MISA      , {"misa"       ,  true    ,           false       ,      true} },
+-    { CSR_MHARTID   , {"mhartid"    ,  true    ,           false       ,      true} },
+-    { CSR_MARCHID   , {"marchid"    ,  true    ,           false       ,      true} },
+-    { CSR_MVENDORID , {"mvendorid"  ,  true    ,           false       ,      true} },
+-    { CSR_TDATA1    , {"tdata1"     ,  true    ,           false       ,      true} },
+-    { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,      true} },
+-    { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,      true} },
++    // ADDRESS          NAME      OVERRIDE_MASKS         PRESENCE        WRITE_ENABLE        WRITE_MASK
++    { CSR_MSTATUS   , {"mstatus"    ,  true    ,           false       ,   true             , true} },
++    { CSR_MISA      , {"misa"       ,  true    ,           false       ,   true             , true} },
++    { CSR_MHARTID   , {"mhartid"    ,  true    ,           false       ,   true             , true} },
++    { CSR_MARCHID   , {"marchid"    ,  true    ,           false       ,   true             , true} },
++    { CSR_MVENDORID , {"mvendorid"  ,  true    ,           false       ,   true             , true} },
++    { CSR_TDATA1    , {"tdata1"     ,  true    ,           false       ,   true             , true} },
++    { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,   true             , true} },
++    { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,   true             , true} },
++    { CSR_MTVAL     , {"mtval"      ,  true    ,           false       ,   true             , true} },
+   };
+ 
+ std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index 771bb2f75..7e55bb920 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -9,6 +9,7 @@ namespace openhw {
+       bool override_mask_param;
+       bool presence_param;
+       bool write_enable_param;
++      bool write_mask_param;
+   } csr_param_t;
+ 
+ 
+@@ -32,6 +33,7 @@ public:
+ 
+   void take_pending_interrupt();
+   void take_interrupt(reg_t pending_interrupts);
++  virtual void enter_debug_mode(uint8_t cause) override;
+ 
+   void reset();
+ 
+@@ -49,13 +51,21 @@ public:
+   inline uint32_t mcause_to_mip(uint32_t mcause);
+ 
+ protected:
++  bool nmi_inject;
++
+   bool csr_counters_injection;
+-  bool interrupt_injected;
++
+   bool taken_trap;
++  bool taken_debug;
+   uint64_t which_trap;
++  uint64_t which_debug;
++
+   string base;
+   virtual void take_trap(trap_t &t, reg_t epc); // take an exception
+   st_rvfi *reference;
++  st_rvfi *step_rvfi;
++
++  commit_log_reg_t last_log_reg_write;
+ 
+   static std::unordered_map<uint64_t, csr_param_t> csr_params;
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/execute.cc b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
+index 02b27c50d..7e2e4b172 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/execute.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
+@@ -329,6 +329,7 @@ void processor_t::step(size_t n)
+     catch(trap_debug_mode&)
+     {
+       enter_debug_mode(DCSR_CAUSE_SWBP);
++      break;
+     }
+     catch (wait_for_interrupt_t &t)
+     {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.h b/vendor/riscv/riscv-isa-sim/riscv/processor.h
+index 13fccd4d7..627925e20 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.h
+@@ -341,7 +341,7 @@ protected:
+   void disasm(insn_t insn); // disassemble and print an instruction
+   int paddr_bits();
+ 
+-  void enter_debug_mode(uint8_t cause);
++  virtual void enter_debug_mode(uint8_t cause);
+ 
+   void debug_output_log(std::stringstream *s); // either output to interactive user or write to log file
+ 

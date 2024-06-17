@@ -37,7 +37,7 @@ import "DPI-C" function void spike_set_default_params(string profile);
 
             $cast(mode, st.mode[1:0]);
 
-            return $sformatf(`FORMAT_INSTR_STR_MACRO, $sformatf("%t", $time), 0,
+            return $sformatf(`FORMAT_INSTR_STR_MACRO, $sformatf("%t", $time), st.intr,
                             st.trap,
                             st.pc_rdata,
                             $sformatf("%08x", st.insn),
@@ -122,21 +122,23 @@ import "DPI-C" function void spike_set_default_params(string profile);
             reference_model_pc64 = reference_model_pc64 & 'hFFFFFFFF;
         end
 
-        // Avoid comparison until field correct specification
-        if (0 && (t_core.intr[0] | t_reference_model.intr[0])) begin
-            if (t_core.intr[0] !== t_reference_model.intr[0]) begin
-                error = 1;
-                cause_str = $sformatf("%s\nINTR Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.intr, t_core.intr);
+        `define COMPARE(field, error_str) \
+            if (t_core.``field !== t_reference_model.``field) begin \
+                error = 1; \
+                cause_str = $sformatf("%s\n%s Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, error_str, t_reference_model.``field, t_core.``field); \
             end
+
+        if (t_core.dbg[2:0] | t_reference_model.dbg[2:0]) begin
+            `COMPARE(dbg[2:0] , "Debug cause")
+        end
+        else if (0 && t_core.intr[0] | t_reference_model.intr[0]) begin
+            `COMPARE(intr[0], "INTR bit")
             else begin
                 `uvm_info("scoreboard_utils", $sformatf("             INTR correctly compared core %h iss %h", t_reference_model.intr, t_core.intr), UVM_MEDIUM)
             end
         end
-        if (t_core.trap[0] | t_reference_model.trap[0]) begin
-            if (t_core.trap[0] !== t_reference_model.trap[0]) begin
-                error = 1;
-                cause_str = $sformatf("%s\nTRAP Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
-            end
+        else if (t_core.trap[0] | t_reference_model.trap[0]) begin
+            `COMPARE(trap[0], "TRAP Mismatch")
         end
         else begin
             if (t_core.insn !== t_reference_model.insn) begin
@@ -144,19 +146,10 @@ import "DPI-C" function void spike_set_default_params(string profile);
                 cause_str = $sformatf("%s\nINSN Mismatch    [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.insn, t_core.insn);
             end
             if (t_core.rd1_addr != 0 || t_reference_model.rd1_addr != 0) begin
-                if (t_core.rd1_addr[4:0] !== t_reference_model.rd1_addr[4:0]) begin
-                    error = 1;
-                    cause_str = $sformatf("%s\nRD ADDR Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.rd1_addr[4:0], t_core.rd1_addr[4:0]);
-                end
-                if (t_core.rd1_wdata !== t_reference_model.rd1_wdata) begin
-                    error = 1;
-                    cause_str = $sformatf("%s\nRD VAL Mismatch  [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.rd1_wdata, t_core.rd1_wdata);
-                end
+                `COMPARE(rd1_addr[4:0], "RD ADDR")
+                `COMPARE(rd1_wdata, "RD VAL")
             end
-            if (t_core.mode !== t_reference_model.mode) begin
-                error = 1;
-                cause_str = $sformatf("%s\nPRIV Mismatch    [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.mode, t_core.mode);
-            end
+            `COMPARE(mode, "PRIV")
             if (core_pc64 !== reference_model_pc64) begin
                 error = 1;
                 cause_str = $sformatf("%s\nPC Mismatch      [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, reference_model_pc64, core_pc64);
@@ -171,7 +164,7 @@ import "DPI-C" function void spike_set_default_params(string profile);
                 bit valid = t_reference_model.csr_valid[addr] & ~m_core_cfg.unsupported_csr_mask[addr];
 
                 if (valid && t_core.csr_valid[addr]) begin
-                    bit core_value_condition = ((m_core_cfg.unified_traps && t_core.intr[0]) && !(is_csr_insn(t_core) && addr == get_insn_rs1(t_core)));
+                    bit core_value_condition = (m_core_cfg.unified_traps && (t_core.intr[0] | t_core.dbg[2:0])) && !(is_csr_insn(t_core) && addr == get_insn_rs1(t_core));
                     longint unsigned core_value = (core_value_condition) ? t_core.csr_rdata[addr] : t_core.csr_wdata[addr];
                     found = 1;
                     if (t_reference_model.csr_wdata[addr] !== core_value) begin
