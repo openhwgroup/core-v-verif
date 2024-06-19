@@ -74,12 +74,10 @@ Simulation::Simulation(
     : sim_t(cfg, halted, mems, plugin_devices, args, dm_config, log_path,
             dtb_enabled, dtb_file, socket_enabled, cmd_file, params) {
 
-  Simulation::default_params(this->params);
   // It seems mandatory to set cache block size for MMU.
   // FIXME TODO: Use actual cache configuration (on/off, # of ways/sets).
   // FIXME TODO: Support multiple cores.
   get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
-
   Params::parse_params("/top/", this->params, params);
 
   const std::vector<mem_cfg_t> layout;
@@ -92,7 +90,6 @@ Simulation::Simulation(
   string isa_str = (this->params["/top/isa"]).a_string;
   string priv_str = (this->params["/top/priv"]).a_string;
   this->isa = isa_parser_t(isa_str.c_str(), priv_str.c_str());
-
   this->reset();
 
   bool commitlog = (this->params["/top/log_commits"]).a_bool;

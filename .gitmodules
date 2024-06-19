@@ -1,0 +1,3 @@
+[submodule "lib/yaml-cpp"]
+	path = vendor/riscv/riscv-isa-sim/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
