@@ -430,7 +430,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     //gprs for floating point instructions
     if(RV32ZFINX inside {supported_isa}) begin
       foreach(corev_cfg.zfinx_reserved_gpr[i]) begin
-        if (corev_cfg.zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP}) continue;
+        if (corev_cfg.zfinx_reserved_gpr[i] inside {ZERO, corev_cfg.ra, corev_cfg.sp, GP, corev_cfg.tp}) continue;
         imm = get_rand_spf_value();
         reg_name = corev_cfg.zfinx_reserved_gpr[i].name();
         str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), imm);
