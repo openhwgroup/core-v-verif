@@ -19,6 +19,7 @@
 #include <fstream>
 #include <limits>
 #include <cinttypes>
+#include "YamlParamSetter.h"
 #include "../VERSION"
 
 #define stringify(s) tostr(s)
@@ -126,6 +127,8 @@ static void help(int exit_code = 1)
                   "                        A uint64_t value can be any unsigned number literal\n"
                   "                        in C/C++ syntax (42, 0x2a, etc.)\n"
                   "                        This flag can be used multiple times.\n");
+  fprintf(stderr, "  --param-file <Yaml file path>  Set parameters to file-specified value (see 'spike --print-params' for a full list.)\n"
+                  "                          This flag can be used multiple times.\n");
 
   exit(exit_code);
 }
@@ -463,6 +466,7 @@ int main(int argc, char** argv)
 
   option_parser_t parser;
   openhw::Params params;
+  std::unique_ptr<openhw::YamlParamSetter> paramSetter;
 
   parser.help(&suggest_help);
   parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
@@ -513,6 +517,7 @@ int main(int argc, char** argv)
   });
   parser.option(0, "steps", 1, [&](const char* s){max_steps = strtoull(s, 0, 0);});
   parser.option(0, "param", 1, [&](const char* s){params.setFromCmdline(s);});
+  parser.option(0, "param-file", 1, [&](const char* s){paramSetter = std::make_unique<openhw::YamlParamSetter>(&params, s);});
   parser.option(0, "dm-progsize", 1,
       [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
   parser.option(0, "dm-no-impebreak", 0,
@@ -618,6 +623,7 @@ int main(int argc, char** argv)
     cfg.hartids = default_hartids;
   }
 
+  openhw::Simulation::default_params(params);
   if (max_steps != 0) {
     params.set_uint64_t("/top/", "max_steps", max_steps);
     params.set_bool("/top/", "max_steps_enabled", true);
@@ -627,7 +633,8 @@ int main(int argc, char** argv)
   params.set_uint64_t("/top/", "num_procs", cfg.nprocs());
   params.set_string("/top/core/0/", "isa", std::string(cfg.isa()));
   params.set_string("/top/core/0/", "priv", std::string(cfg.priv()));
-
+  if(paramSetter != NULL)
+    paramSetter->setParams();
   openhw::Param param = params.get("/top/core/0/misa_we");
   std::cerr << "[spike.cc:main()] Value of '/top/core/0/misa_we' = " << (param.name != "" ? (param.a_bool ? "true" : "false") : "UNDEFINED") << "\n";
 
