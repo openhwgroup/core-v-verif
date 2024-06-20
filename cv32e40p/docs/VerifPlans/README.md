@@ -10,6 +10,9 @@ Below are two different chapters describing verification plans status and direct
 ## Short verification methodology introduction
 For CV32E40Pv2 verification, the formal verification methodology has been chosen over the stimuli-based simulation that was done for v1 version of the core. However, full verification closure is not feasible using only formal verification due to complexity of specific scenarios. All these specific uncoverable scenarios from formal verification are then exercised by stimuli-based simulation using a reference model of the core. These scenarios along with formal assertions are described inside verifications plans, for which details are given in a table below. Regarding already available v1 plans, their re-use or not is specified in this table.
 
+RISC-V ISA Formal Verification methodology is described [here](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p/dev/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_RISCV_vPlan_v1.1.pdf).
+Setup and script files to launch RISC-V ISA Formal Verification using Siemens Questa Processor tool are available [here](https://github.com/openhwgroup/cv32e40p/tree/dev/scripts/riscv_isa_formal).
+
 ## Verification Plan Status
 
 The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature, as long with status update with respect to CV32E40Pv1 verification plans.  Under the heading `VPlan Status`, the test plan can be **Incomplete**, **draft**. If the verification is **captured**, it has one of the following status:
