@@ -114,6 +114,7 @@ package cv32e40p_instr_test_pkg;
   `include "cv32e40p_debug_rom_gen.sv"
   `include "cv32e40p_asm_program_gen.sv"
   `include "cv32e40p_load_store_instr_lib.sv"
+  `include "cv32e40p_loop_instr.sv"
 
   `include "cv32e40p_instr_base_test.sv"
 

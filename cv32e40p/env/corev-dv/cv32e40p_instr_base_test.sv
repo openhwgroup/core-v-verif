@@ -46,6 +46,7 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
     override_debug_rom_gen();
     override_instr_stream();
     override_load_store_lib();
+    override_loop_instr();
     super.build_phase(phase);
   endfunction
 
@@ -131,6 +132,11 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
   virtual function void override_load_store_lib();
     uvm_factory::get().set_type_override_by_type(riscv_multi_page_load_store_instr_stream::get_type(), cv32e40p_multi_page_load_store_instr_stream::get_type());
     uvm_factory::get().set_type_override_by_type(riscv_mem_region_stress_test::get_type(), cv32e40p_mem_region_stress_test::get_type());
+  endfunction
+
+  // to avoid loop tests to reserve all S0:A5 regs used by compressed instructions
+  virtual function void override_loop_instr();
+    uvm_factory::get().set_type_override_by_type(riscv_loop_instr::get_type(), cv32e40p_loop_instr::get_type());
   endfunction
 
   virtual function void apply_directed_instr();
