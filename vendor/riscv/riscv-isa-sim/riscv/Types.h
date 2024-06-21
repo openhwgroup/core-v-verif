@@ -28,8 +28,7 @@ typedef struct {
    uint64_t                 insn_interrupt;
    uint64_t                 insn_interrupt_id;
    uint64_t                 insn_bus_fault;
-   uint64_t                 insn_nmi_store_fault;
-   uint64_t                 insn_nmi_load_fault;
+   uint64_t                 insn_nmi_cause;
 
    uint64_t                 pc_rdata;
    uint64_t                 pc_wdata;

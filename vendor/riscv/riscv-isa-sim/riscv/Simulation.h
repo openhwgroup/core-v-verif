@@ -60,6 +60,32 @@ public:
   std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi> &vreference);
 
   /*
+   * Set the MIP register
+   * *
+   * * @param mask:  The value to be set
+   * * @param revert_steps: Number of steps to revert if the interrupt will be taken 
+   * * @param interrupt_allowed: True if interrupt is allowed to be taken 
+   * * @return:  True if interrupt will be taken, false if not
+   * */
+  bool interrupt(reg_t mask, reg_t mie, uint32_t revert_steps, bool interrupt_allowed);
+
+  /*
+   * Set the debug request
+   * * 
+   * * @param debug_req:  True if debug request is set
+   * * @param revert_steps: Number of steps to revert if the debug request is taken
+   * * @param debug_allowed: True if debug is allowed to be taken
+   */
+  bool set_debug_req(bool debug_req, uint32_t revert_steps, bool debug_allowed);
+
+  /*
+   * Revert the state  
+   * *
+   * * @param num_steps:  number of steps to revert
+   * */
+  void revert_state(int num_steps);
+
+  /*
    * Proposed constuctor for the Simulation class
    * *
    * * @param params: parameters to configure the simulation behaviour

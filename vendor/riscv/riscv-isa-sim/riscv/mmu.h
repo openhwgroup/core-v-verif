@@ -94,16 +94,25 @@ public:
     reg_t vpn = addr >> PGSHIFT;
     bool aligned = (addr & (sizeof(T) - 1)) == 0;
     bool tlb_hit = tlb_store_tag[vpn % TLB_ENTRIES] == vpn;
+    target_endian<T> previous_value;
 
     if (xlate_flags == 0 && likely(aligned && tlb_hit)) {
+      //Store previous value before writing
+      previous_value = *(target_endian<T>*)(tlb_data[vpn % TLB_ENTRIES].host_offset + addr);
+
       *(target_endian<T>*)(tlb_data[vpn % TLB_ENTRIES].host_offset + addr) = to_target(val);
     } else {
+      //Store previous value before writing
+      load_slow_path(addr, sizeof(T), (uint8_t*)&previous_value, xlate_flags);
+
       target_endian<T> target_val = to_target(val);
       store_slow_path(addr, sizeof(T), (const uint8_t*)&target_val, xlate_flags, true, false);
     }
 
-    if (unlikely(proc && proc->get_log_commits_enabled()))
+    if (unlikely(proc && proc->get_log_commits_enabled())) {
       proc->state.log_mem_write.push_back(std::make_tuple(addr, val, sizeof(T)));
+      proc->state.log_mem_pre_write.push_back(std::make_tuple(addr, from_target(previous_value), sizeof(T)));
+    }
   }
 
   template<typename T>

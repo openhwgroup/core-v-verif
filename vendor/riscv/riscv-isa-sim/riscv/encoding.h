@@ -87,6 +87,7 @@
 #define DCSR_STOPTIME       (1<<9)
 #define DCSR_CAUSE          (7<<6)
 #define DCSR_DEBUGINT       (1<<5)
+#define DCSR_MPRVEN         (1<<4)
 #define DCSR_HALT           (1<<3)
 #define DCSR_STEP           (1<<2)
 #define DCSR_PRV            (3<<0)

@@ -734,12 +734,13 @@ mie_csr_t::mie_csr_t(processor_t* const proc, const reg_t addr):
 }
 
 reg_t mie_csr_t::write_mask() const noexcept {
+  const reg_t custom_ints = 0xffff0000;
   const reg_t supervisor_ints = proc->extension_enabled('S') ? MIP_SSIP | MIP_STIP | MIP_SEIP : 0;
   const reg_t lscof_int = proc->extension_enabled(EXT_SSCOFPMF) ? MIP_LCOFIP : 0;
   const reg_t hypervisor_ints = proc->extension_enabled('H') ? MIP_HS_MASK : 0;
   const reg_t coprocessor_ints = (reg_t)proc->any_custom_extensions() << IRQ_COP;
   const reg_t delegable_ints = supervisor_ints | coprocessor_ints | lscof_int;
-  const reg_t all_ints = delegable_ints | hypervisor_ints | MIP_MSIP | MIP_MTIP | MIP_MEIP;
+  const reg_t all_ints = delegable_ints | hypervisor_ints | MIP_MSIP | MIP_MTIP | MIP_MEIP | custom_ints;
   return all_ints;
 }
 
@@ -992,13 +993,15 @@ bool wide_counter_csr_t::unlogged_write(const reg_t val) noexcept {
   // takes precedence over the increment to instret.  However, Spike
   // unconditionally increments instret after executing an instruction.
   // Correct for this artifact by decrementing instret here.
-   openhw::reg::unlogged_write( openhw::reg::unlogged_read()-1);
+
+  // disable since we (at the moment) check mcounterinhibit
+  //openhw::reg::unlogged_write( openhw::reg::unlogged_read()-1);
   return true;
 }
 
 reg_t wide_counter_csr_t::written_value() const noexcept {
   // Re-adjust for upcoming bump()
-  return  openhw::reg::unlogged_read() + 1;
+  return  openhw::reg::unlogged_read(); //+ 1; // Disable since we dont always bump
 }
 
 // implement class time_counter_csr_t
@@ -1239,9 +1242,10 @@ reg_t dcsr_csr_t::read() const noexcept {
   v = set_field(v, DCSR_EBREAKH, ebreakh);
   v = set_field(v, DCSR_EBREAKS, ebreaks);
   v = set_field(v, DCSR_EBREAKU, ebreaku);
-  v = set_field(v, DCSR_STOPCYCLE, 0);
+  v = set_field(v, DCSR_STOPCYCLE, 1); //TODO: Make configurable
   v = set_field(v, DCSR_STOPTIME, 0);
   v = set_field(v, DCSR_CAUSE, cause);
+  v = set_field(v, DCSR_MPRVEN, 1); // TODO: Make configurable
   v = set_field(v, DCSR_STEP, step);
   v = set_field(v, DCSR_PRV, prv);
   return v;
