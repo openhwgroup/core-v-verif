@@ -70,8 +70,15 @@ UVM_PLUSARGS ?=
 CV_SIMULATOR ?= unsim
 SIMULATOR    ?= $(CV_SIMULATOR)
 
-# Optionally exclude the OVPsim (not recommended)
-USE_ISS      ?= YES
+# If USE_ISS is not specified, it will decide by default to enable the ISS if imperas_home is defined
+ifndef USE_ISS
+ifneq ($(IMPERAS_HOME),)
+USE_ISS = YES
+else
+USE_ISS = NO
+endif
+$(info Info: USE_ISS is not specified when invoking make command, defaulting USE_ISS to $(USE_ISS) (check for IMPERAS_HOME in your environment))
+endif
 
 # Common configuration variables
 CFG          ?= default
