@@ -65,5 +65,10 @@ ${DV_UVMT_PATH}/uvmt_cv32e40s_pkg.sv
 // Depends on env
 ${FILE_LIST_IDV}
 
+// Reference model wrapper files
+${FILE_LIST_RM}
+${TBSRC_HOME}/uvmt/uvmt_cv32e40s_reference_model_controller.sv
+//${TBSRC_HOME}/uvmt/uvmt_cv32e40s_reference_model_wrap.sv
+
 // CV32E40S test bench files
 -f ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_files.flist

@@ -133,6 +133,11 @@ export DV_OVPM_HOME             = $(CORE_V_VERIF)/vendor_lib/imperas
 export DV_OVPM_MODEL            = $(DV_OVPM_HOME)/imperas_DV_COREV
 export DV_OVPM_DESIGN           = $(DV_OVPM_HOME)/design
 
+
+# Reference Model
+export RM_HOME 					= $(CORE_V_VERIF)/lib/reference_model
+
+
 # Verilab SVlib
 export DV_SVLIB_PATH            = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab
 
@@ -439,3 +444,7 @@ clean_dpi_dasm_spike:
 
 clean_svlib:
 	rm -rf $(SVLIB_PKG)
+
+clean_spike: 
+	rm -rf $(SPIKE_PATH)/build
+	rm -rf $(SPIKE_INSTALL_DIR)

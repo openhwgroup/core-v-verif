@@ -137,12 +137,25 @@ VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     ifeq ($(ISS),IMPERAS)
+        VSIM_FLAGS += +USE_ISS
+        VSIM_FLAGS += +define+USE_IMPERASDV
+        VSIM_FLAGS += +define+USE_ISS
         VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
     endif
     ifeq ($(ISS),SPIKE)
-	VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
-	VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
-	LIBS = spike_lib
+        VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+        VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
+        LIBS = spike_lib
+    endif
+    ifeq ($(ISS),RM)
+        VSIM_FLAGS += +USE_RM
+        VLOG_FLAGS += +USE_RM
+        VSIM_FLAGS += +define+USE_RM
+        VLOG_FLAGS += +define+USE_RM
+        VLOG_FILE_LIST += -f $(RM_HOME)/reference_model.flist
+        VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+        VSIM_FLAGS += -gblso $(SPIKE_LIBS_DIR)/libriscv.so
+        LIBS = spike_lib
     endif
 endif
 
@@ -195,6 +208,15 @@ VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 #  endif
 #endif
 
+# Use a custom GCC path to compile DPI
+GCC_PATH			?= $(shell which gcc)
+VSIM_FLAGS        	+= -dpicpppath $(GCC_PATH)
+VSIM_FLAGS 			+= -noautoldlibpath
+
+# This must currently always be exported, since the reference_model_wrap is used in uvmt_cv32e40s_tb.sv
+# TODO: Make a "dummy" reference model, that is loaded when it is disabled, like ImperasDV. 
+# Or find another solution to handle swapping different ISSs
+export FILE_LIST_RM  = -f $(RM_HOME)/reference_model.flist
 
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
   ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
@@ -205,9 +227,6 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
     export FILE_LIST_IDV      ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
     export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dv_deps.flist
   endif
-  VSIM_FLAGS += +USE_ISS
-  VSIM_FLAGS += +define+USE_IMPERASDV
-  VSIM_FLAGS += +define+USE_ISS
 else
   VSIM_PLUSARGS               += +DISABLE_OVPSIM
   VLOG_FLAGS                  += +DISABLE_OVPSIM
@@ -552,6 +571,8 @@ vlog: $(LIBS) lib
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
 	@echo "* FILE_LIST_IDV_DEPS = $(FILE_LIST_IDV_DEPS)"
 	@echo "* FILE_LIST_IDV      = $(FILE_LIST_IDVS)"
+	@echo "* FILE_LIST_RM      = $(FILE_LIST_RM)"
+	@echo "* RM_HOME      = $(RM_HOME)"
 	@echo "$(BANNER)"
 	cd $(SIM_CFG_RESULTS) && \
 		$(VLOG) \
@@ -647,5 +668,5 @@ clean:
 	rm -rf $(SIM_RESULTS)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_spike
 	rm -rf $(CV_CORE_PKG)

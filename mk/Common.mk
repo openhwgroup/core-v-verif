@@ -194,6 +194,13 @@ OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
 # Imperas OVPsim Instruction Set Simulator
 IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
 
+
+###############################################################################
+# Reference Model
+export RM_HOME = $(CORE_V_VERIF)/lib/reference_model
+
+
+
 ###############################################################################
 # Run the yaml2make scripts
 
@@ -691,18 +698,22 @@ dpi_dasm: $(DPI_DASM_SPIKE_PKG)
 ###############################################################################
 # Build vendor/riscv-isa-sim into tools/
 
-export SPIKE_PATH  = $(CORE_V_VERIF)/vendor/riscv/riscv-isa-sim
-export SPIKE_INSTALL_DIR = $(CORE_V_VERIF)/tools/spike/
-SPIKE_LIBS_DIR = $(SPIKE_INSTALL_DIR)/lib/
+# Another spike version can be used by exporting another SPIKE_PATH
+export SPIKE_PATH  ?= $(CORE_V_VERIF)/vendor/riscv/riscv-isa-sim
+export SPIKE_INSTALL_DIR = $(CORE_V_VERIF)/tools/spike
+SPIKE_LIBS_DIR = $(SPIKE_INSTALL_DIR)/lib
 SPIKE_FESVR_LIB = $(SPIKE_LIBS_DIR)/libfesvr
 SPIKE_RISCV_LIB = $(SPIKE_LIBS_DIR)/libriscv
 SPIKE_DISASM_LIB = $(SPIKE_LIBS_DIR)/libdisasm
 
 NUM_JOBS ?= 8
-
+# Compile spike without boost to avoid errors in gcc 11.4
 $(SPIKE_FESVR_LIB).so $(SPIKE_RISCV_LIB).so:
 	mkdir -p $(SPIKE_PATH)/build;
-	[ ! -f $(SPIKE_PATH)/build/config.log ] && cd $(SPIKE_PATH)/build && ../configure --prefix=$(SPIKE_INSTALL_DIR) || true
+	[ ! -f $(SPIKE_PATH)/build/config.log ] && cd $(SPIKE_PATH)/build && ../configure --prefix=$(SPIKE_INSTALL_DIR) \
+		--without-boost \
+		--without-boost-asio \
+		--without-boost-regex || true
 	make -C $(SPIKE_PATH)/build/ -j $(NUM_JOBS) install;
 
 spike_lib: $(SPIKE_FESVR_LIB).so $(SPIKE_RISCV_LIB).so
