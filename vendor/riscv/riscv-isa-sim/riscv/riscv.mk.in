@@ -8,7 +8,7 @@ riscv_subproject_deps = \
 	softfloat \
 
 riscv_CFLAGS = -fPIC
-riscv_LDFLAGS = -lyaml-cpp
+riscv_LDFLAGS =
 
 riscv_install_shared_lib = yes
 

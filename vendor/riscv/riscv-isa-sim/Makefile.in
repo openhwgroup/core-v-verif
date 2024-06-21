@@ -63,6 +63,12 @@ install_libs_dir := $(INSTALLDIR)/lib
 install_exes_dir := $(INSTALLDIR)/bin
 
 #-------------------------------------------------------------------------
+# Location of the project itself
+#-------------------------------------------------------------------------
+
+PROJECTDIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/..
+
+#-------------------------------------------------------------------------
 # List of subprojects
 #-------------------------------------------------------------------------
 
@@ -70,7 +76,7 @@ sprojs         := @subprojects@
 sprojs_enabled := @subprojects_enabled@
 
 EDA_INCLUDES := -I$(VCS_HOME)/include -I/$(QUESTASIM_HOME)/include -I$(XCEL_HOME)/include -I$(VERILATOR_INSTALL_DIR)/share/verilator/include/vltstd/
-YAML_CPP_INCLUDES := -I$(shell pwd)/../yaml-cpp/lib/include/
+YAML_CPP_INCLUDES := -I$(PROJECTDIR)/yaml-cpp/lib/include/
 
 sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled)) $(EDA_INCLUDES) $(YAML_CPP_INCLUDES)
 VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
@@ -107,6 +113,21 @@ mcppbs-CXXFLAGS := $(mcppbs-CFLAGS) $(default-CXXFLAGS) @CXXFLAGS@
 CC            := @CC@
 CXX           := @CXX@
 
+#-------------------------------------------------------------------------
+# Yaml-cpp headers are a prerequisite to all object files.
+# The yaml-cpp library is a prerequisite to all libs and binaries.
+#-------------------------------------------------------------------------
+YAMLDIR = $(PROJECTDIR)/yaml-cpp
+
+yaml-cpp : $(YAMLDIR)/lib/lib64/libyaml-cpp.a
+
+$(YAMLDIR)/lib/include/yaml-cpp $(YAMLDIR)/lib/lib64/libyaml-cpp.a :
+	mkdir -p $(YAMLDIR)/lib
+	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(YAMLDIR)/lib -DYAML_BUILD_SHARED_LIBS=off
+	make -C $(YAMLDIR)/build
+	make -C $(YAMLDIR)/build install
+.PHONY : yaml-cpp
+
 # These are the flags actually used for a C++ compile or a C compile.
 # The language-specific flags come after the preprocessor flags, but
 # user-supplied flags always take precedence.
@@ -127,8 +148,8 @@ all-link-flags := $(mcppbs-LDFLAGS) $(LDFLAGS)
 
 comma := ,
 LD            := $(CXX) 
-LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ -lyaml-cpp
-LINK          := $(LD) -L. $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS))) -L$(shell pwd)/../yaml-cpp/lib/lib64
+LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ $(YAMLDIR)/lib/lib64/libyaml-cpp.a
+LINK          := $(LD) -L. $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
 
 # Library creation
 
@@ -224,7 +245,7 @@ $(2)_deps += $$(patsubst %.o, %.d, $$($(2)_c_objs))
 $(2)_deps += $$(patsubst %.h, %.h.d, $$($(2)_precompiled_hdrs))
 $$($(2)_pch) : %.h.gch : %.h
 	$(COMPILE) -x c++-header $$< -c -o $$@
-$$($(2)_objs) : %.o : %.cc $$($(2)_gen_hdrs) $$($(2)_pch)
+$$($(2)_objs) : %.o : %.cc $$($(2)_gen_hdrs) $$($(2)_pch) $(YAMLDIR)/lib/include/yaml-cpp
 	$(COMPILE) $(if $(HAVE_CLANG_PCH), $$(if $$($(2)_pch), -include-pch $$($(2)_pch))) $$($(2)_CFLAGS) -c $$<
 $$($(2)_c_objs) : %.o : %.c $$($(2)_gen_hdrs)
 	$(COMPILE_C) $$($(2)_CFLAGS) -c $$<
@@ -294,7 +315,7 @@ $(2)_prog_libarg    := $$(patsubst %, -l%, $$($(2)_prog_libs))
 $$($(2)_prog_objs) : %.o : %.cc
 	$(COMPILE) -c $$<
 
-$$($(2)_prog_exes) : % : %.o $$($(2)_prog_libnames)
+$$($(2)_prog_exes) : % : %.o $$($(2)_prog_libnames) 
 	$(LINK) -o $$@ $$< $$($(2)_prog_libnames) $(LIBS) $$($(2)_LDFLAGS)
 
 $(2)_deps += $$($(2)_prog_deps)
@@ -384,13 +405,6 @@ check : check-cpp check-bin
 # Installation
 #-------------------------------------------------------------------------
 
-yaml-cpp :
-	mkdir -p $(shell pwd)/../yaml-cpp/lib
-	cmake -S $(shell pwd)/../yaml-cpp -B $(shell pwd)/../yaml-cpp/build -DCMAKE_INSTALL_PREFIX=$(shell pwd)/../yaml-cpp/lib -DYAML_BUILD_SHARED_LIBS=OFF
-	make -C $(shell pwd)/../yaml-cpp/build
-	make -C $(shell pwd)/../yaml-cpp/build install
-.PHONY : yaml-cpp
-
 install-config-hdrs : config.h
 	$(MKINSTALLDIRS) $(install_hdrs_dir)
 	for dir in $(install_config_hdrs); \
@@ -407,12 +421,17 @@ install-hdrs : $(install_hdrs)
     $(INSTALL_HDR) $(src_dir)/$$file $(install_hdrs_dir)/`dirname $$file`; \
   done
 
+# All install_libs depend on the installation of the yaml-cpp library.
+$(install_libs) : $(YAMLDIR)/lib/lib64/libyaml-cpp.a
 install-libs : $(install_libs)
 	$(MKINSTALLDIRS) $(install_libs_dir)
 	for file in $^; \
   do \
     $(INSTALL_LIB) $$file $(install_libs_dir); \
   done
+
+# All install_exes depend on the installation of the yaml-cpp library.
+$(install_exes) : $(YAMLDIR)/lib/lib64/libyaml-cpp.a
 
 install-exes : $(install_exes)
 	$(MKINSTALLDIRS) $(install_exes_dir)
