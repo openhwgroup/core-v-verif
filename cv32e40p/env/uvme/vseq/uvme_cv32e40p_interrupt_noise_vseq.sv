@@ -88,7 +88,7 @@ task uvme_cv32e40p_interrupt_noise_c::rand_delay();
     //@DVT_LINTER_WAIVER_START "MT20211214_1" disable SVTB.29.1.3.1
     short_delay_wgt: repeat($urandom_range(   100,    1)) @(cntxt.interrupt_cntxt.vif.drv_cb);
     med_delay_wgt:   repeat($urandom_range(   500,  100)) @(cntxt.interrupt_cntxt.vif.drv_cb);
-    long_delay_wgt:  repeat($urandom_range(10_000,5_000)) @(cntxt.interrupt_cntxt.vif.drv_cb);
+    long_delay_wgt:  repeat($urandom_range( 5_000,1_000)) @(cntxt.interrupt_cntxt.vif.drv_cb);
     //@DVT_LINTER_WAIVER_END "MT20211214_1"
   endcase
 endtask : rand_delay
