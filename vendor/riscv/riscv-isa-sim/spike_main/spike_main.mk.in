@@ -16,4 +16,3 @@ spike_main_srcs = \
 spike_main_CFLAGS = -fPIC
 
 spike_main_gen_hdrs = \
-	yaml-cpp \
