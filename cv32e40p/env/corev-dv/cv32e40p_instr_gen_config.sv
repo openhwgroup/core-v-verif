@@ -158,7 +158,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
       zfinx_reserved_gpr.size() == num_zfinx_reserved_reg;
       unique {zfinx_reserved_gpr};
       foreach(zfinx_reserved_gpr[i]) {
-        !(zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP, S0, S1, A0, A1, A2, A3, A4, A5});
+        !(zfinx_reserved_gpr[i] inside {ZERO, ra, sp, GP, tp, S0, S1, A0, A1, A2, A3, A4, A5});
         (zfinx_reserved_gpr[i] != dp);
         (zfinx_reserved_gpr[i] != str_rs1);
         (zfinx_reserved_gpr[i] != str_rs3);
