@@ -1,5 +1,7 @@
 //
 // Copyright 2021 Datum Technology Corporation
+// Copyright 2024 CoreLab Tech
+//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
@@ -36,7 +38,7 @@ class uvml_mem_c#(int XLEN=DEFAULT_XLEN) extends uvm_object;
       soft mem_default != MEM_DEFAULT_X;
    }
 
-   `uvm_object_utils_begin(uvml_mem_c);
+   `uvm_object_param_utils_begin(uvml_mem_c#(XLEN));
       `uvm_field_enum(uvml_mem_default_enum, mem_default, UVM_DEFAULT)
       `uvm_field_int (mem_default_const_value,            UVM_DEFAULT)
    `uvm_object_utils_end
@@ -49,12 +51,12 @@ class uvml_mem_c#(int XLEN=DEFAULT_XLEN) extends uvm_object;
    /**
     * Write to memory array
     */
-   extern function void write(bit[XLEN-1:0] addr, reg[7:0] data);
+   extern virtual function void write(bit[XLEN-1:0] addr, reg[7:0] data);
 
    /**
     * Read from memory array, substituing a default value in case value is not in memory
     */
-   extern function reg[7:0] read(bit[XLEN-1:0] addr);
+   extern virtual function reg[7:0] read(bit[XLEN-1:0] addr);
 
    /**
     * Wrapper around readmemh for underlying memory
