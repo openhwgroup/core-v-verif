@@ -1,6 +1,7 @@
 // 
 // Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
+// Copyright 2024 CoreLab Tech
 // 
 // Licensed under the Solderpad Hardware License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +20,6 @@
 `ifndef __UVML_MEM_CONSTANTS_SV__
 `define __UVML_MEM_CONSTANTS_SV__
 
-
-parameter DEFAULT_XLEN = 32;
+parameter DEFAULT_XLEN = `UVML_MEM_XLEN;
 
 `endif // __UVML_MEM_CONSTANTS_SV__
