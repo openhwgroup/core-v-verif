@@ -123,7 +123,7 @@ yaml-cpp : $(YAMLDIR)/lib/lib64/libyaml-cpp.a
 
 $(YAMLDIR)/lib/include/yaml-cpp $(YAMLDIR)/lib/lib64/libyaml-cpp.a :
 	mkdir -p $(YAMLDIR)/lib
-	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(YAMLDIR)/lib -DYAML_BUILD_SHARED_LIBS=off
+	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(YAMLDIR)/lib -DCMAKE_INSTALL_LIBDIR=$(YAMLDIR)/lib/lib64 -DYAML_BUILD_SHARED_LIBS=off
 	make -C $(YAMLDIR)/build
 	make -C $(YAMLDIR)/build install
 .PHONY : yaml-cpp
