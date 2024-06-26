@@ -76,7 +76,7 @@ sprojs         := @subprojects@
 sprojs_enabled := @subprojects_enabled@
 
 EDA_INCLUDES := -I$(VCS_HOME)/include -I/$(QUESTASIM_HOME)/include -I$(XCEL_HOME)/include -I$(VERILATOR_INSTALL_DIR)/share/verilator/include/vltstd/
-YAML_CPP_INCLUDES := -I$(PROJECTDIR)/yaml-cpp/lib/include/
+YAML_CPP_INCLUDES := -I$(install_hdrs_dir)
 
 sprojs_include := -I. -I$(src_dir) $(addprefix -I$(src_dir)/, $(sprojs_enabled)) $(EDA_INCLUDES) $(YAML_CPP_INCLUDES)
 VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
@@ -119,14 +119,25 @@ CXX           := @CXX@
 #-------------------------------------------------------------------------
 YAMLDIR = $(PROJECTDIR)/yaml-cpp
 
-yaml-cpp : $(YAMLDIR)/lib/lib64/libyaml-cpp.a
+yaml-cpp : $(install_libs_dir)/libyaml-cpp.so
 
-$(YAMLDIR)/lib/include/yaml-cpp $(YAMLDIR)/lib/lib64/libyaml-cpp.a :
-	mkdir -p $(YAMLDIR)/lib
-	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(YAMLDIR)/lib -DCMAKE_INSTALL_LIBDIR=$(YAMLDIR)/lib/lib64 -DYAML_BUILD_SHARED_LIBS=off
+yaml-cpp-static: $(install_libs_dir)/libyaml-cpp.a
+
+# Build and install the shared version of the library and the headers.
+$(install_hdrs_dir)/yaml-cpp $(install_libs_dir)/libyaml-cpp.so :
+	rm -rf $(YAMLDIR)/build
+	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(INSTALLDIR) -DCMAKE_INSTALL_LIBDIR=$(install_libs_dir) -DYAML_BUILD_SHARED_LIBS=on
 	make -C $(YAMLDIR)/build
 	make -C $(YAMLDIR)/build install
-.PHONY : yaml-cpp
+
+# Build and install the static version of the library.
+$(install_libs_dir)/libyaml-cpp.a :
+	rm -rf $(YAMLDIR)/build
+	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(INSTALLDIR) -DCMAKE_INSTALL_LIBDIR=$(install_libs_dir) -DYAML_BUILD_SHARED_LIBS=off
+	make -C $(YAMLDIR)/build
+	make -C $(YAMLDIR)/build install
+
+.PHONY : yaml-cpp yaml-cpp-static
 
 # These are the flags actually used for a C++ compile or a C compile.
 # The language-specific flags come after the preprocessor flags, but
@@ -148,8 +159,8 @@ all-link-flags := $(mcppbs-LDFLAGS) $(LDFLAGS)
 
 comma := ,
 LD            := $(CXX) 
-LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ $(YAMLDIR)/lib/lib64/libyaml-cpp.a
-LINK          := $(LD) -L. $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
+LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ -lyaml-cpp
+LINK          := $(LD) -L. -L$(YAMLDIR)/build $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
 
 # Library creation
 
@@ -245,7 +256,7 @@ $(2)_deps += $$(patsubst %.o, %.d, $$($(2)_c_objs))
 $(2)_deps += $$(patsubst %.h, %.h.d, $$($(2)_precompiled_hdrs))
 $$($(2)_pch) : %.h.gch : %.h
 	$(COMPILE) -x c++-header $$< -c -o $$@
-$$($(2)_objs) : %.o : %.cc $$($(2)_gen_hdrs) $$($(2)_pch) $(YAMLDIR)/lib/include/yaml-cpp
+$$($(2)_objs) : %.o : %.cc $$($(2)_gen_hdrs) $$($(2)_pch) $(install_hdrs_dir)/yaml-cpp
 	$(COMPILE) $(if $(HAVE_CLANG_PCH), $$(if $$($(2)_pch), -include-pch $$($(2)_pch))) $$($(2)_CFLAGS) -c $$<
 $$($(2)_c_objs) : %.o : %.c $$($(2)_gen_hdrs)
 	$(COMPILE_C) $$($(2)_CFLAGS) -c $$<
@@ -421,8 +432,8 @@ install-hdrs : $(install_hdrs)
     $(INSTALL_HDR) $(src_dir)/$$file $(install_hdrs_dir)/`dirname $$file`; \
   done
 
-# All install_libs depend on the installation of the yaml-cpp library.
-$(install_libs) : $(YAMLDIR)/lib/lib64/libyaml-cpp.a
+# All install_libs depend on the installation of the yaml-cpp shared library.
+$(install_libs) : $(install_libs_dir)/libyaml-cpp.so
 install-libs : $(install_libs)
 	$(MKINSTALLDIRS) $(install_libs_dir)
 	for file in $^; \
@@ -430,8 +441,8 @@ install-libs : $(install_libs)
     $(INSTALL_LIB) $$file $(install_libs_dir); \
   done
 
-# All install_exes depend on the installation of the yaml-cpp library.
-$(install_exes) : $(YAMLDIR)/lib/lib64/libyaml-cpp.a
+# All install_exes depend on the installation of the yaml-cpp shared library.
+$(install_exes) : $(install_libs_dir)/libyaml-cpp.so
 
 install-exes : $(install_exes)
 	$(MKINSTALLDIRS) $(install_exes_dir)
