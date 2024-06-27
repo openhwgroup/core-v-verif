@@ -30,10 +30,6 @@ class uvma_rvfi_mon_trn_logger_c#(int ILEN=DEFAULT_ILEN,
 
    uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_rvfi_mon_trn_logger_c) instr_export;
 
-   const string format_header_str = "%15s | RVFI | %8s | %6s | %8s | %8s | %s | %03s | %08s | %03s | %08s | %03s | %08s | %03s | %08s | %08s | %s";
-   const string format_instr_str  = "%15s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %08x | x%-2d | %08x | x%-2d | %08x";
-   const string format_mem_str    = "| %02s | %08x | %08s |";
-
    uvma_rvfi_instr_table_seq_item_c#(ILEN,XLEN) instr_table[bit[XLEN-1:0]];
 
    `uvm_component_param_utils(uvma_rvfi_mon_trn_logger_c)

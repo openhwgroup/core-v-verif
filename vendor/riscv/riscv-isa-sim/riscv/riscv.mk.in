@@ -14,12 +14,15 @@ riscv_install_shared_lib = yes
 riscv_install_prog_srcs = \
 
 riscv_install_hdrs = \
+	Params.h \
+	Types.h \
 	abstract_device.h \
 	abstract_interrupt_controller.h \
 	cachesim.h \
 	cfg.h \
 	common.h \
 	csrs.h \
+	cva6.h \
 	cvxif.h \
 	debug_defines.h \
 	debug_module.h \
@@ -37,8 +40,10 @@ riscv_install_hdrs = \
 	mmu.h \
 	platform.h \
 	processor.h \
+	Proc.h \
 	rocc.h \
 	sim.h \
+	Simulation.h \
 	simif.h \
 	trap.h \
 	triggers.h \
@@ -48,17 +53,20 @@ riscv_precompiled_hdrs = \
 	insn_template.h \
 
 riscv_srcs = \
-	isa_parser.cc \
+	Params.cc \
 	processor.cc \
+	Proc.cc \
 	execute.cc \
 	dts.cc \
 	sim.cc \
+	Simulation.cc \
 	interactive.cc \
 	cachesim.cc \
 	mmu.cc \
 	extension.cc \
 	extensions.cc \
 	rocc.cc \
+	cva6_base.cc \
 	cvxif_base.cc \
 	devices.cc \
 	rom.cc \
@@ -69,10 +77,13 @@ riscv_srcs = \
 	remote_bitbang.cc \
 	jtag_dtm.cc \
 	csrs.cc \
+	csrs_ext.cc \
 	triggers.cc \
 	vector_unit.cc \
 	socketif.cc \
 	cfg.cc \
+	riscv_dpi.cc \
+	SimJTAG.cc \
 	$(riscv_gen_srcs) \
 
 riscv_test_srcs =

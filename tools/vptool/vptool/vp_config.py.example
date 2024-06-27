@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
 #
-# Original Author: Zbigniew Chamski (zbigniew.chamski@thalesgroup.com)
+# Original Author: Zbigniew Chamski (Thales)
 #############################################################################
 
 import re, os, glob, sys
@@ -44,7 +44,7 @@ else:
     sys.exit()
 
 # Location of database files
-SAVED_DB_LOCATION = os.path.join(VP_PLATFORM_TOP_DIR, "*.pck")
+SAVED_DB_LOCATION = os.path.join(VP_PLATFORM_TOP_DIR, "*.yml")
 
 # Location of Markdown output file(s)
 if "MARKDOWN_OUTPUT_DIR" in os.environ:

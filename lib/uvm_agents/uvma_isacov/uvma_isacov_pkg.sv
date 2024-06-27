@@ -16,6 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
+`include "uvm_macros.svh"
 `include "uvma_isacov_macros.sv"
 
 package uvma_isacov_pkg;
@@ -29,7 +30,7 @@ package uvma_isacov_pkg;
   // DPI imports
   `include "dpi_dasm_imports.svh"
 
-  // Constants / Structs / Enums  
+  // Constants / Structs / Enums
   `include "uvma_isacov_constants.sv"
   `include "uvma_isacov_tdefs.sv"
 

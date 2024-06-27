@@ -52,6 +52,7 @@ VCS_UVM_VERBOSITY ?= UVM_MEDIUM
 #VCS_UVMHOME_ARG ?= /opt/uvm/1800.2-2017-0.9/
 #VCS_UVMHOME_ARG ?= /opt/synopsys/vcs-mx/O-2018.09-SP1-1/etc/uvm
 VCS_UVMHOME_ARG  ?= /synopsys/vcs/S-2021.09-SP1/etc/uvm
+export VCS_HOME  ?= $(abspath $(shell which $(VCS))/../../)
 VCS_UVM_ARGS     ?= +define+UVM +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg.sv +UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) -ntb_opts uvm-1.2
 
 VCS_COMP_FLAGS  ?= -lca -sverilog \
@@ -147,8 +148,26 @@ endif
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
-VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+VCS_RUN_FLAGS ?=
+
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    ifeq ($(ISS),IMPERAS)
+        VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+    endif
+    ifeq ($(ISS),SPIKE)
+        VCS_RUN_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+        VCS_RUN_FLAGS += -sv_lib $(SPIKE_DISASM_LIB)
+        LIBS = spike_lib
+    endif
+endif
+
+ifeq ($(call IS_YES,$(COMPILE_SPIKE)),YES)
+    VCS_RUN_FLAGS += -sv_lib $(SPIKE_FESVR_LIB)
+    LIBS = spike_lib
+endif
+
+VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION +define+$(CORE_DEFINES)
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_PLUSARGS += +USE_ISS
 else
@@ -158,11 +177,10 @@ endif
 VCS_RUN_BASE_FLAGS   ?= $(VCS_GUI) \
                         $(VCS_PLUSARGS) +ntb_random_seed=$(RNDSEED) \
                         -sv_lib $(VCS_OVP_MODEL_DPI) \
-                        -sv_lib $(DPI_DASM_LIB) \
                         -sv_lib $(abspath $(SVLIB_LIB))
 
 # Simulate using latest elab
-VCS_RUN_FLAGS         = -assert nopostproc
+VCS_RUN_FLAGS        += -assert nopostproc
 VCS_RUN_FLAGS        += $(VCS_RUN_BASE_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_WAVES_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_COV_FLAGS)
@@ -197,7 +215,7 @@ VCS_COMP = $(VCS_COMP_FLAGS) \
 		$(VCS_FILE_LIST) \
 		$(UVM_PLUSARGS)
 
-comp: mk_vcs_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
+comp: mk_vcs_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI) $(LIBS)
 	@echo "$(BANNER)"
 	@echo "* $(SIMULATOR) compile"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vcs.log"
@@ -289,14 +307,17 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 		+incdir+$(RISCVDV_PKG)/user_extension \
 		+incdir+$(COREVDV_PKG) \
 		+incdir+$(CV_CORE_COREVDV_PKG) \
-		-f $(CV_CORE_MANIFEST) \
 		$(CFG_COMPILE_FLAGS) \
 		-f $(COREVDV_PKG)/manifest.f \
 		-l vcs.log
 
 corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 
-gen_corev-dv:
+gen_corev-dv: $(LIBS)
+	@echo "$(BANNER)"
+	@echo "* Generating $(TEST) with corev-dv..."
+	@echo "* with VCS_RUN_FLAGS = $(VCS_RUN_FLAGS) "
+	@echo "$(BANNER)"
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
@@ -310,6 +331,7 @@ gen_corev-dv:
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \

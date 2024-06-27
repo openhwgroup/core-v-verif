@@ -89,3 +89,7 @@ and our [SV/UVM coding style guidelines](https://github.com/openhwgroup/core-v-v
 Do not mix unrelated changes into the same commit!
 * Write meaningful commit messages.
 * If asked to modify your changes, do fixup your commits and rebase your branch to maintain a clean history.
+
+## Acknowledgements
+
+Check out the [acknowledgements](ACKNOWLEDGEMENTS.md).

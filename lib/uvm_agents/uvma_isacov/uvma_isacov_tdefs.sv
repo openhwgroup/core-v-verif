@@ -74,7 +74,14 @@ typedef enum {
   CSRRWI, CSRRSI, CSRRCI,
 
   // Zifencei
-  FENCE_I
+  FENCE_I,
+
+  //Zcb
+  C_LBU, C_LHU, C_LH,
+  C_SB, C_SH,
+  C_ZEXT_B, C_SEXT_B, C_ZEXT_H, C_SEXT_H,
+  C_NOT, C_MUL
+
 } instr_name_t;
 
 typedef enum {
@@ -108,7 +115,10 @@ typedef enum {
   CSR_TYPE,
 
   // CSR* instruction with immu operand
-  CSRI_TYPE
+  CSRI_TYPE,
+
+  // ZCB instructions
+  ZCB_TYPE
 
 } instr_type_t;
 
@@ -456,6 +466,9 @@ bit rs1_is_signed[instr_name_t] = '{
   SH1ADD : 1,
   SH2ADD : 1,
   SH3ADD : 1,
+  C_SEXT_B : 1,
+  C_SEXT_H : 1,
+  C_MUL : 1,
   default: 0
 };
 
@@ -471,6 +484,7 @@ bit rs2_is_signed[instr_name_t] = '{
   SH1ADD : 1,
   SH2ADD : 1,
   SH3ADD : 1,
+  C_MUL  : 1,
   default: 0
 };
 
@@ -537,6 +551,8 @@ bit rd_is_signed[instr_name_t] = '{
   SH1ADD : 1,
   SH2ADD : 1,
   SH3ADD : 1,
+  C_LH   : 1,
+  C_MUL  : 1,
   default: 0
 };
 
@@ -558,6 +574,17 @@ bit c_has_rs1[instr_name_t] = '{
   C_JR   : 1,
   C_JALR : 1,
   C_ADD  : 1,
+  C_LBU  : 1,
+  C_SB   : 1,
+  C_SH   : 1,
+  C_LHU  : 1,
+  C_LH   : 1,
+  C_ZEXT_B  : 1,
+  C_SEXT_B  : 1,
+  C_ZEXT_H  : 1,
+  C_SEXT_H  : 1,
+  C_NOT  : 1,
+  C_MUL  : 1,
   default: 0
 };
 
@@ -630,6 +657,15 @@ function instr_ext_t get_instr_ext(instr_name_t name);
       FENCE_I
     })
     return ZIFENCEI_EXT;
+
+  if (name inside
+    {
+      C_LBU, C_LHU, C_LH,
+      C_SB, C_SH, C_ZEXT_B,
+      C_SEXT_B, C_ZEXT_H, C_SEXT_H,
+      C_NOT, C_MUL
+    })
+    return ZCE_EXT;
 
 endfunction : get_instr_ext
 
@@ -720,6 +756,12 @@ function instr_type_t get_instr_type(instr_name_t name);
   if (name inside {JAL})
     return J_TYPE;
 
+  if (name inside {C_LBU,C_LHU,C_LH,
+                   C_SB,C_SH,C_ZEXT_B,
+                   C_SEXT_B,C_ZEXT_H,C_SEXT_H,
+                   C_NOT, C_MUL})
+    return ZCB_TYPE;
+
   return UNKNOWN_TYPE;
 endfunction : get_instr_type
 
@@ -729,8 +771,8 @@ function instr_group_t get_instr_group(instr_name_t name, bit[DEFAULT_XLEN-1:0] 
   if (name inside {UNKNOWN})
     return UNKNOWN_GROUP;
 
-  if (name inside {LB,LH,LW,LBU,LHU,C_LW,C_LWSP}) begin
-    if (name inside {LH, LHU} && mem_addr[0])
+  if (name inside {LB,LH,LW,LBU,C_LBU,C_LHU,C_LH,LHU,C_LW,C_LWSP}) begin
+    if (name inside {LH, LHU, C_LH, C_LHU} && mem_addr[0])
       return MISALIGN_LOAD_GROUP;
 
     if (name inside {LW, C_LW, C_LWSP} && mem_addr[1:0])
@@ -739,8 +781,8 @@ function instr_group_t get_instr_group(instr_name_t name, bit[DEFAULT_XLEN-1:0] 
     return LOAD_GROUP;
   end
 
-  if (name inside {SB,SH,SW,C_SW,C_SWSP}) begin
-    if (name inside {SH} && mem_addr[0])
+  if (name inside {SB,SH,SW,C_SB,C_SH,C_SW,C_SWSP}) begin
+    if (name inside {SH,C_SH} && mem_addr[0])
       return MISALIGN_STORE_GROUP;
 
     if (name inside {SW, C_SW, C_SWSP} && mem_addr[1:0])
@@ -761,6 +803,8 @@ function instr_group_t get_instr_group(instr_name_t name, bit[DEFAULT_XLEN-1:0] 
                    CLZ, CTZ, CPOP,
                    MIN, MAX, MINU, MAXU,
                    SEXT_B, SEXT_H, ZEXT_H,
+                   C_SEXT_B, C_SEXT_H, C_ZEXT_B,
+                   C_ZEXT_H, C_NOT,
                    ANDN, ORN, XNOR, ROR, RORI, ROL,
                    REV8, ORC_B,
                    CLMUL, CLMULH, CLMULR,
@@ -793,7 +837,7 @@ function instr_group_t get_instr_group(instr_name_t name, bit[DEFAULT_XLEN-1:0] 
   if (name inside {CSRRW,CSRRS,CSRRC,CSRRWI,CSRRSI,CSRRCI})
     return CSR_GROUP;
 
-  if (name inside {MUL})
+  if (name inside {MUL,C_MUL})
     return MUL_GROUP;
 
   if (name inside {MULH,MULHSU,MULHU})

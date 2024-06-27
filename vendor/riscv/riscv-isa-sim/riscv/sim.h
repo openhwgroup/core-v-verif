@@ -7,10 +7,12 @@
 #include "debug_module.h"
 #include "devices.h"
 #include "log_file.h"
-#include "processor.h"
+#include "Proc.h"
 #include "simif.h"
+#include "Types.h"
 
 #include <fesvr/htif.h>
+#include <fesvr/context.h>
 #include <vector>
 #include <map>
 #include <string>
@@ -33,7 +35,7 @@ public:
         bool dtb_enabled, const char *dtb_file,
         bool socket_enabled,
         FILE *cmd_file, // needed for command line option --cmd
-        size_t max_steps);
+        openhw::Params& params);
   ~sim_t();
 
   // run the simulation to completion
@@ -60,7 +62,10 @@ public:
   // Callback for processors to let the simulation know they were reset.
   virtual void proc_reset(unsigned id) override;
 
-private:
+  void switch_to_target() { this->target.switch_to();}
+  void switch_to_host() { this->host->switch_to();}
+
+protected:
   isa_parser_t isa;
   const cfg_t * const cfg;
   std::vector<std::pair<reg_t, mem_t*>> mems;
@@ -77,11 +82,15 @@ private:
   std::unique_ptr<ns16550_t> ns16550;
   bus_t bus;
   log_file_t log_file;
+  openhw::Params params;
 
   FILE *cmd_file; // pointer to debug command input file
 
   socketif_t *socketif;
   std::ostream sout_; // used for socket and terminal interface
+
+  context_t* host;
+  context_t  target;
 
   processor_t* get_core(const std::string& i);
   void step(size_t n); // step through simulation
@@ -90,7 +99,6 @@ private:
   static const size_t CPU_HZ = 1000000000; // 1GHz CPU
   size_t current_step;
   size_t total_steps;
-  size_t max_steps;
   size_t current_proc;
   bool debug;
   bool histogram_enabled; // provide a histogram of PCs

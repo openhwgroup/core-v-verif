@@ -1,13 +1,13 @@
 // Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
 // Copyright 2020 Silicon Labs, Inc.
-// 
+//
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     https://solderpad.org/licenses/
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@
 
 
 typedef enum int unsigned {
-    MXL_32,
-    MXL_64,
-    MXL_128
+    MXL_32 = 32,
+    MXL_64 = 64,
+    MXL_128 = 128
 } corev_mxl_t;
 
 typedef enum bit[CSR_ADDR_WL-1:0] {
@@ -132,6 +132,8 @@ typedef enum bit[CSR_ADDR_WL-1:0] {
   MCAUSE         = 'h342,
   MTVAL          = 'h343,
   MIP            = 'h344,
+  MTINST         = 'h34A,
+  MTVAL2         = 'h34B,
   PMPCFG0        = 'h3A0,
   PMPCFG1        = 'h3A1,
   PMPCFG2        = 'h3A2,
@@ -662,6 +664,115 @@ typedef enum {
   ENDIAN_BIG,
   ENDIAN_MIXED
 } endianness_t;
+
+
+typedef struct packed {
+    // Major mode enable controls
+   bit                          enabled;
+   bit                          is_active;
+   bit                          scoreboard_enabled;
+   bit                          disable_all_csr_checks;
+   bit [CSR_MASK_WL-1:0]        disable_csr_check_mask;
+   bit                          cov_model_enabled;
+   bit                          trn_log_enabled;
+
+   // ISS configuration
+   bit                          use_iss;
+
+   // RISC-V ISA Configuration
+   corev_mxl_t                  xlen;
+   int unsigned                 ilen;
+
+   bit                          ext_i_supported;
+   bit                          ext_a_supported;
+   bit                          ext_m_supported;
+   bit                          ext_c_supported;
+   bit                          ext_p_supported;
+   bit                          ext_v_supported;
+   bit                          ext_f_supported;
+   bit                          ext_d_supported;
+   bit                          ext_zba_supported;
+   bit                          ext_zbb_supported;
+   bit                          ext_zbc_supported;
+   bit                          ext_zbe_supported;
+   bit                          ext_zbf_supported;
+   bit                          ext_zbm_supported;
+   bit                          ext_zbp_supported;
+   bit                          ext_zbr_supported;
+   bit                          ext_zbs_supported;
+   bit                          ext_zbt_supported;
+   bit                          ext_zcb_supported;
+   bit                          ext_zifencei_supported;
+   bit                          ext_zicsr_supported;
+   bit                          ext_zicntr_supported;
+
+   bit                          ext_cv32a60x_supported;
+
+   bit                          mode_s_supported;
+   bit                          mode_u_supported;
+
+   bit                          pmp_supported;
+   int unsigned                 pmp_regions;
+   bit                          debug_supported;
+
+   bitmanip_version_t           bitmanip_version;
+
+   priv_spec_version_t          priv_spec_version;
+
+   endianness_t                 endianness;
+
+   bit                          unaligned_access_supported;
+   bit                          unaligned_access_amo_supported;
+
+   // Mask of CSR addresses that are not supported in this core
+   // post_randomize() will adjust this based on extension and mode support
+   bit [CSR_MASK_WL-1:0]        unsupported_csr_mask;
+
+   // Common parameters
+   int unsigned                 num_mhpmcounters;
+   //uvma_core_cntrl_pma_region_c  pma_regions[];
+    //
+   bit  unsigned                 unified_traps;
+
+   bit  unsigned                 dram_valid;
+   longint unsigned              dram_base;
+   longint unsigned              dram_size;
+
+   // Common bootstrap addresses
+   // The valid bits should be constrained if the bootstrap signal is not valid for this core configuration
+   bit [MAX_XLEN-1:0]           mhartid;
+   bit                          mhartid_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           mvendorid;
+   bit                          mvendorid_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           marchid;
+   bit                          marchid_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           mimpid;
+   bit                          mimpid_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           boot_addr;
+   bit                          boot_addr_valid;
+   bit                          boot_addr_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           mtvec_addr;
+   bit                          mtvec_addr_valid;
+   bit                          mtvec_addr_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           dm_halt_addr;
+   bit                          dm_halt_addr_valid;
+   bit                          dm_halt_addr_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           dm_exception_addr;
+   bit                          dm_exception_addr_valid;
+   bit                          dm_exception_addr_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           nmi_addr;
+   bit                          nmi_addr_valid;
+   bit                          nmi_addr_plusarg_valid;
+
+} st_core_cntrl_cfg;
 
 `endif // __UVMA_CORE_CNTRL_TDEFS_SV__
 

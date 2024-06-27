@@ -116,7 +116,7 @@ std::map<std::string, uint64_t> htif_t::load_payload(const std::string& payload,
     else
       throw std::runtime_error(
         "could not open " + payload + "; searched paths:\n" +
-        "\t. (current directory)\n" + 
+        "\t. (current directory)\n" +
         "\t" + PREFIX TARGET_DIR + " (based on configured --prefix and --with-target)"
       );
   }

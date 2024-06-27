@@ -17,6 +17,7 @@
 #include "triggers.h"
 #include "../fesvr/memif.h"
 #include "vector_unit.h"
+#include "Types.h"
 
 #define N_HPMCOUNTERS 29
 
@@ -175,6 +176,7 @@ struct state_t
   reg_t last_inst_priv;
   int last_inst_xlen;
   int last_inst_flen;
+  insn_t last_inst_fetched;
 };
 
 // this class represents one processor in a RISC-V machine.
@@ -195,9 +197,9 @@ public:
   bool get_log_commits_enabled() const { return log_commits_enabled; }
   void reset();
   void step(size_t n); // run for n cycles
-  void put_csr(int which, reg_t val);
+  virtual void put_csr(int which, reg_t val);
   uint32_t get_id() const { return id; }
-  reg_t get_csr(int which, insn_t insn, bool write, bool peek = 0);
+  virtual reg_t get_csr(int which, insn_t insn, bool write, bool peek = 0);
   reg_t get_csr(int which) { return get_csr(which, insn_t(0), false, true); }
   mmu_t* get_mmu() { return mmu; }
   state_t* get_state() { return &state; }
@@ -215,7 +217,7 @@ public:
   }
   extension_t* get_extension();
   extension_t* get_extension(const char* name);
-  bool any_custom_extensions() const {
+  virtual bool any_custom_extensions() const {
     return !custom_extensions.empty();
   }
   bool extension_enabled(unsigned char ext) const {
@@ -299,9 +301,9 @@ public:
   void set_nb_register_source(uint8_t new_number) {nb_register_src = new_number;}
   uint8_t get_nb_register_source() {return nb_register_src;}
 
-private:
+protected:
   uint8_t nb_register_src = 2;
-  const isa_parser_t * const isa;
+  const isa_parser_t * isa;
   const cfg_t * const cfg;
 
   simif_t* sim;
@@ -319,6 +321,7 @@ private:
   bool in_wfi;
   bool check_triggers_icount;
   std::vector<bool> impl_table;
+  openhw::Params params;
 
   // Note: does not include single-letter extensions in misa
   std::bitset<NUM_ISA_EXTENSIONS> extension_enable_table;
@@ -331,14 +334,14 @@ private:
   static const size_t OPCODE_CACHE_SIZE = 8191;
   insn_desc_t opcode_cache[OPCODE_CACHE_SIZE];
 
-  void take_pending_interrupt() { take_interrupt(state.mip->read() & state.mie->read()); }
+  virtual void take_pending_interrupt() { take_interrupt(state.mip->read() & state.mie->read()); }
   void take_interrupt(reg_t mask); // take first enabled interrupt in mask
-  void take_trap(trap_t& t, reg_t epc); // take an exception
+  virtual void take_trap(trap_t& t, reg_t epc); // take an exception
   void take_trigger_action(triggers::action_t action, reg_t breakpoint_tval, reg_t epc);
   void disasm(insn_t insn); // disassemble and print an instruction
   int paddr_bits();
 
-  void enter_debug_mode(uint8_t cause);
+  virtual void enter_debug_mode(uint8_t cause);
 
   void debug_output_log(std::stringstream *s); // either output to interactive user or write to log file
 

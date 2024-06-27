@@ -1,0 +1,38 @@
+diff --git a/vendor/patches/riscv/riscv-isa-sim/0022-fix-spike-version-reporting.patch b/vendor/patches/riscv/riscv-isa-sim/0022-fix-spike-version-reporting.patch
+new file mode 100644
+index 000000000..e69de29bb
+diff --git a/vendor/riscv/riscv-isa-sim/Makefile.in b/vendor/riscv/riscv-isa-sim/Makefile.in
+index f9c4b09a0..39b93e8dd 100644
+--- a/vendor/riscv/riscv-isa-sim/Makefile.in
++++ b/vendor/riscv/riscv-isa-sim/Makefile.in
+@@ -94,9 +94,9 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
+ #
+ # These all appear on the command line, from lowest precedence to
+ # highest.
+-SPIKE_HASH_VERSION:= $(shell git log -1 --pretty=tformat:"%h" -- .. )
++SPIKE_HASH_VERSION:= $(shell git log -1 --pretty=tformat:"%h")
+ 
+-default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC -DSPIKE_HASH_VERSION=0x$(SPIKE_HASH_VERSION)
++default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC -DSPIKE_HASH_VERSION=$(SPIKE_HASH_VERSION)
+ default-CXXFLAGS := $(default-CFLAGS) -std=c++17
+ 
+ mcppbs-CPPFLAGS := @CPPFLAGS@
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+index 7e08b8a3b..dddecb47c 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+@@ -21,9 +21,13 @@
+ #include <cinttypes>
+ #include "../VERSION"
+ 
++#define stringify(s) tostr(s)
++#define tostr(s) #s
++
+ static void version(int exit_code = 1)
+ {
+-  fprintf(stderr, SPIKE_VERSION " %x\n", SPIKE_HASH_VERSION);
++  // Stringify hash to preserve the exact value returned by 'git'.
++  fprintf(stderr, SPIKE_VERSION " %s\n", stringify(SPIKE_HASH_VERSION));
+   exit(exit_code);
+ }
+ 

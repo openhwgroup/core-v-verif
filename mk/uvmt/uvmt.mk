@@ -72,6 +72,7 @@ SIMULATOR    ?= $(CV_SIMULATOR)
 
 # Optionally exclude the OVPsim (not recommended)
 USE_ISS      ?= YES
+ISS          ?= IMPERAS
 
 # Common configuration variables
 CFG             ?= default
@@ -119,6 +120,9 @@ export DV_UVML_TRN_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_trn
 export DV_UVML_LOGS_PATH        = $(CORE_V_VERIF)/lib/uvm_libs/uvml_logs
 export DV_UVML_SB_PATH          = $(CORE_V_VERIF)/lib/uvm_libs/uvml_sb
 export DV_UVML_MEM_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_mem
+
+export DV_UVMC_RVFI_SCOREBOARD_PATH      = $(CORE_V_VERIF)/lib/uvm_components/uvmc_rvfi_scoreboard/
+export DV_UVMC_RVFI_REFERENCE_MODEL_PATH = $(CORE_V_VERIF)/lib/uvm_components/uvmc_rvfi_reference_model/
 
 export DV_OVPM_HOME             = $(CORE_V_VERIF)/vendor_lib/imperas
 export DV_OVPM_MODEL            = $(DV_OVPM_HOME)/imperas_DV_COREV
