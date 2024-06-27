@@ -166,10 +166,13 @@ import "DPI-C" function void spike_set_default_params(string profile);
                 if (valid && t_core.csr_valid[addr]) begin
                     bit core_value_condition = (m_core_cfg.unified_traps && (t_core.intr[0] | t_core.dbg[2:0])) && !(is_csr_insn(t_core) && addr == get_insn_rs1(t_core));
                     longint unsigned core_value = (core_value_condition) ? t_core.csr_rdata[addr] : t_core.csr_wdata[addr];
+                    longint unsigned ref_value = t_reference_model.csr_wdata[addr];
+                    if (m_core_cfg.xlen == MXL_32)
+                        ref_value = ref_value & 'hFFFF_FFFF;
                     found = 1;
-                    if (t_reference_model.csr_wdata[addr] !== core_value) begin
+                    if (ref_value !== core_value) begin
                         error = 1; cause_str = $sformatf("%s\nCSR %-4h Mismatch   [REF]: 0x%-16h [CORE]: 0x%-16h",
-                            cause_str, addr, t_reference_model.csr_wdata[addr], core_value);
+                            cause_str, addr, ref_value, core_value);
                     end
                     else begin
                         csrs_match_count += 1;
