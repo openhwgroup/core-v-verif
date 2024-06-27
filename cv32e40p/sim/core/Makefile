@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     https://solderpad.org/licenses/
+#	 https://solderpad.org/licenses/
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,48 +41,48 @@
 ###############################################################################
 
 # "Constants"
-MAKE           = make
-MAKE_DIR       = $(PWD)
-MAKE_PATH     := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-COREV_PROJ     = cv32
+MAKE		   = make
+MAKE_DIR	   = $(PWD)
+MAKE_PATH	 := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+COREV_PROJ	 = cv32
 CORE_V_VERIF   = $(abspath $(MAKE_PATH)/../../..)
-DATE           = $(shell date +%F)
-WAVES          = 0
+DATE		   = $(shell date +%F)
+WAVES		  = 1
 
-CV_CORE       ?= CV32E40P
-CV_CORE_LC     = $(shell echo $(CV_CORE) | tr A-Z a-z)
-CV_CORE_UC     = $(shell echo $(CV_CORE) | tr a-z A-Z)
+CV_CORE	   ?= CV32E40P
+CV_CORE_LC	 = $(shell echo $(CV_CORE) | tr A-Z a-z)
+CV_CORE_UC	 = $(shell echo $(CV_CORE) | tr a-z A-Z)
 
-SIMULATOR     ?= $(CV_SIMULATOR)
+SIMULATOR	 ?= $(CV_SIMULATOR)
 
 # Test-Program directores.
 # Relative path is used for Verilator which cannot seem to handle loooong pathnames.
-TEST_PROGRAM_PATH    = $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs/custom
+TEST_PROGRAM_PATH	= $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs/custom
 TEST_PROGRAM_RELPATH = ../../tests/programs/custom
 
 # Common output directories
-RUN_INDEX               ?= 0
-SIM_RESULTS              = simulation_results
-SIM_TEST_RESULTS         = $(SIM_RESULTS)/$(TEST)
-SIM_RUN_RESULTS          = $(SIM_TEST_RESULTS)/$(RUN_INDEX)
+RUN_INDEX			   ?= 0
+SIM_RESULTS			  = simulation_results
+SIM_TEST_RESULTS		 = $(SIM_RESULTS)/$(TEST)
+SIM_RUN_RESULTS		  = $(SIM_TEST_RESULTS)/$(RUN_INDEX)
 SIM_TEST_PROGRAM_RESULTS = $(SIM_RUN_RESULTS)/test_program
-SIM_BSP_RESULTS          = $(SIM_TEST_PROGRAM_RESULTS)/bsp
+SIM_BSP_RESULTS		  = $(SIM_TEST_PROGRAM_RESULTS)/bsp
 
 # Compile compile flags for all simulators
 SV_CMP_FLAGS =
 
 # Default "custom test-program"
 CUSTOM_PROG  ?= requested_csr_por
-TEST         ?= hello-world
+TEST		 ?= scrap
 
 ###############################################################################
 # Generate and include TEST_FLAGS_MAKE, based on the YAML test description.
 # An example of what is generated is below (not all of these flags are used):
-#       TEST_DESCRIPTION=Simple hello-world sanity test
-#       TEST_NAME=hello-world
-#       TEST_PROGRAM=hello-world
-#       TEST_TEST_DIR=/home/mike/GitHubRepos/MikeOpenHWGroup/core-v-verif/master/cv32e40p/tests/programs/custom/hello-world
-#       TEST_UVM_TEST=uvmt_$(CV_CORE_LC)_firmware_test_c
+#	   TEST_DESCRIPTION=Simple hello-world sanity test
+#	   TEST_NAME=hello-world
+#	   TEST_PROGRAM=hello-world
+#	   TEST_TEST_DIR=/home/mike/GitHubRepos/MikeOpenHWGroup/core-v-verif/master/cv32e40p/tests/programs/custom/hello-world
+#	   TEST_UVM_TEST=uvmt_$(CV_CORE_LC)_firmware_test_c
 
 YAML2MAKE = $(CORE_V_VERIF)/bin/yaml2make
 TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE))
@@ -101,45 +101,45 @@ include $(CORE_V_VERIF)/mk/Common.mk
 # vsim configuration
 VVERSION  = "10.7b"
 
-VLIB      = vlib
-VWORK     = work
+VLIB	  = vlib
+VWORK	 = work
 
-VLOG          = vlog
-VLOG_FLAGS    = -pedanticerrors -suppress 2577 -suppress 2583
-VLOG_LOG      = vloggy
+VLOG		  = vlog
+VLOG_FLAGS	= -pedanticerrors -suppress 2577 -suppress 2583
+VLOG_LOG	  = vloggy
 
-VOPT          = vopt
-VOPT_FLAGS    = -debugdb -fsmdebug -pedanticerrors +acc #=mnprft
+VOPT		  = vopt
+VOPT_FLAGS	= -debugdb -fsmdebug -pedanticerrors +acc #=mnprft
 
-VSIM              = vsim
-VSIM_HOME         = /usr/pack/modelsim-$(VVERSION)-kgf/questasim
-VSIM_FLAGS       ?=  # user defined
-ALL_VSIM_FLAGS    = $(VSIM_FLAGS)
+VSIM			  = vsim
+VSIM_HOME		 = /usr/pack/modelsim-$(VVERSION)-kgf/questasim
+VSIM_FLAGS	   ?=  # user defined
+ALL_VSIM_FLAGS	= $(VSIM_FLAGS)
 VSIM_DEBUG_FLAGS  = -debugdb
-VSIM_GUI_FLAGS    = -gui -debugdb
+VSIM_GUI_FLAGS	= -gui -debugdb
 VSIM_SCRIPT_DIR	  = ../tools/vsim
-VSIM_SCRIPT       = $(VSIM_SCRIPT_DIR)/vsim.tcl
+VSIM_SCRIPT	   = $(VSIM_SCRIPT_DIR)/vsim.tcl
 
 # vcs configuration (hopelessly out of date)
-VCS_VERSION             = O-2018.09-SP1-1
-VCS_HOME                = /opt/synopsys/vcs-mx/$(VCS_VERSION)
-VCS                     = vcs
-VCS_FLAGS              ?= # user defined
-ALL_VCS_FLAGS           = $(VCS_FLAGS)
-VCS_SCRIPT_DIR          = ../tools/vcs
-VCS_SCRIPT              = $(VCS_SCRIPT_DIR)/vcs_batch.tcl
-VCS_SCRIPT_GUI          = $(VCS_SCRIPT_DIR)/vcs.tcl
-SIMV                    = ./simv
+VCS_VERSION			 = O-2018.09-SP1-1
+VCS_HOME				= /opt/synopsys/vcs-mx/$(VCS_VERSION)
+VCS					 = vcs
+VCS_FLAGS			  ?= # user defined
+ALL_VCS_FLAGS		   = $(VCS_FLAGS)
+VCS_SCRIPT_DIR		  = ../tools/vcs
+VCS_SCRIPT			  = $(VCS_SCRIPT_DIR)/vcs_batch.tcl
+VCS_SCRIPT_GUI		  = $(VCS_SCRIPT_DIR)/vcs.tcl
+SIMV					= ./simv
 
 # dsim is the Metrics Technologies SystemVerilog simulator  (https://metrics.ca/)
-DSIM                    = dsim
-DSIM_HOME               = /tools/Metrics/dsim
-DSIM_CMP_FLAGS          = +define+CORE_TB -timescale 1ns/1ps $(SV_CMP_FLAGS) -suppress MultiBlockWrite +define+CV32E40P_APU_TRACE
-DSIM_RUN_FLAGS          =
-DSIM_UVM_ARGS           = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
-DSIM_RESULTS           ?= $(PWD)/dsim_results
-DSIM_WORK              ?= $(DSIM_RESULTS)/dsim_work
-DSIM_IMAGE              = dsim.out
+DSIM					= dsim
+DSIM_HOME			   = /tools/Metrics/dsim
+DSIM_CMP_FLAGS		  = +define+CORE_TB -timescale 1ns/1ps $(SV_CMP_FLAGS) -suppress MultiBlockWrite +define+CV32E40P_APU_TRACE
+DSIM_RUN_FLAGS		  =
+DSIM_UVM_ARGS		   = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
+DSIM_RESULTS		   ?= $(PWD)/dsim_results
+DSIM_WORK			  ?= $(DSIM_RESULTS)/dsim_work
+DSIM_IMAGE			  = dsim.out
 
 ifneq (${WAVES}, 0)
   DSIM_CMP_FLAGS += +acc
@@ -148,50 +148,50 @@ ifneq (${WAVES}, 0)
 endif
 
 # xrun is the Cadence xcelium SystemVerilog simulator (https://cadence.com/)
-XRUN              = xrun
-XRUN_FLAGS        = -clean -smartorder -sv -top worklib.tb_top -timescale 1ns/1ps +define+CV32E40P_APU_TRACE -uvmhome CDNS-1.2-ML
-XRUN_DIR          = xcelium.d
+XRUN			  = xrun
+XRUN_FLAGS		= -clean -smartorder -sv -top worklib.tb_top -timescale 1ns/1ps +define+CV32E40P_APU_TRACE -uvmhome CDNS-1.2-ML
+XRUN_DIR		  = xcelium.d
 
 # verilator configuration
-VERILATOR           = verilator
-VERI_FLAGS         +=
+VERILATOR		   = verilator
+VERI_FLAGS		 +=
 VERI_COMPILE_FLAGS += -Wno-BLKANDNBLK $(SV_CMP_FLAGS) # hope this doesn't hurt us in the long run
-VERI_TRACE         ?=
-VERI_OBJ_DIR       ?= cobj_dir
-#VERI_LOG_DIR       ?= cobj_dir/logs
-VERI_LOG_DIR       ?= $(SIM_TEST_PROGRAM_RESULTS)
-VERI_CFLAGS        += -O2
+VERI_TRACE		 ?=
+VERI_OBJ_DIR	   ?= cobj_dir
+#VERI_LOG_DIR	   ?= cobj_dir/logs
+VERI_LOG_DIR	   ?= $(SIM_TEST_PROGRAM_RESULTS)
+VERI_CFLAGS		+= -O2
 
 #riviera configuration
 
-ALIB      = "vlib"
-AWORK     = work
+ALIB	  = "vlib"
+AWORK	 = work
 
-ALOG          = vlog
-ALOG_DEBUG    = -dbg
-ALOG_FLAGS    =
-ALOG_UVM      = -uvmver 1.2
+ALOG		  = vlog
+ALOG_DEBUG	= -dbg
+ALOG_FLAGS	=
+ALOG_UVM	  = -uvmver 1.2
 
-ASIM              = vsim
-ASIM_HOME         = $(ALDEC_PATH)
-ASIM_FLAGS       ?=  # user defined
-ALL_ASIM_FLAGS    = $(ASIM_FLAGS)
+ASIM			  = vsim
+ASIM_HOME		 = $(ALDEC_PATH)
+ASIM_FLAGS	   ?=  # user defined
+ALL_ASIM_FLAGS	= $(ASIM_FLAGS)
 ASIM_DEBUG_FLAGS  = -dbg
-ASIM_GUI_FLAGS    = -gui
+ASIM_GUI_FLAGS	= -gui
 
 # TB source files for the CV32E core
 TBSRC_HOME  := $(CORE_V_VERIF)/$(CV_CORE_LC)/tb
 TBSRC_TOP   := $(TBSRC_HOME)/core/tb_top.sv
 TBSRC_CORE  := $(TBSRC_HOME)/core
 TBSRC_PKG   := $(TBSRC_CORE)/tb_riscv/include/perturbation_defines.sv
-TBSRC       := $(TBSRC_CORE)/tb_top.sv \
-               $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
-               $(TBSRC_CORE)/mm_ram.sv \
-               $(TBSRC_CORE)/dp_ram.sv \
-               $(TBSRC_CORE)/tb_riscv/riscv_random_stall.sv \
-               $(TBSRC_CORE)/tb_riscv/riscv_random_interrupt_generator.sv \
-               $(TBSRC_CORE)/tb_riscv/riscv_rvalid_stall.sv \
-               $(TBSRC_CORE)/tb_riscv/riscv_gnt_stall.sv
+TBSRC	   := $(TBSRC_CORE)/tb_top.sv \
+			   $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
+			   $(TBSRC_CORE)/mm_ram.sv \
+			   $(TBSRC_CORE)/dp_ram.sv \
+			   $(TBSRC_CORE)/tb_riscv/riscv_random_stall.sv \
+			   $(TBSRC_CORE)/tb_riscv/riscv_random_interrupt_generator.sv \
+			   $(TBSRC_CORE)/tb_riscv/riscv_rvalid_stall.sv \
+			   $(TBSRC_CORE)/tb_riscv/riscv_gnt_stall.sv
 
 #/tb_riscv/riscv_rvalid_stall.sv
 
@@ -199,27 +199,27 @@ RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
 TBSRC_VERI  := $(TBSRC_CORE)/tb_top_verilator.sv \
-               $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
-               $(TBSRC_CORE)/tb_riscv/riscv_rvalid_stall.sv \
-               $(TBSRC_CORE)/tb_riscv/riscv_gnt_stall.sv \
-               $(TBSRC_CORE)/mm_ram.sv \
-               $(TBSRC_CORE)/dp_ram.sv
-SIM_LIBS    := $(CORE_V_VERIF)/lib/sim_libs
+			   $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
+			   $(TBSRC_CORE)/tb_riscv/riscv_rvalid_stall.sv \
+			   $(TBSRC_CORE)/tb_riscv/riscv_gnt_stall.sv \
+			   $(TBSRC_CORE)/mm_ram.sv \
+			   $(TBSRC_CORE)/dp_ram.sv
+SIM_LIBS	:= $(CORE_V_VERIF)/lib/sim_libs
 
 # RTL source files for the CV32E core
 # DESIGN_RTL_DIR is used by CV_CORE_MANIFEST file
-CV_CORE_PKG           := $(CORE_V_VERIF)/core-v-cores/$(CV_CORE_LC)
+CV_CORE_PKG		   := $(CORE_V_VERIF)/core-v-cores/$(CV_CORE_LC)
 CV_CORE_RTLSRC_INCDIR := $(CV_CORE_PKG)/rtl/include
-CV_CORE_RTLSRC_PKG    := $(CV_CORE_PKG)/rtl/fpnew/src/fpnew_pkg.sv \
+CV_CORE_RTLSRC_PKG	:= $(CV_CORE_PKG)/rtl/fpnew/src/fpnew_pkg.sv \
 				$(addprefix $(CV_CORE_RTLSRC_INCDIR)/,\
 				CV_CORE_apu_core_package.sv CV_CORE_defines.sv \
 				CV_CORE_tracer_defines.sv)
 CV_CORE_RTLSRC  := $(filter-out $(CV_CORE_PKG)/rtl/$(CV_CORE_LC)_register_file_latch.sv, \
-                $(wildcard $(CV_CORE_PKG)/rtl/*.sv))
+				$(wildcard $(CV_CORE_PKG)/rtl/*.sv))
 # FIXME: temporarily using a local manifest for the core.
-#        This is BAD PRACTICE and will be fixed with
-#        https://github.com/openhwgroup/CV_CORE/pull/421 is resolved.
-CV_CORE_MANIFEST    := $(CV_CORE_PKG)/cv32e40p_manifest.flist
+#		This is BAD PRACTICE and will be fixed with
+#		https://github.com/openhwgroup/CV_CORE/pull/421 is resolved.
+CV_CORE_MANIFEST	:= $(CV_CORE_PKG)/cv32e40p_fpu_manifest.flist
 export DESIGN_RTL_DIR = $(CV_CORE_PKG)/rtl
 
 # Shorthand rules for convience
@@ -301,7 +301,7 @@ dsim-sanity: dsim-test
 
 dsim-custom:
 	@echo "This target is depreciated.  Please use 'make dsim-test TEST=<test-program>'"
-	@echo "                             Example:   'make dsim-test TEST=fibonacci'"
+	@echo "							 Example:   'make dsim-test TEST=fibonacci'"
 
 dsim-test: dsim-comp $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 	@echo "$(BANNER)"
@@ -445,7 +445,7 @@ xrun-all: $(CV_CORE_PKG) $(RTLSRC_PKG) $(RTLSRC) $(TBSRC_PKG) $(TBSRC)
 
 xrun-custom:
 	@echo "This target is depreciated.  Please use 'make xrun-test TEST=<test-program>'"
-	@echo "                             Example:   'make xrun-test TEST=fibonacci'"
+	@echo "							 Example:   'make xrun-test TEST=fibonacci'"
 
 .PHONY: xrun-test
 xrun-test: xrun-all $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
@@ -482,7 +482,7 @@ endif
 verilate: testbench_verilator
 
 sanity-veri-run:
-	make veri-test TEST=hello-world
+	make veri-test TEST=scrap
 
 testbench_verilator: CV_CORE_pkg $(TBSRC_VERI) $(TBSRC_PKG)
 	@echo "$(BANNER)"
@@ -490,7 +490,7 @@ testbench_verilator: CV_CORE_pkg $(TBSRC_VERI) $(TBSRC_PKG)
 	@echo "$(BANNER)"
 	$(VERILATOR) --cc --sv --exe \
 		$(VERI_TRACE) \
-		--Wno-lint --Wno-UNOPTFLAT \
+		--Wno-lint --Wno-UNOPTFLAT -Wno-fatal \
 		--Wno-MODDUP --top-module \
 		tb_top_verilator $(TBSRC_VERI) \
 		-f $(CV_CORE_MANIFEST) \
@@ -682,10 +682,10 @@ clean-sim-results:
 
 # clean up toolchain generated files
 clean-test-programs:
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.o       -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.hex     -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.elf     -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.map     -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.o	   -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.hex	 -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.elf	 -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.map	 -exec rm {} \;
 	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.readelf -exec rm {} \;
 	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.objdump -exec rm {} \;
 	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name corev_*.S -exec rm {} \;
