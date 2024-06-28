@@ -57,17 +57,17 @@ add_rmdb_cmd_and_check () {
 
     if [[ $coverage -eq 1 ]]; then
         echo "status_section=\$(sed -n '/Test (valid UCDB) status:/,/RegressionCompleted:/p' \${regr}.log | head -n -1)
-ok_count=\$(echo \"\$status_section\" | grep \"Ok\" | sed 's/[^0-9]*//g')
-warning_count=\$(echo \"\$status_section\" | grep \"Warning\" | sed 's/[^0-9]*//g')
+ok_count=\$(echo \"\$status_section\" | grep \"Ok \" | sed 's/[^0-9]*//g')
+warning_count=\$(echo \"\$status_section\" | grep \"Warning \" | sed 's/[^0-9]*//g')
 pass_count=\$((ok_count + warning_count))" >> $output_file
     else
         echo "status_section=\$(sed -n '/Action script pass\/fail status:/,/RegressionCompleted:/p' \${regr}.log | head -n -1)
-tmp_pass_count=\$(echo \"\$status_section\" | grep \"Passed\" | sed 's/[^0-9]*//g')
+tmp_pass_count=\$(echo \"\$status_section\" | grep \"Passed \" | sed 's/[^0-9]*//g')
 pass_count=\$((tmp_pass_count-3)) " >> $output_file
     fi
 
 echo "
-fail_count=\$(echo \"\$status_section\" | grep \"Failed\" | sed 's/[^0-9]*//g')
+fail_count=\$(echo \"\$status_section\" | grep \"Failed \" | sed 's/[^0-9]*//g')
 ((tot_fail_count+=fail_count))
 ((tot_pass_count+=pass_count))
 total=\$((fail_count + pass_count))
