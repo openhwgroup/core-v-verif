@@ -1025,7 +1025,7 @@ covergroup cg_csrtype(
   cp_rs1: coverpoint instr.rs1;
   cp_rd: coverpoint instr.rd;
   cp_csr: coverpoint instr.csr {
-    bins CSR[] = {[USTATUS:VLENB]} with (cfg_illegal_csr[item] == 0);
+    bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
   }
 
   cp_rd_rs1_hazard: coverpoint instr.rd {
@@ -1050,7 +1050,7 @@ covergroup cg_csritype(
 
   cp_rd: coverpoint instr.rd;
   cp_csr: coverpoint instr.csr {
-    bins CSR[] = {[USTATUS:VLENB]} with (cfg_illegal_csr[item] == 0);
+    bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
   }
   `ISACOV_CP_BITWISE_4_0(cp_uimm_toggle, instr.rs1, 1)
 endgroup : cg_csritype
@@ -1925,7 +1925,7 @@ covergroup cg_sequential(string name,
   }
 
   cp_csr: coverpoint(instr_prev.csr) iff (instr_prev != null) {
-    bins CSR[] = {[USTATUS:VLENB]} with (cfg_illegal_csr[item] == 0);
+    bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
   }
 
   cross_seq_group_x2: cross cp_group, cp_group_pipe_x2;

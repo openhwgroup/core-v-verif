@@ -254,6 +254,8 @@ typedef enum bit[CSR_ADDR_WL-1:0] {
   MCAUSE         = 'h342,
   MTVAL          = 'h343,
   MIP            = 'h344,
+  MTINST         = 'h34A,
+  MTVAL2         = 'h34B,
   PMPCFG0        = 'h3A0,
   PMPCFG1        = 'h3A1,
   PMPCFG2        = 'h3A2,
