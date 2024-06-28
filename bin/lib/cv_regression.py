@@ -23,6 +23,7 @@ import re
 import sys
 import logging
 from collections import OrderedDict
+from logging import StreamHandler
 
 logger = logging.getLogger(__name__)
 
@@ -173,3 +174,20 @@ class Regression:
 
         tests = [t for t in self.tests.values() if build in t.builds]
         return tests
+
+
+class InfoDebugStreamHandler(StreamHandler):
+    def __init__(self, stream=None):
+        StreamHandler.__init__(self, stream)
+
+    def emit(self, record):
+        if record.levelno <= logging.INFO:
+            StreamHandler.emit(self, record)
+
+class WarningErrorStreamHandler(StreamHandler):
+    def __init__(self, stream=None):
+        StreamHandler.__init__(self, stream)
+
+    def emit(self, record):
+        if record.levelno > logging.INFO:
+            StreamHandler.emit(self, record)
