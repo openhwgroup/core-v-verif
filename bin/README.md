@@ -89,7 +89,14 @@ Please refer to the help utility of *cv_regress* for more details on the utility
 
 Once regression script is generated, it can be run using the correct tool, either by sourcing the shell script, or as an example using Questa Verification Run Manager:
 
-> vrun -rmdb vsim_ci_check.rmdb -run cv32e40p
+> % vrun -rmdb vsim_ci_check.rmdb -run cv32e40p
+
+
+### CV32E40Pv2 Regression Generator
+
+For cv32e40pv2 project, regressions have been split into 5 files across 7 configurations. An interactive utiliy can be run to customize regression parameters (ISS, coverage collection, simulator...) and generate all files needed, by following the instructions of the script.
+
+> % sh cv32e40pv2_nr_generator.sh
 
 ### Regression YAML Format
 
@@ -115,7 +122,7 @@ tests:<br>
 &nbsp;&nbsp;<*Required*: test label. If using the test only once in the same yaml file, the label can match the *actual* test name><br>
 &nbsp;&nbsp;**test_name0**:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: build dependencies, can be a single build_name, or a list of build_name if **builds** is specified (plural) ><br>
-&nbsp;&nbsp;&nbsp;&nbsp;**build(s)**: \<string> (list of \<string>) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;**build(s)**: \<string> (if plural, a list of \<string>) <br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: human-readable test description><br>
 &nbsp;&nbsp;&nbsp;&nbsp;**description**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: make directory for the test><br>
@@ -125,9 +132,9 @@ tests:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;**testname**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: A make command to run before running the test(s).  This could be used for gen_* makes for corev-dv<br>
 &nbsp;&nbsp;&nbsp;&nbsp;**precmd**: \<string><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: A specific configuration of the riscv-dv generator to use for this test><br>
-&nbsp;&nbsp;&nbsp;&nbsp;**riscvdv_cfg**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: make directory for the test><br>
 &nbsp;&nbsp;&nbsp;&nbsp;**cmd**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: The number of test iterations to run.  Note that all runs will receive a random seed><br>
-&nbsp;&nbsp;&nbsp;&nbsp;**num**: \<number>
+&nbsp;&nbsp;&nbsp;&nbsp;**num**: \<number><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: a list of configurations or simulators to be skipped for this specific test><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**skip_sim**: \<number><br>
