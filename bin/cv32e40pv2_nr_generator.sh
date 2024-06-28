@@ -195,7 +195,6 @@ else
                     fi
                     choice_vrun_lsf_cmd=${choice_vrun_lsf_cmd,,}
                     if [[ "$choice_vrun_lsf_cmd" == n* ]]; then
-                        echo "No"
                         nr_vrun_lsf_cmd=""
                         break
                     else
@@ -356,7 +355,8 @@ fi
 
 echo "|"
 
-nr_jobs=($nr_xpulp_jobs $nr_fpu_jobs $nr_dbg_short_jobs $nr_dbg_long_jobs $nr_legacy_jobs)
+nr_jobs=( $nr_xpulp_jobs $nr_fpu_jobs $nr_dbg_short_jobs $nr_dbg_long_jobs $nr_legacy_jobs )
+
 nr_tst_cfgs=(
     "disable_all_trn_logs"
     "disable_all_trn_logs,floating_pt_instr_en"
@@ -395,7 +395,7 @@ for idx in "${!default_nr_cfgs[@]}"; do
             echo "" >> start_all_nr.sh
             echo "echo -e \"--> Starting ${regr} at \$(date \"+%Y-%m-%d %H:%M:%S\")\"" >> start_all_nr.sh
 
-            add_${nr_type}_cmd_and_check ${regr} start_all_nr.sh $nr_vrun_jobs
+            add_${nr_type}_cmd_and_check ${regr} start_all_nr.sh $nr_vrun_jobs $nr_en_cov
 
             echo "echo -n \"--> Finished ${regr} at \$(date \"+%Y-%m-%d %H:%M:%S\")\"" >> start_all_nr.sh
             echo 'echo " : [ $pass_count | $total ]  ( $fail_count Failed, see ${regr}.log ) "' >> start_all_nr.sh
