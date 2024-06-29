@@ -436,6 +436,8 @@ bit [CSR_ADDR_WL-1:0] csr_name2addr[string] = '{
   "mcause"         : MCAUSE,
   "mtval"          : MTVAL,
   "mip"            : MIP,
+  "mtinst"         : MTINST,
+  "mtval2"         : MTVAL2,
   "pmpcfg0"        : PMPCFG0,
   "pmpcfg1"        : PMPCFG1,
   "pmpcfg2"        : PMPCFG2,
@@ -710,6 +712,7 @@ typedef struct packed {
 
    bit                          mode_s_supported;
    bit                          mode_u_supported;
+   bit                          mode_h_supported;
 
    bit                          pmp_supported;
    int unsigned                 pmp_regions;

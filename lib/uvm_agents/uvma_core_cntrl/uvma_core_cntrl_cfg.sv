@@ -73,6 +73,7 @@
 
    rand bit                      mode_s_supported;
    rand bit                      mode_u_supported;
+   rand bit                      mode_h_supported;
 
    rand bit                      pmp_supported;
    rand int unsigned             pmp_regions;
@@ -170,6 +171,7 @@
       `uvm_field_int(                          ext_cv32a60x_supported         , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
+      `uvm_field_int(                          mode_h_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          pmp_supported                  , UVM_DEFAULT          )
       `uvm_field_int(                          pmp_regions                    , UVM_DEFAULT          )
       `uvm_field_int(                          debug_supported                , UVM_DEFAULT          )
@@ -616,6 +618,11 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
     unsupported_csr_mask[MCONFIGPTR] = 1;
   end
 
+  if (!mode_h_supported) begin
+    unsupported_csr_mask[uvma_core_cntrl_pkg::MTVAL2] = 1;
+    unsupported_csr_mask[uvma_core_cntrl_pkg::MTINST] = 1;
+  end
+
   // TODO: These needs inclusion parameter classification
   unsupported_csr_mask[MSECCFG] = 1;
   unsupported_csr_mask[MSECCFGH] = 1;
@@ -781,6 +788,7 @@ function st_core_cntrl_cfg uvma_core_cntrl_cfg_c::to_struct();
 
     st.mode_s_supported = mode_s_supported;
     st.mode_u_supported = mode_u_supported;
+    st.mode_h_supported = mode_h_supported;
 
     st.pmp_supported = pmp_supported;
     st.pmp_regions = pmp_regions;
@@ -882,6 +890,7 @@ function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
 
     mode_s_supported = st.mode_s_supported;
     mode_u_supported = st.mode_u_supported;
+    mode_h_supported = st.mode_h_supported;
 
     pmp_supported = st.pmp_supported;
     pmp_regions = st.pmp_regions;
