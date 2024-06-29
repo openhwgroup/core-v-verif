@@ -4,6 +4,7 @@
 #include "Simulation.h"
 #include "Types.h"
 #include "riscv/mmu.h"
+#include "YamlParamSetter.h"
 
 #include "svdpi.h"
 #include <vpi_user.h>
@@ -35,22 +36,29 @@ std::vector<std::pair<reg_t, mem_t *>> mem_cuts;
 
 std::vector<mem_cfg_t> memory_map;
 Params params;
+std::unique_ptr<YamlParamSetter> paramSetter;
 
 extern "C" void spike_set_default_params(const char *profile) {
   if (strcmp(profile, "cva6") == 0) {
     params.set_string("/top/", "isa", std::string("RV64GC"));
     params.set_string("/top/", "priv", std::string(DEFAULT_PRIV)); // MSU
-    params.set_uint64_t("/top/", "num_procs", 0x1UL);
-    params.set_bool("/top/", "bootrom", true);
-    params.set_bool("/top/", "generic_core_config", true);
-    params.set_uint64_t("/top/", "dram_base", 0x80000000UL);
-    params.set_uint64_t("/top/", "dram_size", 0x400UL * 1024 * 1024);
-    params.set_bool("/top/", "max_steps_enabled", false);
-    params.set_uint64_t("/top/", "max_steps", 2000000UL);
-
     params.set_string("/top/core/0/", "name", std::string("cva6"));
     params.set_string("/top/core/0/", "isa", std::string("RV64GC"));
+  } else {
+    params.set_string("/top/", "isa", std::string("RV32IMC"));
+    params.set_string("/top/", "priv", std::string("M"));
+    params.set_string("/top/core/0/", "name", std::string("cv32a65x"));
+    params.set_string("/top/core/0/", "isa", std::string("RV32IMC"));
   }
+  params.set_uint64_t("/top/", "num_procs", 0x1UL);
+  params.set_bool("/top/", "bootrom", true);
+  params.set_bool("/top/", "generic_core_config", false);
+  params.set_uint64_t("/top/", "dram_base", 0x80000000UL);
+  params.set_uint64_t("/top/", "dram_size", 0x400UL * 1024 * 1024);
+  params.set_bool("/top/", "max_steps_enabled", false);
+  params.set_uint64_t("/top/", "max_steps", 2000000UL);
+
+  Simulation::default_params(params);
 }
 
 extern "C" void spike_set_param_uint64_t(const char *base, const char *name,
@@ -68,17 +76,23 @@ extern "C" void spike_set_param_bool(const char *base, const char *name,
   params.set_bool(base, name, value);
 }
 
+extern "C" void spike_set_params_from_file(const char *yaml_config_path) {
+  cerr << "[SPIKE] Setting parameters from file : " << yaml_config_path << endl;
+  paramSetter = std::make_unique<YamlParamSetter>(&params, yaml_config_path);
+  paramSetter->setParams();
+}
+
 extern "C" void spike_create(const char *filename) {
   std::cerr << "[SPIKE] Starting 'spike_create'...\n";
-
   // TODO parse params from yaml
-  string isa_str = (params["/top/isa"]).a_string;
+  string isa_str = (params["/top/core/0/isa"]).a_string;
+  string priv_str = (params["/top/core/0/priv"]).a_string;
 
   cfg_t *config = new cfg_t(
       /*default_initrd_bounds=*/std::make_pair((reg_t)0, (reg_t)0),
       /*default_bootargs=*/nullptr,
       /*default_isa=*/isa_str.c_str(), // Built from the RTL configuration
-      /*default_priv=*/DEFAULT_PRIV,   // TODO FIXME Ditto
+      /*default_priv=*/priv_str.c_str(),   // TODO FIXME Ditto
       /*default_varch=*/DEFAULT_VARCH, // TODO FIXME Ditto
       /*default_misaligned=*/false,
       /*default_endianness*/ endianness_little,

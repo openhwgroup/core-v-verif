@@ -26,6 +26,26 @@ void Params::cfg_to_params(cfg_t &cfg, Params &params) {
   params.set_uint64_t("/top/core/0/", "pmpregions", (cfg.pmpregions));
 }
 
+void dump_param(Param &p) {
+  std::cerr << p.base << p.name << " = (" << p.type << ") " ;
+  if (p.type == "string")
+    std::cerr << p.a_string;
+  else if (p.type == "uint64_t")
+    std::cerr << "0x" << std::hex << p.a_uint64_t;
+  else if (p.type == "bool")
+    std::cerr << (p.a_bool ? "true" : "false");
+  else
+    std::cerr << "<unsupported_type<" << p.type << ">>";
+}
+
+void Params::dump(void) {
+  for (auto it_base = v.begin(); it_base != v.end(); it_base++)
+    for (auto it_parm = it_base->second.begin(); it_parm != it_base->second.end(); it_parm++) {
+      dump_param(it_parm->second);
+      std::cerr << std::endl;
+    }
+}
+
 void print_center(string &str, const size_t line_length) {
   size_t str_length = str.length();
   size_t how_many = (line_length - str_length) / 2;
