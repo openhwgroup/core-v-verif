@@ -775,6 +775,9 @@ typedef struct packed {
    bit                          nmi_addr_valid;
    bit                          nmi_addr_plusarg_valid;
 
+   bit                          DirectVecOnly;
+   bit                          TvalEn;
+
 } st_core_cntrl_cfg;
 
 `endif // __UVMA_CORE_CNTRL_TDEFS_SV__
