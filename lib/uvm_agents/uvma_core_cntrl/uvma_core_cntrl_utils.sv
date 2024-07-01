@@ -48,6 +48,7 @@ function automatic string get_priv_str(st_core_cntrl_cfg cfg);
 
     if (cfg.mode_s_supported)      rtl_priv = {rtl_priv, "S"};
     if (cfg.mode_u_supported)      rtl_priv = {rtl_priv, "U"};
+    if (cfg.mode_h_supported)      rtl_priv = {rtl_priv, "HS"};
 
     return rtl_priv;
 
