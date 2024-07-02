@@ -102,6 +102,12 @@
 
    rand bit                      unified_traps;
 
+   // parameter to check mtvec mode
+   rand bit                      DirectVecOnly;
+
+   // parameter to enable/disable tval register
+   rand bit                      TvalEn;
+
    // Common bootstrap addresses
    // The valid bits should be constrained if the bootstrap signal is not valid for this core configuration
    rand bit [MAX_XLEN-1:0]       mhartid;
@@ -205,6 +211,8 @@
       `uvm_field_int(                          nmi_addr                       , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_valid                 , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_plusarg_valid         , UVM_DEFAULT          )
+      `uvm_field_int(                          DirectVecOnly                  , UVM_DEFAULT          )
+      `uvm_field_int(                          TvalEn                         , UVM_DEFAULT          )
    `uvm_field_utils_end
 
    constraint defaults_cons {
@@ -845,6 +853,9 @@ function st_core_cntrl_cfg uvma_core_cntrl_cfg_c::to_struct();
     st.nmi_addr_valid = nmi_addr_valid;
     st.nmi_addr_plusarg_valid = nmi_addr_plusarg_valid;
 
+    st.DirectVecOnly = DirectVecOnly;
+    st.TvalEn = TvalEn;
+
     return st;
 
 endfunction : to_struct
@@ -946,6 +957,9 @@ function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
     nmi_addr = st.nmi_addr;
     nmi_addr_valid = st.nmi_addr_valid;
     nmi_addr_plusarg_valid = st.nmi_addr_plusarg_valid;
+
+    DirectVecOnly = st.DirectVecOnly;
+    TvalEn = st.TvalEn;
 
 endfunction : from_struct
 `endif // __UVMA_CORE_CNTRL_CFG_SV__

@@ -559,6 +559,7 @@ std::unordered_map<uint64_t, openhw::csr_param_t> Processor::csr_params = {
     { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,   true             , true} },
     { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,   true             , true} },
     { CSR_MTVAL     , {"mtval"      ,  true    ,           false       ,   true             , true} },
+    { CSR_MTVEC     , {"mtvec"      ,  true    ,           false       ,   true             , true} },
   };
 
 std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {

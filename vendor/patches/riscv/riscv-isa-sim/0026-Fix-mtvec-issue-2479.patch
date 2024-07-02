@@ -1,0 +1,24 @@
+From 6a00cdcd5520bada09d41478e38b35ba39820df3 Mon Sep 17 00:00:00 2001
+From: ajalali <ayoub.jalali@external.thalesgroup.com>
+Date: Mon, 1 Jul 2024 18:58:22 +0200
+Subject: Fix mtvec issue #2479
+
+---
+ vendor/riscv/riscv-isa-sim/riscv/Proc.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 1a26551ac..6d392f176 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -559,6 +559,7 @@ std::unordered_map<uint64_t, openhw::csr_param_t> Processor::csr_params = {
+     { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,   true             , true} },
+     { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,   true             , true} },
+     { CSR_MTVAL     , {"mtval"      ,  true    ,           false       ,   true             , true} },
++    { CSR_MTVEC     , {"mtvec"      ,  true    ,           false       ,   true             , true} },
+   };
+ 
+ std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {
+-- 
+2.39.3
+
