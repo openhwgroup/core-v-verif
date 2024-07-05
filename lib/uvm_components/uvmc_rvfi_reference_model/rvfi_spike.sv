@@ -53,11 +53,6 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
                 void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
             end
 
-            // FIXME TODO: This block is redundant wrt. another copy below.
-            if (core_cfg.boot_addr_valid) begin
-                void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
-            end
-
             void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
 
             void'(spike_set_param_str("/top/", "isa", rtl_isa));
@@ -66,7 +61,6 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             void'(spike_set_param_str(base, "priv", rtl_priv));
             void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
 
-	    // FIXME TODO: The next four lines are redundant wrt. subsequent four line blocks.
             void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
             void'(spike_set_param_uint64_t(base, "mhartid", core_cfg.mhartid));
             void'(spike_set_param_uint64_t(base, "marchid", core_cfg.marchid));
@@ -81,10 +75,6 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
             void'(spike_set_param_uint64_t(base, "marchid_override_mask", 64'hFFFFFFFF));
             void'(spike_set_param_uint64_t(base, "marchid_override_value", core_cfg.marchid));
-
-            // FIXME TODO: Next two line blocks are duplicates of each other
-            void'(spike_set_param_uint64_t(base, "mvendorid_override_mask", 64'hFFFFFFFF));
-            void'(spike_set_param_uint64_t(base, "mvendorid_override_value", core_cfg.mvendorid));
 
             void'(spike_set_param_uint64_t(base, "mvendorid_override_mask", 64'hFFFFFFFF));
             void'(spike_set_param_uint64_t(base, "mvendorid_override_value", core_cfg.mvendorid));
