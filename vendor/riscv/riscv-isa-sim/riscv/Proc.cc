@@ -298,93 +298,122 @@ Processor::~Processor() {
 }
 
 void Processor::default_params(string base, openhw::Params &params) {
-  params.set_string(base, "isa", "RV32GC", "RV32GC",
-             "ISA");
-  params.set_string(base, "priv", DEFAULT_PRIV, DEFAULT_PRIV, "Privilege Level");
-  params.set_uint64_t(base, "boot_addr", 0x80000000UL, "0x80000000UL",
-             "First PC of the core");
-  params.set_string(base, "mmu_mode", "sv39", "sv39",
-             "Memory virtualization mode");
+  if (!params.exist(base, "isa"))
+    params.set_string(base, "isa", "RV32GC", "RV32GC", "ISA");
+  if (!params.exist(base, "priv"))
+    params.set_string(base, "priv", DEFAULT_PRIV, DEFAULT_PRIV, "Privilege Level");
+  if (!params.exist(base, "boot_addr"))
+    params.set_uint64_t(base, "boot_addr", 0x80000000UL, "0x80000000UL",
+                        "First PC of the core");
+  if (!params.exist(base, "mmu_mode"))
+    params.set_string(base, "mmu_mode", "sv39", "sv39",
+                      "Memory virtualization mode");
 
-  params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
-             "Number of PMP regions");
-  params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
-             "Default PMPADDR0 value");
-  params.set_uint64_t(base, "pmpcfg0", 0x0UL, "0x0",
-             "Default PMPCFG0 value");
-  params.set_uint64_t(base, "marchid", 0x3UL, "0x3", "MARCHID value");
-  params.set_uint64_t(base, "mhartid", 0x0UL, "0x0", "MHARTID value");
-  params.set_uint64_t(base, "mvendorid", 0x00000602UL, "0x00000602UL",
-             "MVENDORID value");
+  if (!params.exist(base, "pmpregions"))
+    params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
+                        "Number of PMP regions");
+  if (!params.exist(base, "pmpaddr0"))
+    params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
+			"Default PMPADDR0 value");
+  if (!params.exist(base, "pmpcfg0"))
+    params.set_uint64_t(base, "pmpcfg0", 0x0UL, "0x0",
+			"Default PMPCFG0 value");
+  if (!params.exist(base, "marchid"))
+    params.set_uint64_t(base, "marchid", 0x3UL, "0x3", "MARCHID value");
+  if (!params.exist(base, "mhartid"))
+    params.set_uint64_t(base, "mhartid", 0x0UL, "0x0", "MHARTID value");
+  if (!params.exist(base, "mvendorid"))
+    params.set_uint64_t(base, "mvendorid", 0x00000602UL, "0x00000602UL",
+			"MVENDORID value");
 
-  params.set_uint64_t(base, "debug_handler_addr", 0x1a110800, "0x1a110800",
-             "Debug handler Address");
+  if (!params.exist(base, "debug_handler_addr"))
+    params.set_uint64_t(base, "debug_handler_addr", 0x1a110800, "0x1a110800",
+			"Debug handler Address");
 
-  params.set_uint64_t(base, "debug_exception_handler_addr", 0x1A140000, "0x1A140000",
-             "Debug handler Address");
+  if (!params.exist(base, "debug_exception_handler_addr"))
+    params.set_uint64_t(base, "debug_exception_handler_addr", 0x1A140000, "0x1A140000",
+			"Debug handler Address");
 
-  params.set_string(base, "extensions", "", "", "Possible extensions: cv32a60x, cvxif");
+  if (!params.exist(base, "extensions"))
+    params.set_string(base, "extensions", "", "", "Possible extensions: cv32a60x, cvxif");
 
-  params.set_bool(base, "misaligned", false, "false",
-             "Support for misaligned memory operations");
+  if (!params.exist(base, "misaligned"))
+    params.set_bool(base, "misaligned", false, "false",
+		    "Support for misaligned memory operations");
 
-  params.set_bool(base, "csr_counters_injection", false, "false",
-             "Allow to set CSRs getting values from DPI");
+  if (!params.exist(base, "csr_counters_injection"))
+    params.set_bool(base, "csr_counters_injection", false, "false",
+		    "Allow to set CSRs getting values from DPI");
 
-  params.set_bool(base, "interrupts_injection", true, "true",
-             "Allow to set MIP csr with values from DPI");
+  if (!params.exist(base, "interrupts_injection"))
+    params.set_bool(base, "interrupts_injection", true, "true",
+		    "Allow to set MIP csr with values from DPI");
 
-  params.set_bool(base, "debug_injection", true, "true",
-             "Allow to enter in debug mode with values from DPI");
+  if (!params.exist(base, "debug_injection"))
+    params.set_bool(base, "debug_injection", true, "true",
+		    "Allow to enter in debug mode with values from DPI");
 
-  params.set_bool(base, "hide_csrs_based_on_priv", false, "false",
-             "Allow to hide CSRs based on priv modes available.");
+  if (!params.exist(base, "hide_csrs_based_on_priv"))
+    params.set_bool(base, "hide_csrs_based_on_priv", false, "false",
+		    "Allow to hide CSRs based on priv modes available.");
 
-  params.set_uint64_t(base, "mtvec_vectored_alignment", 0x4UL, "0x4",
-             "Default alignment for mtvec when vector mode active");
+  if (!params.exist(base, "mtvec_vectored_alignment"))
+    params.set_uint64_t(base, "mtvec_vectored_alignment", 0x4UL, "0x4",
+			"Default alignment for mtvec when vector mode active");
 
-  params.set_bool(base, "override_custom_extensions", true, "false",
-             "Allow to override custom extensions value.");
+  if (!params.exist(base, "override_custom_extensions"))
+    params.set_bool(base, "override_custom_extensions", true, "false",
+		    "Allow to override custom extensions value.");
 
-  params.set_bool(base, "override_custom_extensions_value", false, "false",
-             "Value for the custom extensions override.");
+  if (!params.exist(base, "override_custom_extensions_value"))
+    params.set_bool(base, "override_custom_extensions_value", false, "false",
+		    "Value for the custom extensions override.");
 
-  params.set_bool(base, "non_standard_interrupts", false, "false",
-             "Value for the custom extensions override.");
+ if (!params.exist(base, "non_standard_interrupts"))
+     params.set_bool(base, "non_standard_interrupts", false, "false",
+		     "Value for the custom extensions override.");
 
-  params.set_bool(base, "unified_traps", false, "false",
-             "Unify all kind of traps with the exceptions.");
+  if (!params.exist(base, "unified_traps"))
+    params.set_bool(base, "unified_traps", false, "false",
+		    "Unify all kind of traps with the exceptions.");
 
-  params.set_uint64_t(base, "nmi_mcause", 0x00000020, "0x00000020",
-             "Value of MCAUSE in case of NMI. It does not include the interrupt bit.");
+  if (!params.exist(base, "nmi_mcause"))
+    params.set_uint64_t(base, "nmi_mcause", 0x00000020, "0x00000020",
+			"Value of MCAUSE in case of NMI. It does not include the interrupt bit.");
 
   for (auto it = Processor::csr_params.begin(); it != Processor::csr_params.end(); it++) {
       string csr_name = it->second.name;
       if (it->second.override_mask_param) {
-        params.set_uint64_t(base, csr_name + "_override_value", (0x0UL), "0x0",
-                    csr_name + " CSR override value");
-        params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
-                    csr_name + " CSR override mask");
+	if (!params.exist(base, csr_name + "_override_value"))
+          params.set_uint64_t(base, csr_name + "_override_value", (0x0UL), "0x0",
+			      csr_name + " CSR override value");
+        if (!params.exist(base, csr_name + "_override_mask"))
+          params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
+			      csr_name + " CSR override mask");
       }
       if (it->second.presence_param) {
-        params.set_bool(base, csr_name + "_presence", true, "true",
-                    csr_name + " CSR presence");
+        if (!params.exist(base, csr_name + "_presence"))
+          params.set_bool(base, csr_name + "_presence", true, "true",
+			  csr_name + " CSR presence");
       }
       if (it->second.write_enable_param) {
-        params.set_bool(base, csr_name + "_we_enable", false, "false",
-                    csr_name +" CSR Write Enable param enable");
-        params.set_bool(base, csr_name + "_we", false, "false",
-                    csr_name + " CSR Write Enable value");
+        if (!params.exist(base, csr_name + "_we_enable"))
+          params.set_bool(base, csr_name + "_we_enable", false, "false",
+			  csr_name +" CSR Write Enable param enable");
+        if (!params.exist(base, csr_name + "_we"))
+          params.set_bool(base, csr_name + "_we", false, "false",
+			  csr_name + " CSR Write Enable value");
       }
       if (it->second.write_mask_param) {
-        params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
+        if (!params.exist(base, csr_name + "_write_mask"))
+          params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
                     csr_name + " CSR write mask");
       }
   }
 
-  params.set_uint64_t(base, "trigger_count", 0x0000004, "0x00000004",
-             "Number of enabled triggers");
-
+  if (!params.exist(base, "trigger_count"))
+    params.set_uint64_t(base, "trigger_count", 0x0000004, "0x00000004",
+			"Number of enabled triggers");
 }
 
 inline void Processor::set_XPR(reg_t num, reg_t value) {
