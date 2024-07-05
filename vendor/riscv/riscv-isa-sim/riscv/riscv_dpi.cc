@@ -39,20 +39,24 @@ Params params;
 std::unique_ptr<YamlParamSetter> paramSetter;
 
 extern "C" void spike_set_default_params(const char *profile) {
-  if (strcmp(profile, "cva6") == 0) {
+  if (strncmp(profile, "cv64a", 5) == 0) {
     params.set_string("/top/", "isa", std::string("RV64GC"));
     params.set_string("/top/", "priv", std::string(DEFAULT_PRIV)); // MSU
-    params.set_string("/top/core/0/", "name", std::string("cva6"));
-    params.set_string("/top/core/0/", "isa", std::string("RV64GC"));
-  } else {
+    params.set_string("/top/cores/", "isa", std::string("RV64GC"));
+  } else if (strncmp(profile, "cv32a", 5) == 0) {
     params.set_string("/top/", "isa", std::string("RV32IMC"));
     params.set_string("/top/", "priv", std::string("M"));
-    params.set_string("/top/core/0/", "name", std::string("cv32a65x"));
-    params.set_string("/top/core/0/", "isa", std::string("RV32IMC"));
+    params.set_string("/top/cores/", "isa", std::string("RV32IMC"));
+  } else  {
+    std::cerr << "[SPIKE] spike_set_default_params(): UNSUPPORTED target config '" << profile << "', cannot continue!\n";
+    exit(1);
   }
+  params.set_string("/top/core/0/", "name", std::string(profile));
   params.set_uint64_t("/top/", "num_procs", 0x1UL);
   params.set_bool("/top/", "bootrom", true);
   params.set_bool("/top/", "generic_core_config", false);
+  params.set_uint64_t("/top/", "bootrom_base", 0x10000UL);
+  params.set_uint64_t("/top/", "bootrom_size", 0x1000UL);
   params.set_uint64_t("/top/", "dram_base", 0x80000000UL);
   params.set_uint64_t("/top/", "dram_size", 0x400UL * 1024 * 1024);
   params.set_bool("/top/", "max_steps_enabled", false);
