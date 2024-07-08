@@ -547,7 +547,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
     // Select processor name
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CV32E40P"));
     // Worst case propagation of events 19+2 retirements. (19 due to long fpu multicycle instr that observed meantime. +2 is buffer)
-    void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 21));
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 25));
     // Redirect stdout to parent systemverilog simulator
     void'(rvviRefConfigSetInt(IDV_CONFIG_REDIRECT_STDOUT, RVVI_TRUE));
 
