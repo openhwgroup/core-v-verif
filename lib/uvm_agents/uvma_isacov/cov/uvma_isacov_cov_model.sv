@@ -1951,7 +1951,7 @@ covergroup cg_sequential(string name,
                                                                      BRANCH_GROUP};
   }
 
-  cross_seq_csr_hazard_x2: cross cp_csr, cp_instr, cp_csr_hazard {
+  cross_seq_csr_hazard_x2: cross cp_csr, cp_group, cp_csr_hazard {
     // Ignore non-hazard bins
     ignore_bins IGN_HAZ = binsof(cp_csr_hazard) intersect {0};
   }
