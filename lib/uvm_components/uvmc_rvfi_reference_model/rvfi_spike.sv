@@ -20,6 +20,9 @@ import "DPI-C" function int spike_create(string filename);
 import "DPI-C" function void spike_set_param_uint64_t(string base, string name, longint unsigned value);
 import "DPI-C" function void spike_set_param_str(string base, string name, string value);
 import "DPI-C" function void spike_set_param_bool(string base, string name, bit value);
+import "DPI-C" function longint unsigned spike_get_param_uint64_t(string base, string name);
+import "DPI-C" function string spike_get_param_str(string base, string name);
+import "DPI-C" function bit spike_get_param_bool(string base, string name);
 import "DPI-C" function void spike_set_default_params(string profile);
 import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
 
@@ -30,6 +33,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         string binary, config_file;
         string rtl_isa, rtl_priv;
         string base;
+        longint unsigned boot_addr;
 
         base = $sformatf("/top/core/%0d/", core_cfg.mhartid);
 
@@ -42,8 +46,15 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
         void'(spike_set_default_params(core_name));
 
-        if($value$plusargs("config_file=%s", config_file)) begin
+        if ($value$plusargs("config_file=%s", config_file)) begin
             void'(spike_set_params_from_file(config_file));
+            // If core address is not set or is zero (FORNOW no way to discriminate
+            // between these conditions), take the "/top/core_configs/boot_addr" value
+            // (possibly equal to zero).
+            boot_addr = spike_get_param_uint64_t(base, "boot_addr");
+            if (boot_addr == 0)
+                boot_addr = spike_get_param_uint64_t("/top/core_configs/", "boot_addr");
+
         end else begin
             rtl_isa = get_isa_str(core_cfg);
 
@@ -87,12 +98,23 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
                 void'(spike_set_param_uint64_t("/top/", "dram_size", core_cfg.dram_size));
             end
 
-            if (core_cfg.boot_addr_valid) begin
-                void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
+            // FORNOW FIXME TODO: Hardcoded bootrom base address
+            boot_addr = 64'h10000;
+        end
+
+        // Override default boot address with the address from UVM config.
+        if (core_cfg.boot_addr_valid) begin
+	    if (boot_addr != core_cfg.boot_addr) begin
+                `uvm_warning("SPIKE tandem",
+                             $sformatf("Overriding default boot address 0x%08h with UVM setting: 0x%08h",
+                                       boot_addr, core_cfg.boot_addr));
+                boot_addr = core_cfg.boot_addr;
             end
         end
 
-        `uvm_info("spike_tandem", $sformatf("core_name : %s", core_name), UVM_LOW);
+        void'(spike_set_param_uint64_t(base, "boot_addr", boot_addr));
+        `uvm_info("spike_tandem", $sformatf("core_name: %s", core_name), UVM_LOW);
+        `uvm_info("spike_tandem", $sformatf("boot_addr: 0x%08h", boot_addr), UVM_LOW);
 
         if (core_name == "cve2") begin
             void'(spike_set_param_uint64_t(base, "mstatus_override_mask", 64'hFFFFFFFF));

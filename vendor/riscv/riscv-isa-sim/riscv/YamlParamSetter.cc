@@ -50,7 +50,7 @@ namespace openhw {
         else if (param.type == "uint64_t") {
             uint64_t uint64Value = paramIterator->second.as<uint64_t>();
             this->params->set_uint64_t(paramBase, paramName, uint64Value, param.default_value, param.description);
-            std::cout << "[OK] " << paramBase + paramName << ": " << uint64Value << endl;
+            std::cout << "[OK] " << paramBase + paramName << ": 0x" << std::hex << uint64Value << endl;
         }
     }
 }

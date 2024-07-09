@@ -80,6 +80,21 @@ extern "C" void spike_set_param_bool(const char *base, const char *name,
   params.set_bool(base, name, value);
 }
 
+extern "C" uint64_t spike_get_param_uint64_t(const char *base, const char *name)
+{
+  return params.get(base, name).a_uint64_t;
+}
+
+extern "C" const char *spike_get_param_str(const char *base, const char *name)
+{
+  return params.get(base, name).a_string.c_str();
+}
+
+extern "C" bool spike_get_param_bool(const char *base, const char *name)
+{
+  return params.get(base, name).a_bool;
+}
+
 extern "C" void spike_set_params_from_file(const char *yaml_config_path) {
   cerr << "[SPIKE] Setting parameters from file : " << yaml_config_path << endl;
   paramSetter = std::make_unique<YamlParamSetter>(&params, yaml_config_path);
