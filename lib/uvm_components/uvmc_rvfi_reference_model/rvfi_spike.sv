@@ -105,9 +105,9 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         // Override default boot address with the address from UVM config.
         if (core_cfg.boot_addr_valid) begin
 	    if (boot_addr != core_cfg.boot_addr) begin
-                `uvm_warning("SPIKE tandem",
-                             $sformatf("Overriding default boot address 0x%08h with UVM setting: 0x%08h",
-                                       boot_addr, core_cfg.boot_addr));
+                `uvm_info("SPIKE tandem",
+                         $sformatf("Overriding default boot address 0x%08h with UVM setting: 0x%08h",
+                                   boot_addr, core_cfg.boot_addr), UVM_NONE);
                 boot_addr = core_cfg.boot_addr;
             end
         end
