@@ -52,26 +52,20 @@ class cvxif_t : public cvxif_extn_t
       return false;
     else switch (insn_r.funct3)
     {
-      case Func3::FUNC3_0:
+      case FUNC3_0:
         //CUS_NOP have rd equal to zero
         return (insn_r.rd != 0x0);
-      case Func3::FUNC3_1:
-        switch (insn_r.funct7)
-        {
-          case Func7::CUS_ADD:
-            return true;
-          case Func7::CUS_DOUBLE_RS1:
-            return true;
-          case Func7::CUS_DOUBLE_RS2:
-            return true;
-          case Func7::CUS_ADD_MULTICYCLE:
-            return true;
-          default:
-            return false;
-        }
-      case Func3::FUNC3_2, Func3::FUNC3_3:
+
+      case FUNC3_1:
+        //Only CUS_ADD
+        return true;
+      
+      case FUNC3_2:
+        //Only CUS_EXC
         return false;
+      
       default:
+        // All other cases: writeback is assumed REQUIRED.
         return false;
     }
   }
@@ -108,27 +102,61 @@ class cvxif_t : public cvxif_extn_t
     switch (r_insn.funct3)
     {
       case FUNC3_0:
-          switch (r_insn.funct7)
-          {
-            // CUS_NOP
-            case (0x00):
-              break;
-            default:
+        switch (r_insn.funct7 & 0x1) {
+          case NO_RS3:
+            switch (r_insn.funct7 & 0x7e) {
+              case CUS_NOP:
+                break;
+              case CUS_U_ADD:
+                if (p -> get_state() -> prv != PRV_U) {
+                  illegal_instruction();
+                }
+                return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) RS3);
+
+              case CUS_S_ADD:
+                if (p -> get_state() -> prv != PRV_S) {
+                  illegal_instruction();
+                }
+                return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
+
+              case CUS_ADD_MULTI:
+                return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
+
+              default:
+                illegal_instruction();
+            }
+            break;
+          case RS3_IN:
+            //Actually only CUS_ADD_RS3 using rs3, we don't need to add another switch case
+            if (p -> get_nb_register_source() != 3) {
               illegal_instruction();
-          }
-      case FUNC3_1:
-        switch(r_insn.funct7) {
-          case Func7::CUS_ADD:
-            return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
-          case Func7::CUS_DOUBLE_RS1:
-            return (reg_t) ((reg_t) RS1 + (reg_t) RS1);
-          case Func7::CUS_DOUBLE_RS2:
-            return (reg_t) ((reg_t) RS2 + (reg_t) RS2);
-          case Func7::CUS_ADD_MULTICYCLE:
-            return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
+            }
+            return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) RS3);
           default:
             illegal_instruction();
         }
+        break;
+      case FUNC3_1:
+        switch(r_insn.funct7) {
+          case 0:
+            return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
+            break;
+          default:
+            illegal_instruction();
+        }
+      
+      case FUNC3_2:
+        switch (r_insn.funct7) {
+          case (0x60):
+            if (r_insn.rs2 != 0 || r_insn.rd != 0){
+              illegal_instruction();
+            } else {
+              raise_exception(insn, (reg_t) (r_insn.rs1));
+            }
+            break;
+          default:
+            illegal_instruction();
+          }
       default:
         illegal_instruction();
     }
