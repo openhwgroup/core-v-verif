@@ -43,8 +43,9 @@ extern "C" void spike_set_default_params(const char *profile) {
     params.set_string("/top/", "isa", std::string("RV64GC"));
     params.set_string("/top/", "priv", std::string(DEFAULT_PRIV)); // MSU
     params.set_string("/top/cores/", "isa", std::string("RV64GC"));
-  } else if (strncmp(profile, "cv32a", 5) == 0) {
-    params.set_string("/top/", "isa", std::string("RV32IMC"));
+  } else if ((strncmp(profile, "cv32a", 5) == 0) || (strcmp(profile, "hwconfig") == 0)) {
+    // FIXME TODO: We assume hwconfig is a #@b configuration.
+    // params.set_string("/top/", "isa", std::string("RV32IMC"));
     params.set_string("/top/", "priv", std::string("M"));
     params.set_string("/top/cores/", "isa", std::string("RV32IMC"));
   } else  {
