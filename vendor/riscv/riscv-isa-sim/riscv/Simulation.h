@@ -67,6 +67,8 @@ public:
    * */
   Simulation(Params &params);
 
+  Processor* get_core_by_id(size_t i);
+
 private:
   uint64_t total_steps = 0;
   uint64_t max_steps;

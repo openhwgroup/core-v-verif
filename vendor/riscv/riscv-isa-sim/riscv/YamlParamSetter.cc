@@ -36,20 +36,28 @@ namespace openhw {
     void YamlParamSetter::redefineParameter(std::string base, std::string paramBase, YAML::const_iterator paramIterator) {
         std::string paramName = paramIterator->first.as<std::string>();
         std::string setValue = "";
-        Param param = this->params->get(base, paramName);
-        if (param.type == "string") {
+        std::string paramValue = paramIterator->second.as<std::string>();
+        std::string paramType;
+        if (paramValue == "true" or paramValue == "false")
+            paramType = "bool";
+        else if (paramValue[0] >= '0' && paramValue[0] <= '9' )
+            paramType = "uint64_t";
+        else
+            paramType = "string";
+
+        if (paramType == "string") {
             std::string stringValue = paramIterator->second.as<std::string>();
-            this->params->set_string(paramBase, paramName, stringValue, param.default_value, param.description);
+            this->params->set_string(paramBase, paramName, stringValue);
             std::cout << "[OK] " << paramBase + paramName << ": " << stringValue << endl;
         }
-        else if (param.type == "bool") {
+        else if (paramType == "bool") {
             bool boolValue = paramIterator->second.as<bool>();
-            this->params->set_bool(paramBase, paramName, boolValue, param.default_value, param.description);
+            this->params->set_bool(paramBase, paramName, boolValue);
             std::cout << "[OK] " << paramBase + paramName << ": " << boolValue << endl;
         }
-        else if (param.type == "uint64_t") {
+        else if (paramType == "uint64_t") {
             uint64_t uint64Value = paramIterator->second.as<uint64_t>();
-            this->params->set_uint64_t(paramBase, paramName, uint64Value, param.default_value, param.description);
+            this->params->set_uint64_t(paramBase, paramName, uint64Value);
             std::cout << "[OK] " << paramBase + paramName << ": 0x" << std::hex << uint64Value << endl;
         }
     }

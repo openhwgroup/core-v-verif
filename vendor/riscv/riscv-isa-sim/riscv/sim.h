@@ -62,8 +62,8 @@ public:
   // Callback for processors to let the simulation know they were reset.
   virtual void proc_reset(unsigned id) override;
 
-  void switch_to_target() { this->target.switch_to();}
-  void switch_to_host() { this->host->switch_to();}
+  void switch_to_target() {this->target.switch_to();}
+  void switch_to_host() {this->host->switch_to();}
 
 protected:
   isa_parser_t isa;
