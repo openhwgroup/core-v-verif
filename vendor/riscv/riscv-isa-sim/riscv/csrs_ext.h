@@ -12,7 +12,9 @@
 #include "memtracer.h"
 #include "csrs.h"
 #include <unordered_map>
+#include <map>
 #include <cassert>
+#include <string>
 
 class processor_t;
 namespace openhw {
@@ -57,6 +59,10 @@ public:
 
   virtual bool backdoor_write(const reg_t val) noexcept;
 
+  virtual std::string get_name() noexcept;
+
+  virtual void set_name(std::string new_name) noexcept;
+
 private:
   reg_t value;
 
@@ -67,7 +73,12 @@ protected:
   processor_t *const proc;
   state_t *const state;
   friend class Processor;
+
+  static std::string addr2name(uint64_t addr);
+
+  std::string name;
 };
+
 
 } // namespace openhw
 

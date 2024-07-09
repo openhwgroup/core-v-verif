@@ -16,6 +16,7 @@
 `define __RVFI_SPIKE_SV__
 
 import "DPI-C" function int spike_create(string filename);
+import "DPI-C" function void spike_delete();
 
 import "DPI-C" function void spike_set_param_uint64_t(string base, string name, longint unsigned value);
 import "DPI-C" function void spike_set_param_str(string base, string name, string value);

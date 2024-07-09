@@ -211,7 +211,7 @@ Processor::Processor(
   registered_extensions_v["cvxif"] = false;
 
   base = "/top/core/" + std::to_string(id) + "/";
-  Processor::default_params(base, this->params);
+  Processor::default_params(base, this->params, this);
   Params::parse_params(base, this->params, params_);
 
   string isa_str = this->params[base + "isa"].a_string;
@@ -226,13 +226,23 @@ Processor::Processor(
   uint64_t trigger_count = this->params[base + "trigger_count"].a_uint64_t;
   ((cfg_t *)cfg)->trigger_count = trigger_count;
 
-  disassembler = new disassembler_t(this->isa);
+  if (disassembler != NULL)
+      delete disassembler;
+
+  this->disassembler = new disassembler_t(this->isa);
 
   for (auto e : this->isa->get_extensions()) {
     register_extension(e.second);
   }
 
-  processor_t::set_pmp_num(this->params[base + "pmpregions"].a_uint64_t);
+  this->taken_trap = false;
+  this->taken_debug = false;
+  this->nmi_inject = false;
+
+
+  uint64_t pmpregions = this->params[base + "pmpregions"].a_uint64_t;
+  std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions << std::endl;
+  processor_t::set_pmp_num(pmpregions);
 
   ((cfg_t *)cfg)->misaligned =
       (this->params[base + "misaligned"]).a_bool;
@@ -299,17 +309,14 @@ Processor::~Processor() {
         delete e.second;
 }
 
-void Processor::default_params(string base, openhw::Params &params) {
-  if (!params.exist(base, "isa"))
-    params.set_string(base, "isa", "RV32GC", "RV32GC", "ISA");
-  if (!params.exist(base, "priv"))
-    params.set_string(base, "priv", DEFAULT_PRIV, DEFAULT_PRIV, "Privilege Level");
-  if (!params.exist(base, "boot_addr"))
-    params.set_uint64_t(base, "boot_addr", 0x80000000UL, "0x80000000UL",
-                        "First PC of the core");
-  if (!params.exist(base, "mmu_mode"))
-    params.set_string(base, "mmu_mode", "sv39", "sv39",
-                      "Memory virtualization mode");
+void Processor::default_params(string base, openhw::Params &params, Processor *proc) {
+  params.set_string(base, "isa", "RV32GC", "RV32GC",
+             "ISA");
+  params.set_string(base, "priv", DEFAULT_PRIV, DEFAULT_PRIV, "Privilege Level");
+  params.set_uint64_t(base, "boot_addr", 0x80000000UL, "0x80000000UL",
+             "First PC of the core");
+  params.set_string(base, "mmu_mode", "sv39", "sv39",
+             "Memory virtualization mode");
 
   if (!params.exist(base, "pmpregions"))
     params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
@@ -383,33 +390,21 @@ void Processor::default_params(string base, openhw::Params &params) {
     params.set_uint64_t(base, "nmi_mcause", 0x00000020, "0x00000020",
 			"Value of MCAUSE in case of NMI. It does not include the interrupt bit.");
 
-  for (auto it = Processor::csr_params.begin(); it != Processor::csr_params.end(); it++) {
-      string csr_name = it->second.name;
-      if (it->second.override_mask_param) {
-	if (!params.exist(base, csr_name + "_override_value"))
-          params.set_uint64_t(base, csr_name + "_override_value", (0x0UL), "0x0",
-			      csr_name + " CSR override value");
-        if (!params.exist(base, csr_name + "_override_mask"))
-          params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
-			      csr_name + " CSR override mask");
-      }
-      if (it->second.presence_param) {
-        if (!params.exist(base, csr_name + "_presence"))
-          params.set_bool(base, csr_name + "_presence", true, "true",
-			  csr_name + " CSR presence");
-      }
-      if (it->second.write_enable_param) {
-        if (!params.exist(base, csr_name + "_we_enable"))
-          params.set_bool(base, csr_name + "_we_enable", false, "false",
-			  csr_name +" CSR Write Enable param enable");
-        if (!params.exist(base, csr_name + "_we"))
-          params.set_bool(base, csr_name + "_we", false, "false",
-			  csr_name + " CSR Write Enable value");
-      }
-      if (it->second.write_mask_param) {
-        if (!params.exist(base, csr_name + "_write_mask"))
-          params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
-                    csr_name + " CSR write mask");
+  for (auto it = proc->get_state()->csrmap.begin(); it != proc->get_state()->csrmap.end(); it++) {
+      string csr_name = it->second.get()->get_name();
+      if (csr_name != "noname") {
+        params.set_uint64_t(base, csr_name + "_override_value", (0x0UL), "0x0",
+                    csr_name + " CSR override value");
+        params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
+                    csr_name + " CSR override mask");
+        params.set_bool(base, csr_name + "_presence", true, "true",
+                    csr_name + " CSR presence");
+        params.set_bool(base, csr_name + "_we_enable", false, "false",
+                    csr_name +" CSR Write Enable param enable");
+        params.set_bool(base, csr_name + "_we", false, "false",
+                    csr_name + " CSR Write Enable value");
+        params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
+                        csr_name + " CSR write mask");
       }
   }
 
@@ -434,6 +429,11 @@ void Processor::put_csr(int which, reg_t val)
     search->second->write(val);
     return;
   }
+}
+
+reg_t Processor::get_csr(int which)
+{
+    return this->get_csr(which, 0, 0, 1);
 }
 
 reg_t Processor::get_csr(int which, insn_t insn, bool write, bool peek)
@@ -469,12 +469,14 @@ void Processor::reset()
 
     this->get_state()->debug_mode = 1;
 
-    for (auto it = Processor::csr_params.begin(); it != Processor::csr_params.end(); it++) {
-        string csr_name = it->second.name;
+    auto it = this->get_state()->csrmap.begin();
+    while (it != this->get_state()->csrmap.end()) {
 
-        openhw::reg* p_csr = (openhw::reg*) this->state.csrmap[it->first].get();
+        openhw::reg* p_csr = (openhw::reg*) it->second.get();
+        std::string csr_name = reg::addr2name(it->first);
+        if (csr_name != "") {
+            p_csr->set_name(csr_name);
 
-        if (it->second.override_mask_param) {
             uint64_t override_mask = (this->params[base + csr_name + "_override_mask"]).a_uint64_t;
             uint64_t override_value = (this->params[base + csr_name + "_override_value"]).a_uint64_t;
 
@@ -483,27 +485,27 @@ void Processor::reset()
             // Write the value to the CSR
             p_csr->backdoor_write(val);
             // Affect possible dependencies
-            p_csr->write(val);
-        }
+            if (val != p_csr->read())
+                p_csr->write(val);
 
-        if (it->second.presence_param) {
-            bool presence = (this->params[base + csr_name + "_presence"]).a_bool;
-            auto csr_it = state.csrmap.find(it->first);
-            if (csr_it != state.csrmap.end() and !presence)
-                state.csrmap.erase(csr_it);
-        }
-
-        if (it->second.write_enable_param) {
             bool we_enable = (this->params[base + csr_name + "_we_enable"]).a_bool;
             bool we = (this->params[base + csr_name + "_we"]).a_bool;
             if (we_enable)
                 p_csr->set_we(we);
-        }
-        if (it->second.write_mask_param) {
+
+            string write_mask_string = base + csr_name + "_write_mask";
             uint64_t write_mask = (this->params[base + csr_name + "_write_mask"]).a_uint64_t;
             p_csr->set_param_write_mask(write_mask);
-        }
 
+            bool presence = (this->params[base + csr_name + "_presence"]).a_bool;
+            if (!presence)
+                state.csrmap.erase(it++);
+            else
+                it++;
+
+        }
+        else
+            it++;
     }
 
     this->get_state()->debug_mode = 0;
@@ -540,8 +542,8 @@ void Processor::take_interrupt(reg_t pending_interrupts) {
 
   processor_t::take_interrupt(pending_interrupts);
 
-  if (nmi_inject && !this->taken_trap && pending_interrupts == 0) {
-    nmi_inject = false;
+  if (this->nmi_inject && !this->taken_trap && pending_interrupts == 0) {
+    this->nmi_inject = false;
     uint64_t nmi_mcause = (this->params[base + "nmi_mcause"]).a_uint64_t;
     throw trap_t(((reg_t)1 << (isa->get_max_xlen() - 1)) | nmi_mcause);
   }
@@ -578,20 +580,6 @@ void Processor::enter_debug_mode(uint8_t cause) {
     this->which_debug = cause;
 
 }
-
-std::unordered_map<uint64_t, openhw::csr_param_t> Processor::csr_params = {
-    // ADDRESS          NAME      OVERRIDE_MASKS         PRESENCE        WRITE_ENABLE        WRITE_MASK
-    { CSR_MSTATUS   , {"mstatus"    ,  true    ,           false       ,   true             , true} },
-    { CSR_MISA      , {"misa"       ,  true    ,           false       ,   true             , true} },
-    { CSR_MHARTID   , {"mhartid"    ,  true    ,           false       ,   true             , true} },
-    { CSR_MARCHID   , {"marchid"    ,  true    ,           false       ,   true             , true} },
-    { CSR_MVENDORID , {"mvendorid"  ,  true    ,           false       ,   true             , true} },
-    { CSR_TDATA1    , {"tdata1"     ,  true    ,           false       ,   true             , true} },
-    { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,   true             , true} },
-    { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,   true             , true} },
-    { CSR_MTVAL     , {"mtval"      ,  true    ,           false       ,   true             , true} },
-    { CSR_MTVEC     , {"mtvec"      ,  true    ,           false       ,   true             , true} },
-  };
 
 std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {
     { 'M',  {0x300, 0xFFF} },

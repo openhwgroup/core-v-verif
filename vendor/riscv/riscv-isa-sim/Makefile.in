@@ -127,15 +127,15 @@ yaml-cpp-static: $(install_libs_dir)/libyaml-cpp.a
 $(install_hdrs_dir)/yaml-cpp $(install_libs_dir)/libyaml-cpp.so :
 	rm -rf $(YAMLDIR)/build
 	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(INSTALLDIR) -DCMAKE_INSTALL_LIBDIR=$(install_libs_dir) -DYAML_BUILD_SHARED_LIBS=on
-	make -C $(YAMLDIR)/build
-	make -C $(YAMLDIR)/build install
+	make -C $(YAMLDIR)/build -j $(NUM_JOBS)
+	make -C $(YAMLDIR)/build install -j $(NUM_JOBS)
 
 # Build and install the static version of the library.
 $(install_libs_dir)/libyaml-cpp.a :
 	rm -rf $(YAMLDIR)/build
 	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(INSTALLDIR) -DCMAKE_INSTALL_LIBDIR=$(install_libs_dir) -DYAML_BUILD_SHARED_LIBS=off
-	make -C $(YAMLDIR)/build
-	make -C $(YAMLDIR)/build install
+	make -C $(YAMLDIR)/build -j $(NUM_JOBS)
+	make -C $(YAMLDIR)/build install -j $(NUM_JOBS)
 
 .PHONY : yaml-cpp yaml-cpp-static
 
@@ -327,7 +327,7 @@ $(2)_prog_libarg    := $$(patsubst %, -l%, $$($(2)_prog_libs))
 $$($(2)_prog_objs) : %.o : %.cc
 	$(COMPILE) -c $$<
 
-$$($(2)_prog_exes) : % : %.o $$($(2)_prog_libnames) 
+$$($(2)_prog_exes) : % : %.o $$($(2)_prog_libnames)
 	$(LINK) -o $$@ $$< $$($(2)_prog_libnames) $(LIBS_EXE) $$($(2)_LDFLAGS)
 
 $(2)_deps += $$($(2)_prog_deps)
