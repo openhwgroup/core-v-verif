@@ -46,19 +46,19 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
         void'(spike_set_default_params(core_name));
 
+        rtl_isa = get_isa_str(core_cfg);
+        rtl_priv = get_priv_str(core_cfg);
+
         if ($value$plusargs("config_file=%s", config_file)) begin
             void'(spike_set_params_from_file(config_file));
             // If core address is not set or is zero (FORNOW no way to discriminate
-            // between these conditions), take the "/top/core_configs/boot_addr" value
+            // between these conditions), take the "/top/cores/boot_addr" value
             // (possibly equal to zero).
             boot_addr = spike_get_param_uint64_t(base, "boot_addr");
             if (boot_addr == 0)
-                boot_addr = spike_get_param_uint64_t("/top/core_configs/", "boot_addr");
+                boot_addr = spike_get_param_uint64_t("/top/cores/", "boot_addr");
 
         end else begin
-            rtl_isa = get_isa_str(core_cfg);
-
-            rtl_priv = get_priv_str(core_cfg);
 
             if (core_cfg.ext_cv32a60x_supported) begin
                 void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
@@ -66,10 +66,6 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
             void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
 
-            void'(spike_set_param_str("/top/", "isa", rtl_isa));
-            void'(spike_set_param_str(base, "isa", rtl_isa));
-            void'(spike_set_param_str("/top/", "priv", rtl_priv));
-            void'(spike_set_param_str(base, "priv", rtl_priv));
             void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
 
             void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
@@ -102,6 +98,11 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             boot_addr = 64'h10000;
         end
 
+        void'(spike_set_param_str("/top/", "isa", rtl_isa));
+        void'(spike_set_param_str(base, "isa", rtl_isa));
+        void'(spike_set_param_str("/top/", "priv", rtl_priv));
+        void'(spike_set_param_str(base, "priv", rtl_priv));
+
         // Override default boot address with the address from UVM config.
         if (core_cfg.boot_addr_valid) begin
 	    if (boot_addr != core_cfg.boot_addr) begin
@@ -115,6 +116,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         void'(spike_set_param_uint64_t(base, "boot_addr", boot_addr));
         `uvm_info("spike_tandem", $sformatf("core_name: %s", core_name), UVM_LOW);
         `uvm_info("spike_tandem", $sformatf("boot_addr: 0x%08h", boot_addr), UVM_LOW);
+        `uvm_info("spike_tandem", $sformatf("isa: '%s'", rtl_isa), UVM_LOW);
 
         if (core_name == "cve2") begin
             void'(spike_set_param_uint64_t(base, "mstatus_override_mask", 64'hFFFFFFFF));
