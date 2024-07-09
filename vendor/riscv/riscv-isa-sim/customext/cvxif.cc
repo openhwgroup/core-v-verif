@@ -69,7 +69,8 @@ class cvxif_t : public cvxif_extn_t
           default:
             return false;
         }
-      case Func3::FUNC3_2, Func3::FUNC3_3:
+      case Func3::FUNC3_2:
+      case Func3::FUNC3_3:
         return false;
       default:
         return false;
