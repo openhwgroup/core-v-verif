@@ -154,7 +154,6 @@ function void uvma_pma_agent_c::create_components();
 
    scoreboard      = uvma_pma_sb_c#(ILEN,XLEN)            ::type_id::create("scoreboard"     , this);
    cov_model       = uvma_pma_cov_model_c                 ::type_id::create("cov_model"      , this);
-  // region_cov_model       = uvma_pma_region_cov_model_c                 ::type_id::create("region_cov_model"      , this);
    region_cov_model = new[cfg.regions.size()];
    foreach (region_cov_model[i]) begin
       region_cov_model[i] = uvma_pma_region_cov_model_c   ::type_id::create($sformatf("region_cov_model%0d", i), this);
@@ -182,7 +181,7 @@ function void uvma_pma_agent_c::connect_analysis_ports();
    end else begin
       mon_ap =  monitor_axi.ap;
    end
-   //Establishing connections between monitor ports and sequencer
+   //Establishing connections between monitor ports and scoreboard
    this.mon_ap.connect(scoreboard.pma_export);
 
 endfunction : connect_analysis_ports

@@ -33,6 +33,7 @@ class uvma_pma_cfg_c#(int ILEN=DEFAULT_ILEN,
    // PMA regions
    uvma_core_cntrl_pma_region_c  regions[];
 
+
    `uvm_object_param_utils_begin(uvma_pma_cfg_c#(ILEN,XLEN))
       `uvm_field_int (                         enabled           , UVM_DEFAULT)
       `uvm_field_enum(uvm_active_passive_enum, is_active         , UVM_DEFAULT)
@@ -84,19 +85,9 @@ endfunction : new
 
 function int uvma_pma_cfg_c::get_pma_region_for_addr(bit[XLEN-1:0] addr);
 
-   // In default PMA configurations overlapping regions map from low index to high
    for (int i = 0; i < regions.size(); i++) begin
-      if (memory_intf == UVMA_PMA_AXI_INTF) begin
-         if (addr_in_region(addr, regions[i]))
-            return i;
-      end
-      else if (memory_intf == UVMA_PMA_OBI_INTF) begin
-         if (regions[i].is_addr_in_region(addr))
-            return i;
-      end
-     else begin
-     `uvm_fatal("CFG", "Configuration does not contain valid memory interface")
-     end
+      if (addr_in_region(addr, regions[i]))
+         return i;
    end
 
    return -1;

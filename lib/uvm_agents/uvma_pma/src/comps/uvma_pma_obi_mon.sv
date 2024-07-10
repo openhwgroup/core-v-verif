@@ -25,8 +25,10 @@ class uvma_pma_obi_mon_c#(int ILEN=DEFAULT_ILEN,int XLEN=DEFAULT_XLEN) extends u
    uvm_analysis_port#(uvma_pma_mon_trn_c)  ap;
 
    // TLM exports
-   uvm_analysis_export#(uvma_obi_memory_mon_trn_c)                   obi_export;
-   uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c)                 obi_fifo;
+   uvm_analysis_export#(uvma_obi_memory_mon_trn_c)                   obi_i_export;
+   uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c)                obi_i_fifo;
+   uvm_analysis_export#(uvma_obi_memory_mon_trn_c)                   obi_d_export;
+   uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c)                obi_d_fifo;
 
    uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_pma_obi_mon_c) rvfi_instr_export;
 
@@ -58,7 +60,7 @@ class uvma_pma_obi_mon_c#(int ILEN=DEFAULT_ILEN,int XLEN=DEFAULT_XLEN) extends u
    /**
     * OBI data
     */
-   extern virtual function void write_obi_d(uvma_obi_memory_mon_trn_c obi);
+   extern virtual function void write_obi(uvma_obi_memory_mon_trn_c obi, int access_type);
 
    /**
     * Appends cfg, prints out trn and issues heartbeat.
@@ -85,24 +87,35 @@ function void uvma_pma_obi_mon_c::build_phase(uvm_phase phase);
    end
 
    ap = new("ap", this);
-   obi_export      = new("obi_export", this);
-   obi_fifo      = new("obi_fifo", this);
+   obi_i_export    = new("obi_i_export", this);
+   obi_i_fifo      = new("obi_i_fifo", this);
+   obi_d_export    = new("obi_d_export", this);
+   obi_d_fifo      = new("obi_d_fifo", this);
    rvfi_instr_export = new("rvfi_instr_export", this);
 
-   this.obi_export.connect(this.obi_fifo.analysis_export);
+   this.obi_i_export.connect(this.obi_i_fifo.analysis_export);
+   this.obi_d_export.connect(this.obi_d_fifo.analysis_export);
 
 endfunction : build_phase
 
 task uvma_pma_obi_mon_c::run_phase(uvm_phase phase);
    uvma_obi_memory_mon_trn_c obi_trn;
+   int access_type_i;
+   int access_type_d;
+   super.run_phase(phase);
 
-   forever begin
-
-      super.run_phase(phase);
-
-      obi_fifo.get(obi_trn);
-      write_obi_d(obi_trn);
-   end
+   fork
+      forever begin
+         obi_d_fifo.get(obi_trn);
+         access_type_d = 1;
+         write_obi(obi_trn, access_type_d);
+      end
+      forever begin
+         obi_i_fifo.get(obi_trn);
+         access_type_i = 0;
+         write_obi(obi_trn, access_type_i);
+      end
+   join_any
 
 endtask : run_phase
 
@@ -140,7 +153,7 @@ function void uvma_pma_obi_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(I
 
 endfunction : write_rvfi_instr
 
-function void uvma_pma_obi_mon_c::write_obi_d(uvma_obi_memory_mon_trn_c obi);
+function void uvma_pma_obi_mon_c::write_obi(uvma_obi_memory_mon_trn_c obi, int access_type);
 
    // Create a new monitor transaction with mapped index region
    uvma_pma_mon_trn_c mon_trn;
@@ -148,7 +161,10 @@ function void uvma_pma_obi_mon_c::write_obi_d(uvma_obi_memory_mon_trn_c obi);
    mon_trn               = uvma_pma_mon_trn_c#(ILEN,XLEN)::type_id::create("mon_trn");
    process_trn(mon_trn);
 
-   mon_trn.access        = (obi.aid == 0)? UVMA_PMA_ACCESS_INSTR : UVMA_PMA_ACCESS_DATA;
+   if(access_type == 1)
+      mon_trn.access        = UVMA_PMA_ACCESS_DATA;
+   else if(access_type == -1)
+      mon_trn.access        = UVMA_PMA_ACCESS_INSTR;
    mon_trn.rw            = (obi.access_type == UVMA_OBI_MEMORY_ACCESS_READ) ? UVMA_PMA_RW_READ : UVMA_PMA_RW_WRITE;
    mon_trn.atomic        = obi.atop;
    mon_trn.address       = obi.address;
@@ -162,8 +178,8 @@ function void uvma_pma_obi_mon_c::write_obi_d(uvma_obi_memory_mon_trn_c obi);
    endcase
 
    if (mon_trn.region_index != -1) begin
-      mon_trn.is_first_word = ((obi.address >> 2) == (cfg.regions[mon_trn.region_index].word_addr_low)) ? 1 : 0;
-      mon_trn.is_last_word  = ((obi.address >> 2) == (cfg.regions[mon_trn.region_index].word_addr_high - 1)) ? 1 : 0;
+      mon_trn.is_first_word = (obi.address == cfg.regions[mon_trn.region_index].word_addr_low) ? 1 : 0;
+      mon_trn.is_last_word  = (obi.address == cfg.regions[mon_trn.region_index].word_addr_high-1) ? 1 : 0;
    end
 
    if (mon_trn.region_index == -1) begin
@@ -172,6 +188,6 @@ function void uvma_pma_obi_mon_c::write_obi_d(uvma_obi_memory_mon_trn_c obi);
 
    ap.write(mon_trn);
 
-endfunction : write_obi_d
+endfunction : write_obi
 
 `endif // __UVMA_PMA_MON_SV__
