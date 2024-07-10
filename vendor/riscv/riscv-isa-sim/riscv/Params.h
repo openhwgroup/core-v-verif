@@ -181,6 +181,8 @@ public:
 
   void print_table(string param_set);
 
+  void dump(void);
+
   std::vector<size_t> get_hartids() {
     std::vector<size_t> mhartids;
     regex regexp("/top/proc/[0-9]+");
