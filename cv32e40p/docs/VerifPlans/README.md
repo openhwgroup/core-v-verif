@@ -10,8 +10,8 @@ Below are two different chapters describing verification plans status and direct
 ## Short verification methodology introduction
 For CV32E40Pv2 verification, the formal verification methodology has been chosen over the stimuli-based simulation that was done for v1 version of the core. However, full verification closure is not feasible using only formal verification due to complexity of specific scenarios. All these specific uncoverable scenarios from formal verification are then exercised by stimuli-based simulation using a reference model of the core. These scenarios along with formal assertions are described inside verifications plans, for which details are given in a table below. Regarding already available v1 plans, their re-use or not is specified in this table.
 
-RISC-V ISA Formal Verification methodology is described [here](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p/dev/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_RISCV_vPlan_v1.1.pdf).
-Setup and script files to launch RISC-V ISA Formal Verification using Siemens Questa Processor tool are available [here](https://github.com/openhwgroup/cv32e40p/tree/dev/scripts/riscv_isa_formal).
+RISC-V ISA Formal Verification methodology is described [here](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_RISCV_vPlan_v1.1.pdf).
+Setup and script files to launch RISC-V ISA Formal Verification using Siemens Questa Processor tool are available [here](https://github.com/openhwgroup/cv32e40p/tree/cv32e40p_v1.8.3/scripts/riscv_isa_formal).
 
 ## Verification Plan Status
 
@@ -32,27 +32,27 @@ Under the heading `Link`, the name shown corresponds to the filename of the vpla
 
 | Category            | Feature        | VPlan Status | Review Status | Comment | Link |
 |---------------------|----------------|--------------|---------------|---------|------|
-| **Base Instruction Set** | RV32IMC + F + Zfinx + Zifencei | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-| **Interrupts**      | CLINT | v1-updated   | Complete | Addition of missing XPULP / F / Zfinx interrupts | [CV32E40Pv2_interrupts.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/interrupts/CV32E40Pv2_interrupts.xlsx "Interrupts Vplan")|
-| **Debug & Trace**   | Debug          | v1-reused | Complete | Missing XPULP-specific debug are in a separate vplan | [CV32E40Pv2_debug.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/debug-trace/CV32E40Pv2_debug.xlsx "Debug Vplan")|
-| **Privileged Spec** | CSRs / Zicsr | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-| **Micro-architecture** | OBI |  v1-reused  | Complete |         | [CV32E40P_OBI_VerifPlan.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_OBI_VerifPlan.xlsx "OBI Vplan") |
-|                        | Pipeline / Sleep Unit | v1-reused | Complete |  | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "Pipeline Sleep Vplan") |
-|                        | FPU Register File | v2-sim-new | Complete |  | [CV32E40Pv2_FPU_register_file.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40Pv2_FPU_register_file.xlsx "FPU Reg. File Vplan") |
-| **Additional ISA** | F / Zfinx | v2-sim-new | Complete | Includes uncoverable items from formal verification | [CV32E40Pv2_F-Zfinx-instructions.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/Zfinx_F_instructions/CV32E40Pv2_F-Zfinx-instructions.xlsx "Add. F/Zfinx Vplan") |
-| **XPULP** | Post-Increment Load/Store (Formal) | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-|  | Post-Increment Load/Store (Simulation) | v2-sim-new | Complete | Addition of "pipeline" with simulation (preceeding F multicycle)  | [CV32E40Pv2_xpulp-postinc-loadstore.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-postinc-loadstore.xlsx "Post-Inc Load/Store simu Vplan") |
-|  | Bitmanipulation (Formal) | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-|  | Bitmanipulation (Simulation) | v2-sim-new | Complete | Lowest priority as formal already checks everything needed, added because corev-dv generator will generate those instructions anyway  | [CV32E40Pv2_xpulp-bitmanipulation.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-bitmanipulations.xlsx "Bitmanip simu Vplan") |
-|  | General ALU (Formal) | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-|  | General ALU (Simulation) | v2-simu-new | Complete | Lowest priority as formal already checks everything needed, added because corev-dv generator will generate those instructions anyway  | [CV32E40Pv2_xpulp-general-alu.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-general-alu.xlsx "General ALU simu Vplan") |
-|  | Immediate Branching (Formal) | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-|  | Immediate Branching (Simulation) | v2-simu-new | Complete | Lowest priority as formal already checks everything needed, added because corev-dv generator will generate those instructions anyway  | [CV32E40Pv2_xpulp-immediate-branching.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-immediate-branching.xlsx "Imm Branching simu Vplan") |
-|  | MAC (Formal) | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-|  | MAC (Simulation) | v2-sim-new | Complete | Addition of missing coverage from formal (operands "toggle")   | [CV32E40Pv2_xpulp-multiply-accumulate.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-multiply-accumulate.xlsx "MAC simu Vplan") |
-|  | SIMD (Formal) | v2-formal-new | Complete |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
-|  | SIMD (Simulation) | v2-sim-new | Complete | Addition of missing coverage from formal (operands "toggle")   | [CV32E40Pv2_xpulp-packed-simd.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-packed-simd.xlsx "SIMD simu Vplan") |
-|  | HWLoop (Simulation) | v2-sim-new | Complete | Feature not test at all in formal verification | [CV32E40Pv2_xpulp-hwloop.xlsx](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-hwloop.xlsx "HWLoop Vplan") |
+| **Base Instruction Set** | RV32IMC + F + Zfinx + Zifencei | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+| **Interrupts**      | CLINT | v1-updated   | Reviewed | Addition of missing XPULP / F / Zfinx interrupts | [CV32E40Pv2_interrupts.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/interrupts/CV32E40Pv2_interrupts.xlsx "Interrupts Vplan")|
+| **Debug & Trace**   | Debug          | v1-reused | Reviewed | Missing XPULP-specific debug are in a separate vplan | [CV32E40Pv2_debug.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/debug-trace/CV32E40Pv2_debug.xlsx "Debug Vplan")|
+| **Privileged Spec** | CSRs / Zicsr | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+| **Micro-architecture** | OBI |  v1-reused  | Reviewed |         | [CV32E40P_OBI_VerifPlan.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_OBI_VerifPlan.xlsx "OBI Vplan") |
+|                        | Pipeline / Sleep Unit | v1-reused | Reviewed |  | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "Pipeline Sleep Vplan") |
+|                        | FPU Register File | v2-sim-new | Reviewed |  | [CV32E40Pv2_FPU_register_file.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40Pv2_FPU_register_file.xlsx "FPU Reg. File Vplan") |
+| **Additional ISA** | F / Zfinx | v2-sim-new | Reviewed | Includes uncoverable items from formal verification | [CV32E40Pv2_F-Zfinx-instructions.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/Zfinx_F_instructions/CV32E40Pv2_F-Zfinx-instructions.xlsx "Add. F/Zfinx Vplan") |
+| **XPULP** | Post-Increment Load/Store (Formal) | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+|  | Post-Increment Load/Store (Simulation) | v2-sim-new | Reviewed | Addition of "pipeline" with simulation (preceeding F multicycle)  | [CV32E40Pv2_xpulp-postinc-loadstore.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-postinc-loadstore.xlsx "Post-Inc Load/Store simu Vplan") |
+|  | Bitmanipulation (Formal) | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+|  | Bitmanipulation (Simulation) | v2-sim-new | Reviewed | Lowest priority as formal already checks everything needed, added because corev-dv generator will generate those instructions anyway  | [CV32E40Pv2_xpulp-bitmanipulation.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-bitmanipulations.xlsx "Bitmanip simu Vplan") |
+|  | General ALU (Formal) | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+|  | General ALU (Simulation) | v2-simu-new | Reviewed | Lowest priority as formal already checks everything needed, added because corev-dv generator will generate those instructions anyway  | [CV32E40Pv2_xpulp-general-alu.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-general-alu.xlsx "General ALU simu Vplan") |
+|  | Immediate Branching (Formal) | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+|  | Immediate Branching (Simulation) | v2-simu-new | Reviewed | Lowest priority as formal already checks everything needed, added because corev-dv generator will generate those instructions anyway  | [CV32E40Pv2_xpulp-immediate-branching.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-immediate-branching.xlsx "Imm Branching simu Vplan") |
+|  | MAC (Formal) | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+|  | MAC (Simulation) | v2-sim-new | Reviewed | Addition of missing coverage from formal (operands "toggle")   | [CV32E40Pv2_xpulp-multiply-accumulate.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-multiply-accumulate.xlsx "MAC simu Vplan") |
+|  | SIMD (Formal) | v2-formal-new | Reviewed |      | [CV32E40Pv2_Formal_VerificationPlans.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/RISC-V_ISA_Formal/CV32E40Pv2_Formal_VerificationPlans.xlsx) |
+|  | SIMD (Simulation) | v2-sim-new | Reviewed | Addition of missing coverage from formal (operands "toggle")   | [CV32E40Pv2_xpulp-packed-simd.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-packed-simd.xlsx "SIMD simu Vplan") |
+|  | HWLoop (Simulation) | v2-sim-new | Reviewed | Feature not test at all in formal verification | [CV32E40Pv2_xpulp-hwloop.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40Pv2_xpulp-hwloop.xlsx "HWLoop Vplan") |
 
 
 </br>
@@ -75,19 +75,19 @@ The tables below capture the current status of the Verification Plan for the CV3
 
 ### Base instruction set plus standard instruction extensions
 
-_Refer to the [VerifPlans/ISA/RV32/Simulation](https://github.com/openhwgroup/core-v-verif/tree/4bb9858cd7c58f8856ff544f53fe102c76ea9683/docs/VerifPlans/ISA/RV32/Simulation "ISA Simulation vPlans") directory for specific Verification Plan status for each supported extension._
+_Refer to the [VerifPlans/ISA/RV32/Simulation](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/docs/VerifPlans/ISA/RV32/Simulation "ISA Simulation vPlans") directory for specific Verification Plan status for each supported extension._
 ### Interrupts
 
 | Feature        | VPlan Status | Review Status | Comment | Link |
 |----------------|--------------|---------------|---------|------|
-| CLINT | Captured | Complete | | [CV32E40P_interrupts.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/interrupts/CV32E40P_interrupts.xlsx "v1 Interrupts Vplan") |
+| CLINT | Captured | Complete | | [CV32E40P_interrupts.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/interrupts/CV32E40P_interrupts.xlsx "v1 Interrupts Vplan") |
 | CLIC | | | Not a CV32E40P Feature | |
 
 ### Debug & Trace
 
 | Feature        | VPlan Status | Review Status | Comment | Link |
 |----------------|--------------|---------------|---------|------|
-| Debug | Captured | Complete | | [CV32E40P_debug.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/debug-trace/CV32E40P_debug.xlsx "Debug Vplan") |
+| Debug | Captured | Complete | | [CV32E40P_debug.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/debug-trace/CV32E40P_debug.xlsx "Debug Vplan") |
 | Trigger module | Captured | Complete | Not a CV32E40P Feature | |
 | Tracer | N/A | N/A | Behavioral model, not RTL | |
 
@@ -95,7 +95,7 @@ _Refer to the [VerifPlans/ISA/RV32/Simulation](https://github.com/openhwgroup/co
 
 | Feature        | VPlan Status | Review Status | Comment | Link |
 |----------------|--------------|---------------|---------|------|
-| CSRs | Incomplete | | | [CSR_Vplan.md](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/privileged_spec/CSR_Vplan.md "v1 CSR Vplan") |
+| CSRs | Incomplete | | | [CSR_Vplan.md](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/privileged_spec/CSR_Vplan.md "v1 CSR Vplan") |
 | User mode | N/A| N/A | Not a CV32E40P Feature | |
 | PMP | N/A | N/A | Not a CV32E40P Feature | |
 
@@ -103,22 +103,22 @@ _Refer to the [VerifPlans/ISA/RV32/Simulation](https://github.com/openhwgroup/co
 
 | Feature        | VPlan Status | Review Status | Comment | Link |
 |----------------|--------------|---------------|---------|------|
-| OBI     | Complete | Reviewed | | [CV32E40P_OBI_VerifPlan.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_OBI_VerifPlan.xlsx "v1 OBI Vplan") |
-| Sleep Unit | Complete | Reviewed | Updates pending based on review feedback | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "v1 Pipeline Sleep Vplan") |
-| Pipelines | Complete | Reviewed | Updates pending based on review feedback | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "v1 Pipeline Sleep Vplan") |
+| OBI     | Complete | Reviewed | | [CV32E40P_OBI_VerifPlan.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_OBI_VerifPlan.xlsx "v1 OBI Vplan") |
+| Sleep Unit | Complete | Reviewed | Updates pending based on review feedback | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "v1 Pipeline Sleep Vplan") |
+| Pipelines | Complete | Reviewed | Updates pending based on review feedback | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "v1 Pipeline Sleep Vplan") |
 
 ### Xpulp instruction extensions
 **Note**: Xpulp instructions are "exercised, but not fully verified" in CV32E40P.
 
 | Feature        | VPlan Status | Review Status | Comment | Link |
 |----------------|--------------|---------------|---------|------|
-| Post-increment load/store | Preliminary draft | | | [CV32E40P_xpulp-postinc-loadstore.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-postinc-loadstore.xlsx "v1 Post-Inc Load/Store simu Vplan") | |
-| Hardware Loop | Preliminary draft | | On-going discussions with Cores TWG | [CV32E40P_xpulp-hwloop.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-hwloop.xlsx "v1 HWLoop Vplan") |
-| Bit Manipulation | Preliminary draft | | | [CV32E40P_xpulp-bitmanipulation.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-bitmanipulations.xlsx "v1 Bitmanip simu Vplan") |
-| General ALU | Preliminary draft | | | [CV32E40P_xpulp-general-alu.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-general-alu.xlsx "v1 General ALU simu Vplan") |
-| Immediate branching | Preliminary draft | | | [CV32E40P_xpulp-immediate-branching.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-immediate-branching.xlsx "v1 Imm Branching simu Vplan") |
-| SIMD | Preliminary draft | | | [CV32E40P_xpulp-packed-simd.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-packed-simd.xlsx "v1 SIMD simu Vplan") |
-| MAC | Preliminary draft | | | [CV32E40P_xpulp-multiply-accumulate.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-multiply-accumulate.xlsx "v1 MAC simu Vplan") |
+| Post-increment load/store | Preliminary draft | | | [CV32E40P_xpulp-postinc-loadstore.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-postinc-loadstore.xlsx "v1 Post-Inc Load/Store simu Vplan") | |
+| Hardware Loop | Preliminary draft | | On-going discussions with Cores TWG | [CV32E40P_xpulp-hwloop.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-hwloop.xlsx "v1 HWLoop Vplan") |
+| Bit Manipulation | Preliminary draft | | | [CV32E40P_xpulp-bitmanipulation.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-bitmanipulations.xlsx "v1 Bitmanip simu Vplan") |
+| General ALU | Preliminary draft | | | [CV32E40P_xpulp-general-alu.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-general-alu.xlsx "v1 General ALU simu Vplan") |
+| Immediate branching | Preliminary draft | | | [CV32E40P_xpulp-immediate-branching.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-immediate-branching.xlsx "v1 Imm Branching simu Vplan") |
+| SIMD | Preliminary draft | | | [CV32E40P_xpulp-packed-simd.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-packed-simd.xlsx "v1 SIMD simu Vplan") |
+| MAC | Preliminary draft | | | [CV32E40P_xpulp-multiply-accumulate.xlsx](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-multiply-accumulate.xlsx "v1 MAC simu Vplan") |
 
 
 ### Custom circuitry
