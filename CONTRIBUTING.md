@@ -18,11 +18,11 @@ All pull-requests to OpenHW Group git repositories must be signed-off using the
 `--signoff` (or `-s`) option to the git commit command (see below).
 
 ## Branches
-The core-v-verif repository provides testbenches for multiple OpenHW cores.  As such the core-v-verif repository uses branches for maintaining stability between 
-the different core testbenches as well as recognizing independent development streams.  An adapted form of the Git Flow is used in this repository.  
+The core-v-verif repository provides testbenches for multiple OpenHW cores.  As such the core-v-verif repository uses branches for maintaining stability between
+the different core testbenches as well as recognizing independent development streams.  An adapted form of the Git Flow is used in this repository.
 
 The following are the official branches for core-v-verif
- Branch                | Example (if applicable) | Usage               
+ Branch                | Example (if applicable) | Usage
  --------------------- | ----------------------- | -----------------------
 _\<core>_/dev          | cv32e40p/dev            | Main line of development for a core testbench.  Most contributinos should target a dev branch.
 _\<core>_/release      | cv32e40p/release        | Staging branch for merge dev branches into master (and vice versa).  In general only OpenHW Committers will utilize these branches
@@ -32,7 +32,7 @@ In most cases a contribution should be made on a _dev_ branch.<br>
 Common infrastructure fixes and updates may target the _master_ branch using the hotfix flow to directly address issues requiring timely fixes.<br>
 
 More information on core-v-verif branch usage can be found here:
-https://github.com/openhwgroup/core-v-docs/blob/master/verif/Common/Presentations/20210311-Branches%20and%20CIs%20for%20core-v-verif.pptx
+https://github.com/openhwgroup/core-v-docs/blob/master/TGs/verification-task-group/documents/presentations/20210311-Branches_and_CIs_for_core-v-verif.pptx
 
 ## The Mechanics
 1. [Fork](https://help.github.com/articles/fork-a-repo/) the [core-v-verif](https://github.com/openhwgroup/core-v-verif) repository
