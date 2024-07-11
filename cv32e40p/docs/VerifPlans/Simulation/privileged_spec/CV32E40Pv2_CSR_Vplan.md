@@ -148,12 +148,12 @@ all\_por\_csr was not mentionned in v1 plan but it seems to fill the same purpos
 **Updated note for CV32E40Pv2 (2024-04-03):** These tests were not mentionned in v1 plan, but existed at the beginning of v2 verification effort. Their behavior is as described in the table : brute-force for all Zicsr instructions, and a shorter version.
 
 ### 3
-Access mode test of all CSRs.  This is a generated test based on [cv32e40p_csr_template.yaml](https://github.com/openhwgroup/core-v-verif/blob/master/vendor_lib/google/corev-dv/cv32e40p_csr_template.yaml).
+Access mode test of all CSRs.  This is a generated test based on [cv32e40p_csr_template.yaml](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/vendor_lib/google/corev-dv/cv32e40p_csr_template.yaml).
 
 **Updated note for CV32E40Pv2 (2024-04-03):** Due to the high number of CSR R/W accesses to mstatus, only the first few accesses are self-checking in F configurations.
 
 ### 4
-Access mode test of all CSRs.  This is a generated test based on [cv32e40p_csr_template.yaml](https://github.com/openhwgroup/core-v-verif/blob/master/vendor_lib/google/corev-dv/cv32e40p_csr_template.yaml).
+Access mode test of all CSRs.  This is a generated test based on [cv32e40p_csr_template.yaml](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/vendor_lib/google/corev-dv/cv32e40p_csr_template.yaml).
 
 **Updated note for CV32E40Pv2 (2024-04-03):** Test was missing some registers for v2 verification, it has been left as-is, updated just to run correctly without error with v2 configurations and
 

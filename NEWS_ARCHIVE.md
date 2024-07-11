@@ -1,9 +1,9 @@
 ### NEWS UPDATES (going back to early 2020):
 **2020-12-10**: OpenHW formally decalres [RTL Freeze for CV32E40P](https://www.openhwgroup.org/news/2020/12/10/core-v-cve4-rtl-freeze-milestone-achieved/)
 <br>
-**2020-10-15**: Aldec's Riviera-PRO SystemVerilog simulator is now supported by core-v-verif.  Check out the README in [mk](https://github.com/openhwgroup/core-v-verif/tree/master/mk/#running-the-environment-with-aldec-riviera-pro-riviera) for more information.
+**2020-10-15**: Aldec's Riviera-PRO SystemVerilog simulator is now supported by core-v-verif.  Check out the README in [mk](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/mk/#running-the-environment-with-aldec-riviera-pro-riviera) for more information.
 <br>
-**2020-09-04**: a new (and _much_ better) method of specifying and organizating test-programs and simulations is now merged in.  See slide "_Test Specification Updates_" in the [2020-08-31 CV32E40P project update](https://github.com/openhwgroup/programs/blob/master/TGs/verification-task-group/projects/CV32E40P_v1.0.0/documents/20200831-CV32E40P-ProjectScheduleUpdate.pptx).
+**2020-09-04**: a new (and _much_ better) method of specifying and organizating test-programs and simulations is now merged in.  See slide "_Test Specification Updates_" in the [2020-08-31 CV32E40P project update](https://github.com/openhwgroup/programs/blob/cv32e40p_v1.8.3/TGs/verification-task-group/projects/CV32E40P_v1.0.0/documents/20200831-CV32E40P-ProjectScheduleUpdate.pptx).
 <br>
 **2020-06-12**: a new "Board Support Package" for CV32E40P simulations is installed at `cv32/bsp`.  This BSP should be used to compile/assemble your [test-programs](https://docs.openhwgroup.org/projects/core-v-verif/en/latest/test_programs.html).  The Makefiles for both the CORE testbench and UVM verification environment have been updated to use this BSP.
 <br>

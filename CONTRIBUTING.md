@@ -32,14 +32,14 @@ In most cases a contribution should be made on a _dev_ branch.<br>
 Common infrastructure fixes and updates may target the _master_ branch using the hotfix flow to directly address issues requiring timely fixes.<br>
 
 More information on core-v-verif branch usage can be found here:
-https://github.com/openhwgroup/core-v-docs/blob/master/TGs/verification-task-group/documents/presentations/20210311-Branches_and_CIs_for_core-v-verif.pptx
+https://github.com/openhwgroup/core-v-docs/blob/cv32e40p_v1.8.3/TGs/verification-task-group/documents/presentations/20210311-Branches_and_CIs_for_core-v-verif.pptx
 
 ## The Mechanics
 1. [Fork](https://help.github.com/articles/fork-a-repo/) the [core-v-verif](https://github.com/openhwgroup/core-v-verif) repository
 2. Clone repository: `git clone https://github.com/[your_github_username]/core-v-verif`
 3. Checkout the correct branch reflecting the nature of your contribution.  Nearly all contributions should target a core's _dev_ branch.  Hotfixes can target _master_.
-4. Create your feature branch: `git checkout -b <my_branch>.`<br> Please uniquify your branch name.  See the [Git Cheats](https://github.com/openhwgroup/core-v-verif/blob/master/GitCheats.md) for a useful nominclature.
-5. Test your changes with the [ci_check](https://github.com/openhwgroup/core-v-verif/blob/master/bin/ci_check) script.
+4. Create your feature branch: `git checkout -b <my_branch>.`<br> Please uniquify your branch name.  See the [Git Cheats](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/GitCheats.md) for a useful nominclature.
+5. Test your changes with the [ci_check](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/bin/ci_check) script.
 6. Commit your changes: `git commit -m 'Add some feature' --signoff`<br>...take note of that **--signoff**, it's important!
 7. Push feature branch: `git push origin <my_branch>`
 8. Submit a [pull request](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork).

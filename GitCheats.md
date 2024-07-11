@@ -1,6 +1,6 @@
 # Git cheat-sheet.
 A few examples to illustrate use of `git` on the command-line.<br><br>
-PLEASE READ CAREFULLY the [CONTRIBUTING.md](https://github.com/openhwgroup/core-v-verif/blob/master/CONTRIBUTING.md)
+PLEASE READ CAREFULLY the [CONTRIBUTING.md](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/CONTRIBUTING.md)
 file in this directory.  You must follow the specified flow to contribute to this repository.
 
 If you have a suggestion to improve this document please either submit a pull-request, open an issue or email mike@openhwgroup.org.
@@ -145,4 +145,3 @@ $ git remote -v<br>
   \> metrics git@gitlab.openhwgroup.metrics.ca:cv32e40p_verif/cv32e40p_verif.git (push)<br>
   \> origin  https://github.com/openhwgroup/core-v-verif (fetch)<br>
   \> origin  https://github.com/openhwgroup/core-v-verif (push)<br>
-
