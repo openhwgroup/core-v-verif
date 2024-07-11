@@ -23,6 +23,7 @@ Functional verification project for the CORE-V family of RISC-V cores.
 
 <!--
 ## NEWS UPDATES:
+**2024-07-01**: CV32E40Pv2 has reached RTL freeze [CV32E40Pv2 final RTL Freeze status](https://github.com/openhwgroup/programs/blob/cv32e40p_v1.8.3/TGs/cores-task-group/MeetingPresentations/Cores-TG-07.01.2024.pdf)
 **2021-07-15**: The verificaton environment for the [cv32e40s](https://github.com/openhwgroup/cv32e40s) is up and running.
 <br>
 **2021-03-23**: The verificaton environment for the [cv32e40x](https://github.com/openhwgroup/cv32e40x) is up and running.
@@ -30,7 +31,7 @@ Functional verification project for the CORE-V family of RISC-V cores.
 **2020-12-16**: The [cv32e40p_v1.0.0](https://github.com/openhwgroup/core-v-verif/releases/tag/22dc5fc) of core-v-verif is released.
 This tag clones the v1.0.0 release of the CV32E40P CORE-V core and will allow you to reproduce the verification environment as it existed at `RTL Freeze`.
 <br>
-More news is available in the [archive](https://github.com/openhwgroup/core-v-verif/blob/master/NEWS_ARCHIVE.md).
+More news is available in the [archive](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/NEWS_ARCHIVE.md).
 -->
 
 ## Getting Started
@@ -83,8 +84,8 @@ We highly appreciate community contributions. You can get a sense of our current
 within a project are defined as [issues](https://github.com/openhwgroup/core-v-verif/issues) with a `task` label.
 <br><br>To ease our work of reviewing your contributions, please:
 
-* Review [CONTRIBUTING](https://github.com/openhwgroup/core-v-verif/blob/master/CONTRIBUTING.md)
-and our [SV/UVM coding style guidelines](https://github.com/openhwgroup/core-v-verif/blob/master/docs/CodingStyleGuidelines.md).
+* Review [CONTRIBUTING](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/CONTRIBUTING.md)
+and our [SV/UVM coding style guidelines](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/docs/CodingStyleGuidelines.md).
 * Split large contributions into smaller commits addressing individual changes or bug fixes.
 Do not mix unrelated changes into the same commit!
 * Write meaningful commit messages.

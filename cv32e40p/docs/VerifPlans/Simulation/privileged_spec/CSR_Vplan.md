@@ -37,7 +37,7 @@ what the core will do when a given CSR has a specific value.
 
 In RISC-V cores, access mode behavior has four dimensions: access mode,
 privilege, existance and field specification.  These are discussed in turn,
-with emphasis placed on pre-silicon functional verification (as opposed to 
+with emphasis placed on pre-silicon functional verification (as opposed to
 post-silicon use by software).
 
 #### Access Mode
@@ -104,7 +104,7 @@ values) and then check that these values have the desired affect.  A good exampl
 is ensuring that interrupts are asserted when MSTATUS[MIE] is both 0/1 and ensuring
 that interrupts are ignored or responded to, as appropriate.
 
-Control register verification of RISC-V cores is not conceptually different than 
+Control register verification of RISC-V cores is not conceptually different than
 control register verification of non-processor ASIC/FPGA RTL.  One difference is
 that in non-processor RTL, the control path (reading the writing the CSRs) is
 typically independent of the data path (events that are affected by control
@@ -151,7 +151,7 @@ machine-mode CSRs.  For example, address range 0x307 : 0x33F between Machine
 Trap Setup CSRs and Machine Trap Handling CSRs.
 
 ### 4
-Access mode test of all CSRs.  This is a generated test based on [cv32e40p_csr_template.yaml](https://github.com/openhwgroup/core-v-verif/blob/master/vendor_lib/google/corev-dv/cv32e40p_csr_template.yaml).
+Access mode test of all CSRs.  This is a generated test based on [cv32e40p_csr_template.yaml](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/vendor_lib/google/corev-dv/cv32e40p_csr_template.yaml).
 
 ### 5
 Same as [4](#4), run in Debug mode.  Add access mode testing of Debug CSRs.
