@@ -1,5 +1,4 @@
 ### NEWS UPDATES (going back to early 2020):
-**2024-07-01**: CV32E40Pv2 has reached RTL freeze [CV32E40Pv2 final RTL Freeze status](https://github.com/openhwgroup/programs/blob/master/TGs/cores-task-group/MeetingPresentations/Cores-TG-07.01.2024.pdf)
 **2020-12-10**: OpenHW formally decalres [RTL Freeze for CV32E40P](https://www.openhwgroup.org/news/2020/12/10/core-v-cve4-rtl-freeze-milestone-achieved/)
 <br>
 **2020-10-15**: Aldec's Riviera-PRO SystemVerilog simulator is now supported by core-v-verif.  Check out the README in [mk](https://github.com/openhwgroup/core-v-verif/tree/master/mk/#running-the-environment-with-aldec-riviera-pro-riviera) for more information.

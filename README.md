@@ -23,6 +23,7 @@ Functional verification project for the CORE-V family of RISC-V cores.
 
 <!--
 ## NEWS UPDATES:
+**2024-07-01**: CV32E40Pv2 has reached RTL freeze [CV32E40Pv2 final RTL Freeze status](https://github.com/openhwgroup/programs/blob/cv32e40p_v1.8.3/TGs/cores-task-group/MeetingPresentations/Cores-TG-07.01.2024.pdf)
 **2021-07-15**: The verificaton environment for the [cv32e40s](https://github.com/openhwgroup/cv32e40s) is up and running.
 <br>
 **2021-03-23**: The verificaton environment for the [cv32e40x](https://github.com/openhwgroup/cv32e40x) is up and running.
