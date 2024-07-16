@@ -1,4 +1,4 @@
-#!/home/cao/lisantools/usr/bin/python3
+#!/usr/bin/env python3
 
 # ----------------------------------------------------------------------------
 # Copyright 2023 CEA*
