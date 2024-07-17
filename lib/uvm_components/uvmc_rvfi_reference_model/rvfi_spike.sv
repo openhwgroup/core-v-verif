@@ -96,6 +96,9 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         `uvm_info("spike_tandem", $sformatf("core_name : %s", core_name), UVM_LOW);
 
         if (core_name == "cve2") begin
+            void'(spike_set_param_uint64_t(base, "mtvec_override_mask", 64'h1));
+            void'(spike_set_param_uint64_t(base, "mtvec_override_value", 64'h1));
+            void'(spike_set_param_uint64_t(base, "mtvec_write_mask", 64'hFFFFFFFE));
             void'(spike_set_param_uint64_t(base, "mstatus_override_mask", 64'hFFFFFFFF));
             void'(spike_set_param_uint64_t(base, "mstatus_override_value", 64'h1800));
             void'(spike_set_param_uint64_t(base, "tdata1_override_mask", 64'hFFFFFFFF));
