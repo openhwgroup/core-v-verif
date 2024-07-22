@@ -1,3 +1,21 @@
+// ----------------------------------------------------------------------------
+// Copyright 2023 CEA*
+// *Commissariat a l'Energie Atomique et aux Energies Alternatives (CEA)
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//[END OF HEADER]
 ${CV_DV_UTILS_DIR}/uvm/memory_partition/memory_partitions_pkg.sv
 ${CV_DV_UTILS_DIR}/uvm/reset_gen/reset_vif_xrtl_pkg.sv
 ${CV_DV_UTILS_DIR}/uvm/reset_gen/xrtl_reset_vif.sv
