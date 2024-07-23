@@ -161,7 +161,7 @@ comma := ,
 LD            := $(CXX)
 LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@
 LIBS_EXE      := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ $(install_libs_dir)/libyaml-cpp.a
-LINK          := $(LD) -L. -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
+LINK          := $(LD) -L. $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
 
 # Library creation
 
