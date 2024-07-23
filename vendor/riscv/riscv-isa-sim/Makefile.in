@@ -160,8 +160,8 @@ all-link-flags := $(mcppbs-LDFLAGS) $(LDFLAGS)
 comma := ,
 LD            := $(CXX)
 LIBS          := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@
-LIBS_EXE      := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ -lyaml-cpp
-LINK          := $(LD) -L. -L$(YAMLDIR)/build $(all-link-flags) -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
+LIBS_EXE      := @LIBS@ @BOOST_ASIO_LIB@ @BOOST_REGEX_LIB@ $(install_libs_dir)/libyaml-cpp.a
+LINK          := $(LD) -L. -Wl,-rpath,$(install_libs_dir) $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
 
 # Library creation
 
@@ -433,17 +433,12 @@ install-hdrs : $(install_hdrs)
     $(INSTALL_HDR) $(src_dir)/$$file $(install_hdrs_dir)/`dirname $$file`; \
   done
 
-# All install_libs depend on the installation of the yaml-cpp shared library.
-$(install_libs) : $(install_libs_dir)/libyaml-cpp.so
 install-libs : $(install_libs)
 	$(MKINSTALLDIRS) $(install_libs_dir)
 	for file in $^; \
   do \
     $(INSTALL_LIB) $$file $(install_libs_dir); \
   done
-
-# All install_exes depend on the installation of the yaml-cpp shared library.
-$(install_exes) : $(install_libs_dir)/libyaml-cpp.so
 
 install-exes : $(install_exes)
 	$(MKINSTALLDIRS) $(install_exes_dir)
