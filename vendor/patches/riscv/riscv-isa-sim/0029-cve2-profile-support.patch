@@ -1,0 +1,12 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+index 69386ab3..3b2dcb53 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -48,6 +48,7 @@ extern "C" void spike_set_default_params(const char *profile) {
+     // params.set_string("/top/", "isa", std::string("RV32IMC"));
+     params.set_string("/top/", "priv", std::string("M"));
+     params.set_string("/top/cores/", "isa", std::string("RV32IMC"));
++  } else if (strncmp(profile, "cve2", 4) == 0) {
+   } else  {
+     std::cerr << "[SPIKE] spike_set_default_params(): UNSUPPORTED target config '" << profile << "', cannot continue!\n";
+     exit(1);
