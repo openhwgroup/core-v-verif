@@ -20,50 +20,50 @@
    // Objects
    uvma_pma_cfg_c    cfg;
 
-    // TLM ports
+   // TLM ports
    uvm_analysis_port#(uvma_pma_mon_trn_c)  ap;
 
-    // TLM exports
-    uvm_analysis_export#(uvma_axi_transaction_c)                   read_axi_export;
-    uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)                read_axi_fifo;
-    uvm_analysis_export#(uvma_axi_transaction_c)                   write_axi_export;
-    uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)                write_axi_fifo;
+   // TLM exports
+   uvm_analysis_export#(uvma_axi_transaction_c)                   read_axi_export;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)                read_axi_fifo;
+   uvm_analysis_export#(uvma_axi_transaction_c)                   write_axi_export;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)                write_axi_fifo;
 
-    uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_pma_axi_mon_c) rvfi_instr_export;
+   uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_pma_axi_mon_c) rvfi_instr_export;
 
-    `uvm_component_param_utils_begin(uvma_pma_axi_mon_c#(ILEN,XLEN))
-      `uvm_field_object(cfg  , UVM_DEFAULT)
-    `uvm_component_utils_end
+   `uvm_component_param_utils_begin(uvma_pma_axi_mon_c#(ILEN,XLEN))
+     `uvm_field_object(cfg  , UVM_DEFAULT)
+   `uvm_component_utils_end
 
    /**
-     * Default constructor.
-   */
+    * Default constructor.
+    */
    extern function new(string name="uvma_pma_axi_mon_c", uvm_component parent=null);
 
    /**
-     * 1. Ensures cfg handle is not null.
-     * 2. Builds ap.
-   */
+    * 1. Ensures cfg handle is not null.
+    * 2. Builds ap.
+    */
    extern virtual function void build_phase(uvm_phase phase);
 
-    /**
-     * Oversees monitoring, depending on the reset state, by calling mon_<pre|in|post>_reset() tasks.
-     */
-    extern virtual task run_phase(uvm_phase phase);
+   /**
+    * Oversees monitoring, depending on the reset state, by calling mon_<pre|in|post>_reset() tasks.
+    */
+   extern virtual task run_phase(uvm_phase phase);
 
-     /**
+   /**
     * RVFI instructions
     */
-    extern function void write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) instr);
+   extern function void write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) instr);
 
    /**
     * axi data
     */
-    extern virtual function void write_axi_d(uvma_axi_transaction_c axi);
+   extern virtual function void write_axi_d(uvma_axi_transaction_c axi);
 
-    /**
+   /**
     * Appends cfg, prints out trn and issues heartbeat.
-     */
+    */
    extern virtual function void process_trn(ref uvma_pma_mon_trn_c trn);
 
 
@@ -102,6 +102,7 @@ endfunction : build_phase
 task uvma_pma_axi_mon_c::run_phase(uvm_phase phase);
 
    super.run_phase(phase);
+
    forever begin
       uvma_axi_transaction_c ar_axi_item;
       uvma_axi_transaction_c aw_axi_item;
@@ -124,7 +125,6 @@ function void uvma_pma_axi_mon_c::process_trn(ref uvma_pma_mon_trn_c trn);
 
    trn.cfg = cfg;
    trn.__originator = get_full_name();
-
    `uvm_info("${name_uppecase}_MON", $sformatf("Sampled transaction from the virtual interface:\n%s", trn.sprint()), UVM_HIGH)
    `uvml_hrtbt()
 
@@ -132,7 +132,7 @@ endfunction : process_trn
 
 function void uvma_pma_axi_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) instr);
 
-   // Create a new monitor transaction with mapped index region
+   // Create a new pma transaction with mapped index region
    uvma_pma_mon_trn_c mon_trn;
 
    mon_trn              = uvma_pma_mon_trn_c#(ILEN,XLEN)::type_id::create("mon_trn");
@@ -155,10 +155,7 @@ endfunction : write_rvfi_instr
 
 function void uvma_pma_axi_mon_c::write_axi_d(uvma_axi_transaction_c axi);
 
-   logic [3:0] cache_value ;
-   logic id ;
-
-   // Create a new monitor transaction with mapped index region
+   // Create a new pma transaction with mapped index region
    uvma_pma_mon_trn_c mon_trn;
 
    mon_trn               = uvma_pma_mon_trn_c#(ILEN,XLEN)::type_id::create("mon_trn");
@@ -167,8 +164,6 @@ function void uvma_pma_axi_mon_c::write_axi_d(uvma_axi_transaction_c axi);
    mon_trn.address       =  axi.m_addr;
    mon_trn.rw            = (axi.m_txn_type == UVMA_AXI_WRITE_REQ) ?  UVMA_PMA_RW_WRITE : UVMA_PMA_RW_READ ;
    mon_trn.region_index  = cfg.get_pma_region_for_addr(mon_trn.address);
-
-   cache_value = 2;
 
    case (axi.m_cache)
       0000 : mon_trn.memtype = UVMA_PMA_MEM_C_NB;
@@ -185,8 +180,8 @@ function void uvma_pma_axi_mon_c::write_axi_d(uvma_axi_transaction_c axi);
    end
 
    if (mon_trn.region_index != -1) begin
-      mon_trn.is_first_word = (mon_trn.address == cfg.regions[mon_trn.region_index].word_addr_low) ? 1 : 0;
-      mon_trn.is_last_word  = (mon_trn.address  == cfg.regions[mon_trn.region_index].word_addr_high - 1) ? 1 : 0;
+      mon_trn.is_first_word = ((mon_trn.address >> 2) == (cfg.regions[mon_trn.region_index].word_addr_low)) ? 1 : 0;
+      mon_trn.is_last_word  = ((mon_trn.address >> 2) == (cfg.regions[mon_trn.region_index].word_addr_high - 1)) ? 1 : 0;
    end
 
    if (mon_trn.region_index == -1) begin
@@ -194,11 +189,6 @@ function void uvma_pma_axi_mon_c::write_axi_d(uvma_axi_transaction_c axi);
    end
 
    ap.write(mon_trn);
-
-   `uvm_info("PMAXIMON", $sformatf("axi monitor send trn access %s", mon_trn.access ), UVM_NONE)
-   `uvm_info("PMAXIMON", $sformatf("axi monitor send trn rw %s",  mon_trn.rw   ), UVM_NONE)
-   `uvm_info("PMAXIMON", $sformatf("axi monitor send trn rw %x",  mon_trn.address  ), UVM_NONE)
-   `uvm_info("PMAXIMON", $sformatf("axi monitor send transaction"), UVM_NONE)
 
 endfunction : write_axi_d
 

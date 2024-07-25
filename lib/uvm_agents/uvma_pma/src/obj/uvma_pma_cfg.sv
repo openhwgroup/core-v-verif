@@ -85,6 +85,20 @@ endfunction : new
 
 function int uvma_pma_cfg_c::get_pma_region_for_addr(bit[XLEN-1:0] addr);
 
+   // In default PMA configurations overlapping regions map from low index to high
+   for (int i = 0; i < regions.size(); i++) begin
+      if (memory_intf == UVMA_PMA_AXI_INTF) begin
+         if (addr_in_region(addr, regions[i]))
+            return i;
+      end
+      else if (memory_intf == UVMA_PMA_OBI_INTF) begin
+         if (regions[i].is_addr_in_region(addr))
+            return i;
+      end
+     else begin
+     `uvm_fatal("CFG", "Configuration does not contain valid memory interface")
+     end
+   end
    for (int i = 0; i < regions.size(); i++) begin
       if (addr_in_region(addr, regions[i]))
          return i;

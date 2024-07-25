@@ -29,7 +29,6 @@ class uvma_pma_obi_mon_c#(int ILEN=DEFAULT_ILEN,int XLEN=DEFAULT_XLEN) extends u
    uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c)                obi_i_fifo;
    uvm_analysis_export#(uvma_obi_memory_mon_trn_c)                   obi_d_export;
    uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c)                obi_d_fifo;
-
    uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_pma_obi_mon_c) rvfi_instr_export;
 
    `uvm_component_param_utils_begin(uvma_pma_obi_mon_c#(ILEN,XLEN))
@@ -42,8 +41,8 @@ class uvma_pma_obi_mon_c#(int ILEN=DEFAULT_ILEN,int XLEN=DEFAULT_XLEN) extends u
    extern function new(string name="uvma_pma_obi_mon_c", uvm_component parent=null);
 
    /*
-    1. Ensures cfg handle is not null.
-    2. Builds ap.
+    * 1. Ensures cfg handle is not null.
+    * 2. Builds ap.
     */
    extern virtual function void build_phase(uvm_phase phase);
 
@@ -99,6 +98,7 @@ function void uvma_pma_obi_mon_c::build_phase(uvm_phase phase);
 endfunction : build_phase
 
 task uvma_pma_obi_mon_c::run_phase(uvm_phase phase);
+
    uvma_obi_memory_mon_trn_c obi_trn;
    int access_type_i;
    int access_type_d;
@@ -130,7 +130,7 @@ endfunction : process_trn
 
 function void uvma_pma_obi_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) instr);
 
-   // Create a new monitor transaction with mapped index region
+   // Create a new pma transaction with mapped index region
    uvma_pma_mon_trn_c mon_trn;
 
    mon_trn              = uvma_pma_mon_trn_c#(ILEN,XLEN)::type_id::create("mon_trn");
@@ -155,7 +155,7 @@ endfunction : write_rvfi_instr
 
 function void uvma_pma_obi_mon_c::write_obi(uvma_obi_memory_mon_trn_c obi, int access_type);
 
-   // Create a new monitor transaction with mapped index region
+   // Create a new pma transaction with mapped index region
    uvma_pma_mon_trn_c mon_trn;
 
    mon_trn               = uvma_pma_mon_trn_c#(ILEN,XLEN)::type_id::create("mon_trn");
@@ -163,8 +163,9 @@ function void uvma_pma_obi_mon_c::write_obi(uvma_obi_memory_mon_trn_c obi, int a
 
    if(access_type == 1)
       mon_trn.access        = UVMA_PMA_ACCESS_DATA;
-   else if(access_type == -1)
+   else if(access_type == 0)
       mon_trn.access        = UVMA_PMA_ACCESS_INSTR;
+
    mon_trn.rw            = (obi.access_type == UVMA_OBI_MEMORY_ACCESS_READ) ? UVMA_PMA_RW_READ : UVMA_PMA_RW_WRITE;
    mon_trn.atomic        = obi.atop;
    mon_trn.address       = obi.address;
@@ -178,8 +179,8 @@ function void uvma_pma_obi_mon_c::write_obi(uvma_obi_memory_mon_trn_c obi, int a
    endcase
 
    if (mon_trn.region_index != -1) begin
-      mon_trn.is_first_word = (obi.address == cfg.regions[mon_trn.region_index].word_addr_low) ? 1 : 0;
-      mon_trn.is_last_word  = (obi.address == cfg.regions[mon_trn.region_index].word_addr_high-1) ? 1 : 0;
+      mon_trn.is_first_word = ((obi.address >> 2) == (cfg.regions[mon_trn.region_index].word_addr_low)) ? 1 : 0;
+      mon_trn.is_last_word  = ((obi.address >> 2) == (cfg.regions[mon_trn.region_index].word_addr_high - 1)) ? 1 : 0;
    end
 
    if (mon_trn.region_index == -1) begin

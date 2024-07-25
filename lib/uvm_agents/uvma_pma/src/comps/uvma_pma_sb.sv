@@ -146,6 +146,7 @@ task uvma_pma_sb_c::run_phase(uvm_phase phase);
       uvma_pma_mon_trn_c pma_trn;
 
       pma_fifo.get(pma_trn);
+
       if(pma_trn.access == UVMA_PMA_ACCESS_INSTR) begin
 
          write_pma_trn_i(pma_trn);
@@ -228,13 +229,13 @@ endfunction : write_pma_trn_d
 
 function void uvma_pma_sb_c::report_phase(uvm_phase phase);
 
-  // print_checked_stats();
+   print_checked_stats();
 
 endfunction : report_phase
 
 function void uvma_pma_sb_c::pre_abort();
 
-   //print_checked_stats();
+   print_checked_stats();
 
 endfunction : pre_abort
 
@@ -249,19 +250,19 @@ function void uvma_pma_sb_c::check_pma_trn_i_deconfigured(uvma_pma_mon_trn_c pma
 
    // Check: Bufferable bit must be 0 in pma_trn for instruction fetches
    if ((pma_trn.memtype == UVMA_PMA_MEM_NC_NB) || (pma_trn.memtype ==UVMA_PMA_MEM_C_NB )) begin
-      `uvm_error("PMApma_trnI", $sformatf("pma_trn I %s address: 0x%08x bufferable bit set for deconfigured PMA",
+      `uvm_error("PMA_trnI", $sformatf("pma_trn I %s address: 0x%08x bufferable bit set for deconfigured PMA",
                                        pma_trn.access, pma_trn.address));
    end
 
    // Check: Cacheable bit must be 0 in pma_trn
    if ((pma_trn.memtype == UVMA_PMA_MEM_NC_NB) || (pma_trn.memtype ==UVMA_PMA_MEM_NC_B)) begin
-      `uvm_error("PMApma_trnI", $sformatf("pma_trn I %s address: 0x%08x cacheable bit set for deconfigured PMA",
+      `uvm_error("PMA_trnI", $sformatf("pma_trn I %s address: 0x%08x cacheable bit set for deconfigured PMA",
                                        pma_trn.access, pma_trn.address));
    end
 
    // Check: atomic attributes should be 0
    if (pma_trn.atomic) begin
-      `uvm_error("PMApma_trnI", $sformatf("pma_trn I %s address: 0x%08x atomic is not zero, pma_trn: 0x%0x",
+      `uvm_error("PMA_trnI", $sformatf("pma_trn I %s address: 0x%08x atomic is not zero, pma_trn: 0x%0x",
                                        pma_trn.access.name(), pma_trn.address,
                                        pma_trn.atomic));
    end
@@ -273,7 +274,7 @@ endfunction : check_pma_trn_i_deconfigured
 
    // Check: Bufferable bit must be 0 in pma_trn for instruction fetches
    if ((pma_trn.memtype == UVMA_PMA_MEM_NC_B ) || (pma_trn.memtype == UVMA_PMA_MEM_C_B )) begin
-      `uvm_error("PMApma_trnI", $sformatf("pma_trn I %s address: 0x%08x bufferable bit set for PMA default region",
+      `uvm_error("PMA_trnI", $sformatf("pma_trn I %s address: 0x%08x bufferable bit set for PMA default region",
                                        pma_trn.access.name(), pma_trn.address));
    end
 
@@ -296,19 +297,19 @@ endfunction : check_pma_trn_i_default_region
 function void uvma_pma_sb_c::check_pma_trn_i_mapped_region(uvma_pma_mon_trn_c pma_trn, int index);
    // Check: Must be main memory
    if (!cfg.regions[index].main) begin
-      `uvm_error("PMApma_trnI", $sformatf("pma_trn I %s address: 0x%08x, region: %0d instruction fetch from I/O memory",
+      `uvm_error("PMA_trnI", $sformatf("pma_trn I %s address: 0x%08x, region: %0d instruction fetch from I/O memory",
                                        pma_trn.access.name(), pma_trn.address, index));
    end
 
    // Check: Bufferable bit must be 0 in pma_trn for instruction fetches
    if ((pma_trn.memtype == UVMA_PMA_MEM_NC_B ) || (pma_trn.memtype ==UVMA_PMA_MEM_C_B )) begin
-      `uvm_error("PMApma_trnI", $sformatf("pma_trn I %s address: 0x%08x bufferable bit set for PMA default region",
+      `uvm_error("PMA_trnI", $sformatf("pma_trn I %s address: 0x%08x bufferable bit set for PMA default region",
                                        pma_trn.access.name(), pma_trn.address));
    end
 
    // Check: Cacheable bit must match memtype[0] in pma_trn
    if ((((pma_trn.memtype == UVMA_PMA_MEM_NC_NB) || (pma_trn.memtype == UVMA_PMA_MEM_NC_B)) && cfg.regions[index].cacheable ==1) || (((pma_trn.memtype == UVMA_PMA_MEM_C_NB) || (pma_trn.memtype == UVMA_PMA_MEM_C_B)) && cfg.regions[index].cacheable ==0)) begin
-      `uvm_error("PMApma_trnI", $sformatf("pma_trn I %s address: 0x%08x, region: %0d cacheable bit mismatch, pma_trn: %s, PMA: %0d",
+      `uvm_error("PMA_trnI", $sformatf("pma_trn I %s address: 0x%08x, region: %0d cacheable bit mismatch, pma_trn: %s, PMA: %0d",
                                        pma_trn.access.name(), pma_trn.address, index,
                                        pma_trn.memtype.name(), cfg.regions[index].cacheable));
    end
@@ -326,13 +327,13 @@ function void uvma_pma_sb_c::check_pma_trn_d_deconfigured(uvma_pma_mon_trn_c pma
 
    // Check: Bufferable bit must be 0 in pma_trn
    if ((pma_trn.memtype == UVMA_PMA_MEM_NC_NB) || (pma_trn.memtype ==UVMA_PMA_MEM_C_NB) ) begin
-      `uvm_error("PMApma_trnD", $sformatf("pma_trn D %s address: 0x%08x bufferable bit set for PMA default region",
+      `uvm_error("PMA_trnD", $sformatf("pma_trn D %s address: 0x%08x bufferable bit set for PMA default region",
                                        pma_trn.access.name(), pma_trn.address));
    end
 
-   /// Check: Cacheable bit must match cacheable flag in pma_trn
+   // Check: Cacheable bit must match cacheable flag in pma_trn
    if (((pma_trn.memtype == UVMA_PMA_MEM_NC_NB) || (pma_trn.memtype == UVMA_PMA_MEM_NC_B) && cfg.regions[index].cacheable ==1) || ((pma_trn.memtype == UVMA_PMA_MEM_C_NB) || (pma_trn.memtype == UVMA_PMA_MEM_C_B) && cfg.regions[index].cacheable ==0)  ) begin
-      `uvm_error("PMApma_trnD", $sformatf("pma_trn D %s address: 0x%08x, region: %0d cacheable bit mismatch, pma_trn: %s, PMA: %0d",
+      `uvm_error("PMA_trnD", $sformatf("pma_trn D %s address: 0x%08x, region: %0d cacheable bit mismatch, pma_trn: %s, PMA: %0d",
                                        pma_trn.access.name(), pma_trn.address, index,
                                        pma_trn.memtype.name(), cfg.regions[index].cacheable));
    end
@@ -343,7 +344,7 @@ function void uvma_pma_sb_c::check_pma_trn_d_default_region(uvma_pma_mon_trn_c p
 
    // Check: Bufferable bit must be 0 in pma_trn for data loads
    if ((pma_trn.memtype == UVMA_PMA_MEM_NC_NB ) || (pma_trn.memtype == UVMA_PMA_MEM_C_NB )) begin
-      `uvm_error("PMApma_trnD", $sformatf("pma_trn D %s address: 0x%08x bufferable bit set for PMA default region",
+      `uvm_error("PMA_trnD", $sformatf("pma_trn D %s address: 0x%08x bufferable bit set for PMA default region",
                                        pma_trn.access.name(), pma_trn.address));
    end
 
@@ -361,7 +362,6 @@ function void uvma_pma_sb_c::check_pma_trn_d_default_region(uvma_pma_mon_trn_c p
    end
 
 endfunction : check_pma_trn_d_default_region
-
 
 
 function void uvma_pma_sb_c::check_pma_trn_d_mapped_region(uvma_pma_mon_trn_c pma_trn, int index);
@@ -384,14 +384,14 @@ function void uvma_pma_sb_c::check_pma_trn_d_mapped_region(uvma_pma_mon_trn_c pm
 
    // Check: Cacheable bit must match memtype in pma_trn
    if ((((pma_trn.memtype == UVMA_PMA_MEM_NC_NB) || (pma_trn.memtype == UVMA_PMA_MEM_NC_B)) && cfg.regions[index].cacheable ==1) || (((pma_trn.memtype == UVMA_PMA_MEM_C_NB) || (pma_trn.memtype == UVMA_PMA_MEM_C_B)) && cfg.regions[index].cacheable ==0)  ) begin
-     `uvm_error("PMApma_trnD", $sformatf("pma_trn D %s address: 0x%08x, region: %0d cacheable bit mismatch, pma_trn: %s, PMA: %0d",
+     `uvm_error("PMA_trnD", $sformatf("pma_trn D %s address: 0x%08x, region: %0d cacheable bit mismatch, pma_trn: %s, PMA: %0d",
                                        pma_trn.access.name(), pma_trn.address, index,
                                        pma_trn.memtype.name(), cfg.regions[index].cacheable));
    end
 
    // Check: atomic attributes should be 0
    if (pma_trn.atomic) begin
-      `uvm_error("PMApma_trnD", $sformatf("pma_trn D %s address: 0x%08x, region: %0d atomic is not zero, pma_trn: 0x%0x",
+      `uvm_error("PMA_trnD", $sformatf("pma_trn D %s address: 0x%08x, region: %0d atomic is not zero, pma_trn: 0x%0x",
                                        pma_trn.access.name(), pma_trn.address, index,
                                        pma_trn.atomic));
    end

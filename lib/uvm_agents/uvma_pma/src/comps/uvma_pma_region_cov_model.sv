@@ -153,7 +153,6 @@ task uvma_pma_region_cov_model_c::run_phase(uvm_phase phase);
    fork
       // Monitor transactions
       forever begin
-         `uvm_info("PMA REGIONS COV MODEL", $sformatf("waitong axi transaction"), UVM_LOW)
          mon_trn_fifo.get(mon_trn);
          if (cfg.enabled && cfg.cov_model_enabled) begin
             sample_mon_trn();
@@ -170,7 +169,6 @@ function void uvma_pma_region_cov_model_c::sample_mon_trn();
    if (!mon_trn.is_default && mon_trn.region_index == this.region_index) begin
       pma_access_covg.sample(mon_trn);
    end
-   `uvm_info("PMA REGIONS COV MODEL ", $sformatf("sample coverage model"), UVM_LOW)
 
 
 endfunction : sample_mon_trn

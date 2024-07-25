@@ -171,6 +171,7 @@ function void uvma_pma_agent_c::create_components();
       `uvm_fatal("CFG", "Configuration does not contain valid memory interface")
    end
    mon_ap = new("mon_ap", this);
+
 endfunction : create_components
 
 
