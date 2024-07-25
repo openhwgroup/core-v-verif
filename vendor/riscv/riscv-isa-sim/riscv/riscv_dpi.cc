@@ -48,6 +48,7 @@ extern "C" void spike_set_default_params(const char *profile) {
     // params.set_string("/top/", "isa", std::string("RV32IMC"));
     params.set_string("/top/", "priv", std::string("M"));
     params.set_string("/top/cores/", "isa", std::string("RV32IMC"));
+  } else if (strncmp(profile, "cve2", 4) == 0) {
   } else  {
     std::cerr << "[SPIKE] spike_set_default_params(): UNSUPPORTED target config '" << profile << "', cannot continue!\n";
     exit(1);
