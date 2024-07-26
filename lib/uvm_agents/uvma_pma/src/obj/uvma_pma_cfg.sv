@@ -99,10 +99,6 @@ function int uvma_pma_cfg_c::get_pma_region_for_addr(bit[XLEN-1:0] addr);
      `uvm_fatal("CFG", "Configuration does not contain valid memory interface")
      end
    end
-   for (int i = 0; i < regions.size(); i++) begin
-      if (addr_in_region(addr, regions[i]))
-         return i;
-   end
 
    return -1;
 
