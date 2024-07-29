@@ -318,6 +318,7 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
            mem_wr_vif.req_addr      = req.aw_chan.addr;
            mem_wr_vif.req_wrn       = 1'b0; 
            mem_wr_vif.req_id        = req.aw_chan.id ;
+           mem_wr_vif.src_id        = req.aw_chan.id ;
 
            // ---------------------------------------
            // Drive every flit of data (len + 1)
@@ -327,6 +328,7 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
 
            // AMO = 1, WRN = 0 => AtomicStore
            // AMO = 1, WRN = 1 => AtomicLoad
+           mem_wr_vif.req_amo = 0;
            case(req.aw_chan.atop[5:4])
              AXI_ATOMIC_NONE   : mem_wr_vif.req_amo = 0; 
              AXI_ATOMIC_STORE  : 
@@ -374,7 +376,10 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
 
            endcase
   
-           if(req.aw_chan.lock == 1) mem_wr_vif.amo_op = MEM_ATOMIC_STEX;
+           if(req.aw_chan.lock == 1) begin 
+             mem_wr_vif.amo_op    = MEM_ATOMIC_STEX;
+             mem_rd_vif.req_amo   = 1;
+           end
            do begin
              @ (posedge mem_wr_vif.clk);
            end while (mem_wr_vif.req_ready == 1'b0);
@@ -458,6 +463,7 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
              mem_rd_vif.req_valid     = 1'b1;
              mem_rd_vif.req_wrn       = 1'b1;
              mem_rd_vif.req_id        = req.id ;
+             mem_rd_vif.src_id        = req.id ;
              mem_rd_vif.req_data      = 'h0;
              mem_rd_vif.req_amo       = 0;
 
@@ -485,7 +491,10 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
              mem_rd_vif.req_strb = 'h0;
              for(int i = lower_byte_lane; i <= upper_byte_lane; i++) mem_rd_vif.req_strb[i] = 1; 
    
-             if(req.lock == 1) mem_rd_vif.amo_op = MEM_ATOMIC_LDEX;
+             if(req.lock == 1) begin 
+               mem_rd_vif.amo_op        = MEM_ATOMIC_LDEX;
+               mem_rd_vif.req_amo       = 1;
+             end
 
 
              do begin

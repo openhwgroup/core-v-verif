@@ -1,22 +1,19 @@
 // ----------------------------------------------------------------------------
-// Copyright 2023 CEA*
-// *Commissariat a l'Energie Atomique et aux Energies Alternatives (CEA)
+//Copyright 2023 CEA*
+//*Commissariat a l'Energie Atomique et aux Energies Alternatives (CEA)
 //
-// SPDX-License-Identifier: Apache-2.0
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+//Licensed under the Apache License, Version 2.0 (the "License");
+//you may not use this file except in compliance with the License.
+//You may obtain a copy of the License at
 //
 //    http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//Unless required by applicable law or agreed to in writing, software
+//distributed under the License is distributed on an "AS IS" BASIS,
+//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//See the License for the specific language governing permissions and
+//limitations under the License.
 //[END OF HEADER]
-// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 //  Description : Receive a request from memory and schedule a response
@@ -384,8 +381,8 @@ class memory_response_model#(int w_addr = 64, int w_data = 512, int w_id = 16)  
       m_mem_rsp_vif.rd_res_id      <= m_memory_rsp.id;
       m_mem_rsp_vif.rd_res_err     <= m_memory_rsp.err;    
       m_mem_rsp_vif.rd_res_data    <= m_memory_rsp.data;
-      m_mem_rsp_vif.rd_res_addr    <= m_memory_rsp.addr;
-      m_mem_rsp_vif.rd_res_ex_fail <= m_memory_rsp.err;   
+      m_mem_rsp_vif.rd_res_addr    <= m_memory_rsp.addr;    
+      m_mem_rsp_vif.rd_res_ex_fail <= m_memory_rsp.err;
       m_mem_rsp_vif.rd_res_valid   <= 1'b1; 
       `uvm_info( "MEMORY RESPONSE MODEL", $sformatf("READ RSP : %s ", m_memory_rsp.convert2string()), UVM_LOW );
 
@@ -650,11 +647,12 @@ class memory_response_model#(int w_addr = 64, int w_data = 512, int w_id = 16)  
            // WRITE
            // --> If true, remove the reservation 
            // --------------------------------------------------------
-           if(m_memory[req_addr].ldex_bytes.exists(m_mem_rsp_vif.src_id)) begin
-             foreach(m_mem_rsp_vif.req_strb[i]) begin
-               if(m_mem_rsp_vif.req_strb[i] == 1) begin
+           foreach(m_mem_rsp_vif.req_strb[i]) begin
+             if(m_mem_rsp_vif.req_strb[i] == 1) begin
+               if(m_memory[req_addr].ldex_bytes.exists(m_mem_rsp_vif.src_id)) begin
                  if( m_memory[req_addr].ldex_bytes[m_mem_rsp_vif.src_id][i] == 1) begin
                    m_memory[req_addr].ldex_bytes.delete(m_mem_rsp_vif.src_id);
+                   break;
                  end
                end
              end
@@ -1001,8 +999,8 @@ class memory_response_model#(int w_addr = 64, int w_data = 512, int w_id = 16)  
                        `uvm_info("MEMORY RESPONSE MODEL", $sformatf("SC FAILED %s", new_wr_rsp_entry.convert2string()), UVM_FULL);
                       end
                     end
-                    m_memory[req_addr].ldex_bytes.delete(m_mem_rsp_vif.src_id);
                   end
+                  m_memory[req_addr].ldex_bytes.delete(m_mem_rsp_vif.src_id);
                 end
               end
 

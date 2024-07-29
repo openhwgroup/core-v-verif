@@ -31,18 +31,18 @@ below provides a summary of the available bricks.
 ## Usage
 
 Several of the utilities depend on the environment variabe
-$CV_DV_UTILS pointing to the root of the repository (the directory where this
+$CV_DV_UTILS_DIR pointing to the root of the repository (the directory where this
 file resides). Below, we provide the syntax to set the environment variable,
 but replace <this directory> with the correction directory for your system.
 
 #### tcsh
 ```tcsh
-setenv CV_DV_UTILS <this directory>
+setenv CV_DV_UTILS_DIR <this directory>
 ```
 
 #### bash
 ```bash
-export CV_DV_UTILS=<this directory>
+export CV_DV_UTILS_DIR=<this directory>
 ```
 
 ## Licensing
