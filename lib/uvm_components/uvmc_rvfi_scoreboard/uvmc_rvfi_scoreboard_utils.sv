@@ -31,6 +31,8 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
     static longint unsigned csrs_match_count;
     static longint unsigned instr_mismatch_count;
 
+    localparam INSTR_MISMATCH_MAX = 5;
+
     bit tb_sim_finished;
 
     function automatic string rvfi_print_struct(ref st_rvfi st);
@@ -65,7 +67,7 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
 
     endfunction : rvfi_print_yaml
 
-    function void rvfi_gen_report(string exit_cause, string mismatch_description = "");
+    function void rvfi_gen_report(string exit_cause, longint exit_code, string mismatch_description = "");
         string filename;
         int file_handle;
 
@@ -75,6 +77,7 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
           file_handle = $fopen(filename, "w");
           if (file_handle != 0) begin
               $fdisplay(file_handle, "exit_cause: %s", exit_cause);
+              $fdisplay(file_handle, "exit_code: 0x%4h", exit_code);
               $fdisplay(file_handle, "instr_count: 0x%h", instr_count);
               $fdisplay(file_handle, "csrs_match_count: 0x%h", csrs_match_count);
               $fdisplay(file_handle, "mismatches_count: 0x%h", core_queue.size());
@@ -197,17 +200,22 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
             reference_model_queue = {reference_model_queue, t_reference_model};
 
             instr_mismatch_count += 1;
-            rvfi_gen_report("MISMATCH", cause_str);
+            rvfi_gen_report("MISMATCH", (t_reference_model.halt >> 1), cause_str);
 
             `uvm_info("spike_tandem", {cause_str}, UVM_NONE);
             `uvm_info("spike_tandem", {instr_rm}, UVM_NONE);
-            `uvm_error("spike_tandem", {instr_core, " <- CORE\n"});
+            if (instr_mismatch_count >= INSTR_MISMATCH_MAX) begin
+                `uvm_fatal("spike_tandem", {instr_core, " <- CORE\n"});
+            end
+            else begin
+                `uvm_error("spike_tandem", {instr_core, " <- CORE\n"});
+            end
         end
         else begin
             `uvm_info("spike_tandem", rvfi_print_struct(t_reference_model) , UVM_MEDIUM)
             if (t_reference_model.halt[0] && !tb_sim_finished) begin
               tb_sim_finished = 1;
-              rvfi_gen_report("SUCCESS", "");
+              rvfi_gen_report("SUCCESS", (t_reference_model.halt >> 1), "");
             end
         end
 
