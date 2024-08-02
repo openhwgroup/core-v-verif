@@ -12,6 +12,9 @@
         .align 8; .global tohost; tohost: .dword 0;                     \
         .align 8; .global fromhost; fromhost: .dword 0;                 \
         .popsection;                                                    \
+        .pushsection .uvmif,"aw",@progbits;                             \
+        .align 6; .global int_ack; int_ack: .dword 0;                   \
+        .popsection;                                                    \
         .align 8; .global begin_regstate; begin_regstate:               \
         .word 128;                                                      \
         .align 8; .global end_regstate; end_regstate:                   \
