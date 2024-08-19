@@ -155,6 +155,7 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
         VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
     endif
     ifeq ($(ISS),SPIKE)
+        VCS_RUN_FLAGS += -sv_lib $(SPIKE_YAML_LIB)
         VCS_RUN_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
         VCS_RUN_FLAGS += -sv_lib $(SPIKE_DISASM_LIB)
         LIBS = spike_lib
