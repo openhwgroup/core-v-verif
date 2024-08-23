@@ -256,7 +256,7 @@ Processor::Processor(
 
   extensions_str = extensions_str + delimiter;
 
-  size_t found = extensions_str.rfind(delimiter);
+  size_t found = extensions_str.find(delimiter);
 
   while (found != string::npos) {
     string token = extensions_str.substr(0, found);
