@@ -32,7 +32,7 @@ index d8cf491c..d32a7a9b 100644
  
  $(2)_deps += $$($(2)_prog_deps)
 diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
-index 4795067f..97914698 100644
+index 4795067f..6ac028e2 100644
 --- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
 +++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
 @@ -211,7 +211,7 @@ Processor::Processor(
@@ -70,6 +70,15 @@ index 4795067f..97914698 100644
  
    ((cfg_t *)cfg)->misaligned =
        (this->params[base + "misaligned"]).a_bool;
+@@ -246,7 +256,7 @@ Processor::Processor(
+ 
+   extensions_str = extensions_str + delimiter;
+ 
+-  size_t found = extensions_str.rfind(delimiter);
++  size_t found = extensions_str.find(delimiter);
+ 
+   while (found != string::npos) {
+     string token = extensions_str.substr(0, found);
 @@ -299,17 +309,14 @@ Processor::~Processor() {
          delete e.second;
  }
