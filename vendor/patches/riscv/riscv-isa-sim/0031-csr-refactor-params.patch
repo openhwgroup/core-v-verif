@@ -32,10 +32,38 @@ index d8cf491c..d32a7a9b 100644
  
  $(2)_deps += $$($(2)_prog_deps)
 diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
-index 4795067f..6ac028e2 100644
+index 4795067f..48c7d529 100644
 --- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
 +++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
-@@ -211,7 +211,7 @@ Processor::Processor(
+@@ -170,17 +170,26 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+             }
+ 
+             // If it is set or clear we need to inject also the value in the CSR
+-            if (reg_t read_csr = this->get_state()->last_inst_fetched.rs1()) {
++            if (this->get_state()->last_inst_fetched.rs1()) {
+                 if ((rvfi.insn & MASK_CSRRC) == MATCH_CSRRC   ||
+                     (rvfi.insn & MASK_CSRRS) == MATCH_CSRRS   ||
+                     (rvfi.insn & MASK_CSRRCI) == MATCH_CSRRCI ||
+                     (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI) {
++
+                     if (reference->csr_valid[INDEX_CSR(read_csr)]) {
+                         this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
+                         rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
+                     }
+                 }
+             }
++            if ((rvfi.insn & MASK_CSRRW) == MATCH_CSRRW   ||
++                (rvfi.insn & MASK_CSRRWI) == MATCH_CSRRWI) {
++
++                if (reference->csr_valid[INDEX_CSR(read_csr)]) {
++                    this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
++                    rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
++                }
++            }
+             break;
+           default:
+             break;
+@@ -211,7 +220,7 @@ Processor::Processor(
    registered_extensions_v["cvxif"] = false;
  
    base = "/top/core/" + std::to_string(id) + "/";
@@ -44,7 +72,16 @@ index 4795067f..6ac028e2 100644
    Params::parse_params(base, this->params, params_);
  
    string isa_str = this->params[base + "isa"].a_string;
-@@ -226,13 +226,23 @@ Processor::Processor(
+@@ -221,18 +230,28 @@ Processor::Processor(
+   std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str << std::endl;
+   std::cout << "[SPIKE]     Non standard interrupts " << this->params[base + "non_standard_interrupts"].a_bool << std::endl;
+ 
++  uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
++  std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions_max << std::endl;
++  processor_t::set_pmp_num(pmpregions_max);
++
+   ((cfg_t *)cfg)->priv = priv_str.c_str();
+ 
    uint64_t trigger_count = this->params[base + "trigger_count"].a_uint64_t;
    ((cfg_t *)cfg)->trigger_count = trigger_count;
  
@@ -63,14 +100,10 @@ index 4795067f..6ac028e2 100644
 +  this->taken_debug = false;
 +  this->nmi_inject = false;
 +
-+
-+  uint64_t pmpregions = this->params[base + "pmpregions"].a_uint64_t;
-+  std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions << std::endl;
-+  processor_t::set_pmp_num(pmpregions);
  
    ((cfg_t *)cfg)->misaligned =
        (this->params[base + "misaligned"]).a_bool;
-@@ -246,7 +256,7 @@ Processor::Processor(
+@@ -246,7 +265,7 @@ Processor::Processor(
  
    extensions_str = extensions_str + delimiter;
  
@@ -79,7 +112,7 @@ index 4795067f..6ac028e2 100644
  
    while (found != string::npos) {
      string token = extensions_str.substr(0, found);
-@@ -299,17 +309,14 @@ Processor::~Processor() {
+@@ -299,20 +318,20 @@ Processor::~Processor() {
          delete e.second;
  }
  
@@ -94,6 +127,9 @@ index 4795067f..6ac028e2 100644
 -  if (!params.exist(base, "mmu_mode"))
 -    params.set_string(base, "mmu_mode", "sv39", "sv39",
 -                      "Memory virtualization mode");
+-
+-  if (!params.exist(base, "pmpregions"))
+-    params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
 +void Processor::default_params(string base, openhw::Params &params, Processor *proc) {
 +  params.set_string(base, "isa", "RV32GC", "RV32GC",
 +             "ISA");
@@ -102,10 +138,16 @@ index 4795067f..6ac028e2 100644
 +             "First PC of the core");
 +  params.set_string(base, "mmu_mode", "sv39", "sv39",
 +             "Memory virtualization mode");
- 
-   if (!params.exist(base, "pmpregions"))
-     params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
-@@ -383,33 +390,21 @@ void Processor::default_params(string base, openhw::Params &params) {
++
++  if (!params.exist(base, "pmpregions_max"))
++    params.set_uint64_t(base, "pmpregions_max", 0x0UL, "0x0",
++                        "Number of PMP regions");
++  if (!params.exist(base, "pmpregions_writable"))
++    params.set_uint64_t(base, "pmpregions_writable", 0x0UL, "0x0",
+                         "Number of PMP regions");
+   if (!params.exist(base, "pmpaddr0"))
+     params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
+@@ -383,33 +402,23 @@ void Processor::default_params(string base, openhw::Params &params) {
      params.set_uint64_t(base, "nmi_mcause", 0x00000020, "0x00000020",
  			"Value of MCAUSE in case of NMI. It does not include the interrupt bit.");
  
@@ -143,8 +185,10 @@ index 4795067f..6ac028e2 100644
 +                    csr_name + " CSR override value");
 +        params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
 +                    csr_name + " CSR override mask");
-+        params.set_bool(base, csr_name + "_presence", true, "true",
-+                    csr_name + " CSR presence");
++        params.set_bool(base, csr_name + "_accessible", true, "true",
++                    csr_name + " CSR accessible");
++        params.set_bool(base, csr_name + "_implemented", true, "true",
++                    csr_name + " CSR implemented");
 +        params.set_bool(base, csr_name + "_we_enable", false, "false",
 +                    csr_name +" CSR Write Enable param enable");
 +        params.set_bool(base, csr_name + "_we", false, "false",
@@ -154,7 +198,7 @@ index 4795067f..6ac028e2 100644
        }
    }
  
-@@ -436,6 +431,11 @@ void Processor::put_csr(int which, reg_t val)
+@@ -436,6 +445,11 @@ void Processor::put_csr(int which, reg_t val)
    }
  }
  
@@ -166,7 +210,7 @@ index 4795067f..6ac028e2 100644
  reg_t Processor::get_csr(int which, insn_t insn, bool write, bool peek)
  {
    auto search = get_state()->csrmap.find(which);
-@@ -469,12 +469,14 @@ void Processor::reset()
+@@ -469,12 +483,14 @@ void Processor::reset()
  
      this->get_state()->debug_mode = 1;
  
@@ -185,7 +229,7 @@ index 4795067f..6ac028e2 100644
              uint64_t override_mask = (this->params[base + csr_name + "_override_mask"]).a_uint64_t;
              uint64_t override_value = (this->params[base + csr_name + "_override_value"]).a_uint64_t;
  
-@@ -483,27 +485,27 @@ void Processor::reset()
+@@ -483,27 +499,32 @@ void Processor::reset()
              // Write the value to the CSR
              p_csr->backdoor_write(val);
              // Affect possible dependencies
@@ -202,20 +246,29 @@ index 4795067f..6ac028e2 100644
 +                p_csr->write(val);
  
 -        if (it->second.write_enable_param) {
-             bool we_enable = (this->params[base + csr_name + "_we_enable"]).a_bool;
-             bool we = (this->params[base + csr_name + "_we"]).a_bool;
-             if (we_enable)
-                 p_csr->set_we(we);
+-            bool we_enable = (this->params[base + csr_name + "_we_enable"]).a_bool;
+-            bool we = (this->params[base + csr_name + "_we"]).a_bool;
+-            if (we_enable)
+-                p_csr->set_we(we);
 -        }
 -        if (it->second.write_mask_param) {
-+
 +            string write_mask_string = base + csr_name + "_write_mask";
              uint64_t write_mask = (this->params[base + csr_name + "_write_mask"]).a_uint64_t;
              p_csr->set_param_write_mask(write_mask);
 -        }
  
-+            bool presence = (this->params[base + csr_name + "_presence"]).a_bool;
-+            if (!presence)
++            bool implemented = (this->params[base + csr_name + "_implemented"]).a_bool;
++            p_csr->set_param_implemented(implemented);
++            if (!implemented) {
++                p_csr->set_param_write_mask(0x0);
++                p_csr->backdoor_write(0x0);
++                if (p_csr->read())
++                    p_csr->write(0);
++            }
++
++            bool accessible = (this->params[base + csr_name + "_accessible"]).a_bool;
++            p_csr->set_param_accessible(accessible);
++            if (!accessible)
 +                state.csrmap.erase(it++);
 +            else
 +                it++;
@@ -226,7 +279,34 @@ index 4795067f..6ac028e2 100644
      }
  
      this->get_state()->debug_mode = 0;
-@@ -540,8 +542,8 @@ void Processor::take_interrupt(reg_t pending_interrupts) {
+@@ -528,6 +549,26 @@ void Processor::reset()
+         }
+     }
+ 
++    uint64_t pmpregions_writable = this->params[base + "pmpregions_writable"].a_uint64_t;
++    uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
++
++    for (int i = pmpregions_writable; i < pmpregions_max; i++) {
++        uint64_t csr_pmpaddr = CSR_PMPADDR0 + i;
++        uint64_t csr_pmpcfg = CSR_PMPCFG0 + (i/4);
++
++        auto addr_it = this->get_state()->csrmap.find(csr_pmpaddr);
++        if (addr_it != this->get_state()->csrmap.end()) {
++            openhw::reg* p_csr = (openhw::reg*) addr_it->second.get();
++            p_csr->set_param_write_mask(0x0);
++            p_csr->set_param_implemented(0x0);
++
++        }
++        auto cfg_it = this->get_state()->csrmap.find(csr_pmpcfg);
++        if (cfg_it != this->get_state()->csrmap.end()) {
++            openhw::reg* p_csr = (openhw::reg*) cfg_it->second.get();
++            p_csr->set_param_implemented(0x0);
++        }
++    }
+ }
+ 
+ void Processor::take_pending_interrupt() {
+@@ -540,8 +581,8 @@ void Processor::take_interrupt(reg_t pending_interrupts) {
  
    processor_t::take_interrupt(pending_interrupts);
  
@@ -237,7 +317,7 @@ index 4795067f..6ac028e2 100644
      uint64_t nmi_mcause = (this->params[base + "nmi_mcause"]).a_uint64_t;
      throw trap_t(((reg_t)1 << (isa->get_max_xlen() - 1)) | nmi_mcause);
    }
-@@ -579,20 +581,6 @@ void Processor::enter_debug_mode(uint8_t cause) {
+@@ -579,20 +620,6 @@ void Processor::enter_debug_mode(uint8_t cause) {
  
  }
  
@@ -380,20 +460,29 @@ index 887ceeaa..81128e68 100644
          }
      }
 diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
-index 72fbc3db..f62cffce 100644
+index 72fbc3db..373c76aa 100644
 --- a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
 +++ b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
-@@ -22,7 +22,8 @@ namespace openhw {
+@@ -21,14 +21,12 @@
+ namespace openhw {
  // implement a middle csr class
  reg::reg(processor_t *const proc, const reg_t addr, const reg_t init)
-     : address(addr), value(init), param_write_mask(-1), param_we(true),
+-    : address(addr), value(init), param_write_mask(-1), param_we(true),
 -      proc(proc), state(proc->get_state()) {
++    : address(addr), value(init), param_write_mask(-1), param_implemented(true),
++      param_accessible(true),
 +      proc(proc), state(proc->get_state()), name("") {
 +          this->name = csr_t::addr2name(addr);
        }
  
- void reg::set_we(bool we) noexcept { this->param_we = we; }
-@@ -94,6 +95,14 @@ inline bool reg::backdoor_write(reg_t val) noexcept {
+-void reg::set_we(bool we) noexcept { this->param_we = we; }
+-
+-bool reg::get_we() noexcept { return this->param_we; }
+-
+ void reg::set_param_write_mask(reg_t mask) noexcept {
+   this->param_write_mask = mask;
+ }
+@@ -94,8 +92,16 @@ inline bool reg::backdoor_write(reg_t val) noexcept {
    return true;
  }
  
@@ -406,9 +495,12 @@ index 72fbc3db..f62cffce 100644
 +}
 +
  void reg::write(const reg_t val, const bool log) noexcept {
-   if (!this->param_we)
+-  if (!this->param_we)
++  if (!this->param_implemented)
      return;
-@@ -114,4 +123,304 @@ reg_t reg::read() const noexcept {
+ 
+   this->pre_write(val);
+@@ -114,4 +120,310 @@ reg_t reg::read() const noexcept {
    return ret_val;
  }
  
@@ -707,14 +799,20 @@ index 72fbc3db..f62cffce 100644
 +        case CSR_VTYPE          : return "vtype";
 +        case CSR_VLENB          : return "vlenb";
 +        case CSR_MCONFIGPTR     : return "mconfigptr";
++        // Old CSR
++        case CSR_MSCONTEXT      : return "mscontext";
 +    }
 +    return "";
 +};
 +
++void reg::set_param_accessible(bool accessible) noexcept { this->param_accessible = accessible; }
++
++void reg::set_param_implemented(bool implemented) noexcept { this->param_implemented = implemented; }
++
 +
  } // namespace openhw
 diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
-index eaaed34d..82980756 100644
+index eaaed34d..024caaf2 100644
 --- a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
 +++ b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
 @@ -12,7 +12,9 @@
@@ -727,7 +825,7 @@ index eaaed34d..82980756 100644
  
  class processor_t;
  namespace openhw {
-@@ -57,6 +59,10 @@ public:
+@@ -57,18 +59,32 @@ public:
  
    virtual bool backdoor_write(const reg_t val) noexcept;
  
@@ -735,10 +833,19 @@ index eaaed34d..82980756 100644
 +
 +  virtual void set_name(std::string new_name) noexcept;
 +
++  virtual void set_param_accessible(bool accessible) noexcept;
++
++  virtual void set_param_implemented(bool implemented) noexcept;
++
  private:
    reg_t value;
  
-@@ -67,8 +73,13 @@ protected:
+ protected:
+   reg_t param_write_mask;
+-  bool param_we;
++  bool param_implemented;
++  bool param_accessible;
+ 
    processor_t *const proc;
    state_t *const state;
    friend class Processor;
