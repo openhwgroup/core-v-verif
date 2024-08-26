@@ -63,12 +63,17 @@ public:
 
   virtual void set_name(std::string new_name) noexcept;
 
+  virtual void set_param_accessible(bool accessible) noexcept;
+
+  virtual void set_param_implemented(bool implemented) noexcept;
+
 private:
   reg_t value;
 
 protected:
   reg_t param_write_mask;
-  bool param_we;
+  bool param_implemented;
+  bool param_accessible;
 
   processor_t *const proc;
   state_t *const state;
