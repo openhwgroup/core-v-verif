@@ -21,14 +21,11 @@
 namespace openhw {
 // implement a middle csr class
 reg::reg(processor_t *const proc, const reg_t addr, const reg_t init)
-    : address(addr), value(init), param_write_mask(-1), param_we(true),
+    : address(addr), value(init), param_write_mask(-1), param_implemented(true),
+      param_accessible(true),
       proc(proc), state(proc->get_state()), name("") {
           this->name = csr_t::addr2name(addr);
       }
-
-void reg::set_we(bool we) noexcept { this->param_we = we; }
-
-bool reg::get_we() noexcept { return this->param_we; }
 
 void reg::set_param_write_mask(reg_t mask) noexcept {
   this->param_write_mask = mask;
@@ -104,7 +101,7 @@ inline void reg::set_name(string new_name) noexcept {
 }
 
 void reg::write(const reg_t val, const bool log) noexcept {
-  if (!this->param_we)
+  if (!this->param_implemented)
     return;
 
   this->pre_write(val);
@@ -418,9 +415,15 @@ std::string reg::addr2name(uint64_t addr) {
         case CSR_VTYPE          : return "vtype";
         case CSR_VLENB          : return "vlenb";
         case CSR_MCONFIGPTR     : return "mconfigptr";
+        // Old CSR
+        case CSR_MSCONTEXT      : return "mscontext";
     }
     return "";
 };
+
+void reg::set_param_accessible(bool accessible) noexcept { this->param_accessible = accessible; }
+
+void reg::set_param_implemented(bool implemented) noexcept { this->param_implemented = implemented; }
 
 
 } // namespace openhw

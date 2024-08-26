@@ -170,15 +170,24 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
             }
 
             // If it is set or clear we need to inject also the value in the CSR
-            if (reg_t read_csr = this->get_state()->last_inst_fetched.rs1()) {
+            if (this->get_state()->last_inst_fetched.rs1()) {
                 if ((rvfi.insn & MASK_CSRRC) == MATCH_CSRRC   ||
                     (rvfi.insn & MASK_CSRRS) == MATCH_CSRRS   ||
                     (rvfi.insn & MASK_CSRRCI) == MATCH_CSRRCI ||
                     (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI) {
+
                     if (reference->csr_valid[INDEX_CSR(read_csr)]) {
                         this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
                         rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
                     }
+                }
+            }
+            if ((rvfi.insn & MASK_CSRRW) == MATCH_CSRRW   ||
+                (rvfi.insn & MASK_CSRRWI) == MATCH_CSRRWI) {
+
+                if (reference->csr_valid[INDEX_CSR(read_csr)]) {
+                    this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
+                    rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
                 }
             }
             break;
@@ -221,6 +230,10 @@ Processor::Processor(
   std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str << std::endl;
   std::cout << "[SPIKE]     Non standard interrupts " << this->params[base + "non_standard_interrupts"].a_bool << std::endl;
 
+  uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
+  std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions_max << std::endl;
+  processor_t::set_pmp_num(pmpregions_max);
+
   ((cfg_t *)cfg)->priv = priv_str.c_str();
 
   uint64_t trigger_count = this->params[base + "trigger_count"].a_uint64_t;
@@ -239,10 +252,6 @@ Processor::Processor(
   this->taken_debug = false;
   this->nmi_inject = false;
 
-
-  uint64_t pmpregions = this->params[base + "pmpregions"].a_uint64_t;
-  std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions << std::endl;
-  processor_t::set_pmp_num(pmpregions);
 
   ((cfg_t *)cfg)->misaligned =
       (this->params[base + "misaligned"]).a_bool;
@@ -318,8 +327,11 @@ void Processor::default_params(string base, openhw::Params &params, Processor *p
   params.set_string(base, "mmu_mode", "sv39", "sv39",
              "Memory virtualization mode");
 
-  if (!params.exist(base, "pmpregions"))
-    params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
+  if (!params.exist(base, "pmpregions_max"))
+    params.set_uint64_t(base, "pmpregions_max", 0x0UL, "0x0",
+                        "Number of PMP regions");
+  if (!params.exist(base, "pmpregions_writable"))
+    params.set_uint64_t(base, "pmpregions_writable", 0x0UL, "0x0",
                         "Number of PMP regions");
   if (!params.exist(base, "pmpaddr0"))
     params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
@@ -397,8 +409,10 @@ void Processor::default_params(string base, openhw::Params &params, Processor *p
                     csr_name + " CSR override value");
         params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
                     csr_name + " CSR override mask");
-        params.set_bool(base, csr_name + "_presence", true, "true",
-                    csr_name + " CSR presence");
+        params.set_bool(base, csr_name + "_accessible", true, "true",
+                    csr_name + " CSR accessible");
+        params.set_bool(base, csr_name + "_implemented", true, "true",
+                    csr_name + " CSR implemented");
         params.set_bool(base, csr_name + "_we_enable", false, "false",
                     csr_name +" CSR Write Enable param enable");
         params.set_bool(base, csr_name + "_we", false, "false",
@@ -488,17 +502,22 @@ void Processor::reset()
             if (val != p_csr->read())
                 p_csr->write(val);
 
-            bool we_enable = (this->params[base + csr_name + "_we_enable"]).a_bool;
-            bool we = (this->params[base + csr_name + "_we"]).a_bool;
-            if (we_enable)
-                p_csr->set_we(we);
-
             string write_mask_string = base + csr_name + "_write_mask";
             uint64_t write_mask = (this->params[base + csr_name + "_write_mask"]).a_uint64_t;
             p_csr->set_param_write_mask(write_mask);
 
-            bool presence = (this->params[base + csr_name + "_presence"]).a_bool;
-            if (!presence)
+            bool implemented = (this->params[base + csr_name + "_implemented"]).a_bool;
+            p_csr->set_param_implemented(implemented);
+            if (!implemented) {
+                p_csr->set_param_write_mask(0x0);
+                p_csr->backdoor_write(0x0);
+                if (p_csr->read())
+                    p_csr->write(0);
+            }
+
+            bool accessible = (this->params[base + csr_name + "_accessible"]).a_bool;
+            p_csr->set_param_accessible(accessible);
+            if (!accessible)
                 state.csrmap.erase(it++);
             else
                 it++;
@@ -530,6 +549,26 @@ void Processor::reset()
         }
     }
 
+    uint64_t pmpregions_writable = this->params[base + "pmpregions_writable"].a_uint64_t;
+    uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
+
+    for (int i = pmpregions_writable; i < pmpregions_max; i++) {
+        uint64_t csr_pmpaddr = CSR_PMPADDR0 + i;
+        uint64_t csr_pmpcfg = CSR_PMPCFG0 + (i/4);
+
+        auto addr_it = this->get_state()->csrmap.find(csr_pmpaddr);
+        if (addr_it != this->get_state()->csrmap.end()) {
+            openhw::reg* p_csr = (openhw::reg*) addr_it->second.get();
+            p_csr->set_param_write_mask(0x0);
+            p_csr->set_param_implemented(0x0);
+
+        }
+        auto cfg_it = this->get_state()->csrmap.find(csr_pmpcfg);
+        if (cfg_it != this->get_state()->csrmap.end()) {
+            openhw::reg* p_csr = (openhw::reg*) cfg_it->second.get();
+            p_csr->set_param_implemented(0x0);
+        }
+    }
 }
 
 void Processor::take_pending_interrupt() {
