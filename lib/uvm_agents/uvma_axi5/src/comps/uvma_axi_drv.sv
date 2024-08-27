@@ -162,7 +162,7 @@ class uvma_axi_drv_c extends uvm_driver #(uvma_axi_transaction_c);
     // task to wait a specific number of clock cycle
     task automatic wait_n_clock_cycle( int unsigned n_clock_cycle );
       for (int i = 0 ; i < n_clock_cycle ; i++) begin
-        @(posedge cntxt.axi_vi.clk);
+        @(posedge master_mp.clk);
       end
     endtask
 endclass: uvma_axi_drv_c
@@ -198,7 +198,7 @@ task uvma_axi_drv_c::pre_reset_phase(uvm_phase phase);
 
    `uvm_info(get_type_name(), $sformatf("start drv_pre_reset"), UVM_DEBUG)
 
-   @(reset_asserted);
+   ->reset_asserted;
    if(cfg.is_slave) begin
      this.slave_mp.slv_axi_cb.aw_ready <= 0;
      this.slave_mp.slv_axi_cb.w_ready  <= 0;
