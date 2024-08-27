@@ -26,16 +26,17 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_transaction_c);
    uvma_axi_synchronizer_c    synchronizer;
 
    //Handles to sequencer FIFOS
-   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      ar_mon2seq_fifo_port;
-   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      aw_mon2seq_fifo_port;
-   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      w_mon2seq_fifo_port;
-   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      mon2seq_fifo_port;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)    ar_mon2seq_fifo_port;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)    aw_mon2seq_fifo_port;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)    w_mon2seq_fifo_port;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)    mon2seq_fifo_port;
 
    //Handles to sequencer port connected to the FIFOS
    uvm_analysis_export #(uvma_axi_transaction_c)      aw_mon2seq_export;
    uvm_analysis_export #(uvma_axi_transaction_c)      w_mon2seq_export;
    uvm_analysis_export #(uvma_axi_transaction_c)      ar_mon2seq_export;
    uvm_analysis_export #(uvma_axi_transaction_c)      mon2seq_export;
+
 
    // ID management
    protected string name ;
@@ -114,7 +115,7 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_transaction_c);
 
    endfunction
 
-       // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Function: is_id_queue_full
     // Function which return the flag indicating if there is no more ID
     // available, corresponding of the type of request.
