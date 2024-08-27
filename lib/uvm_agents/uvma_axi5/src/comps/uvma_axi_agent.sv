@@ -59,6 +59,7 @@ class uvma_axi_agent_c extends uvm_agent;
       if (cntxt == null) begin
          `uvm_info("CNTXT", "Context handle is null; creating", UVM_DEBUG)
          cntxt = uvma_axi_cntxt_c::type_id::create("cntxt");
+         cntxt.mem.mem_default = MEM_DEFAULT_RANDOM;
       end
       uvm_config_db#(uvma_axi_cntxt_c)::set(this, "*", "cntxt", cntxt);
 
