@@ -16,6 +16,7 @@
 `define __RVFI_SPIKE_SV__
 
 import "DPI-C" function int spike_create(string filename);
+import "DPI-C" function void spike_delete();
 
 import "DPI-C" function void spike_set_param_uint64_t(string base, string name, longint unsigned value);
 import "DPI-C" function void spike_set_param_str(string base, string name, string value);
@@ -68,14 +69,11 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
             void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
 
-            void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
-            void'(spike_set_param_uint64_t(base, "mhartid", core_cfg.mhartid));
-            void'(spike_set_param_uint64_t(base, "marchid", core_cfg.marchid));
-            void'(spike_set_param_uint64_t(base, "mvendorid", core_cfg.mvendorid));
+            void'(spike_set_param_uint64_t(base, "pmpregions_max", core_cfg.pmp_regions));
+            void'(spike_set_param_uint64_t(base, "pmpregions_writable", core_cfg.pmp_regions));
             void'(spike_set_param_bool(base, "misaligned", core_cfg.unaligned_access_supported));
 
             void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
-            void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
 
             void'(spike_set_param_uint64_t(base, "mhartid_override_mask", 64'hFFFFFFFF));
             void'(spike_set_param_uint64_t(base, "mhartid_override_value", core_cfg.mhartid));

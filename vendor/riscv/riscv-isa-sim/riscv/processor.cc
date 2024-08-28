@@ -37,7 +37,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
   log_file(log_file), sout_(sout_.rdbuf()), halt_on_reset(halt_on_reset),
   in_wfi(false), check_triggers_icount(false),
   impl_table(256, false), extension_enable_table(isa->get_extension_table()),
-  last_pc(1), executions(1), TM(cfg->trigger_count)
+  last_pc(1), executions(1), TM(cfg->trigger_count), disassembler(nullptr)
 {
 
   VU.p = this;
@@ -56,6 +56,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
   mmu = new mmu_t(sim, cfg->endianness, this);
 
   disassembler = new disassembler_t(isa);
+
   for (auto e : isa->get_extensions())
     register_extension(e.second);
 

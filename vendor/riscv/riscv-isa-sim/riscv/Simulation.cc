@@ -69,7 +69,6 @@ void Simulation::default_params(openhw::Params &params) {
     params.set_bool("/top/", "max_steps_enabled", 200000UL, "200000",
                     "Maximum steps that the simulation can do ");
 
-  Processor::default_params("/top/cores/", params);
 }
 
 Simulation::Simulation(
@@ -128,7 +127,8 @@ Simulation::Simulation(const cfg_t *cfg, string elf_path,
                  NULL,         // cmd_file
                  params) {}
 
-Simulation::~Simulation() {}
+Simulation::~Simulation() {
+}
 
 int Simulation::run() {
   try {
@@ -208,6 +208,14 @@ std::vector<st_rvfi> Simulation::step(size_t n,
     }
   }
   return vspike;
+}
+
+Processor* Simulation::get_core_by_id(size_t id) {
+    for (size_t i = 0; i < procs.size(); i++) {
+        if (procs[i]->get_id() == id)
+            return (Processor*) procs[i];
+    }
+    return nullptr;
 }
 
 #if 0 // FORNOW Unused code, disable until needed.

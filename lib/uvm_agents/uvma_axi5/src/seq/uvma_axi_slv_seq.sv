@@ -189,10 +189,10 @@ endtask : do_mem_operation
 task uvma_axi_slv_seq_c::trs_registration(uvma_axi_transaction_c mon_req);
 
    if(mon_req.m_txn_type == UVMA_AXI_WRITE_ADD_REQ || mon_req.m_txn_type == UVMA_AXI_WRITE_DATA_REQ) begin
-      `uvm_info(get_type_name(), $sformatf("Write trx registration "), UVM_LOW)
+      `uvm_info(get_type_name(), $sformatf("Write trx registration "), UVM_HIGH)
       synchronizer.add_w_trs(mon_req);
    end else if(mon_req.m_txn_type == UVMA_AXI_READ_REQ) begin
-      `uvm_info(get_type_name(), $sformatf("Read trx registration "), UVM_LOW)
+      `uvm_info(get_type_name(), $sformatf("Read trx registration "), UVM_HIGH)
       synchronizer.add_r_trs(mon_req);
    end
 
@@ -210,7 +210,7 @@ task uvma_axi_slv_seq_c::prepare_w_resp();
       `uvm_create(w_slv_rsp)
 
       w_slv_rsp = new synchronizer.w_trs_queue[w_selected_id][0];
-      `uvm_info(get_type_name(), $sformatf("Write Response Transaction is created"), UVM_LOW)
+      `uvm_info(get_type_name(), $sformatf("Write Response Transaction is created"), UVM_HIGH)
 
       exc_resp = synchronizer.check_exclusive_resp(w_selected_id);
       if(exc_resp == 1) w_slv_rsp.m_resp.push_back(1)   ;
@@ -236,7 +236,7 @@ task uvma_axi_slv_seq_c::prepare_w_resp();
          w_slv_rsp.m_user.rand_mode(0);
       end
 
-      `uvm_info(get_type_name(), $sformatf("FINICH WRITE TRANSACTION"), UVM_LOW)
+      `uvm_info(get_type_name(), $sformatf("FINICH WRITE TRANSACTION"), UVM_HIGH)
       synchronizer.write_burst_complete(w_selected_id);
 
       // Randomization of the transaction

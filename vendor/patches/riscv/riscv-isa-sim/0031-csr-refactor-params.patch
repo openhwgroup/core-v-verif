@@ -1,0 +1,988 @@
+diff --git a/vendor/riscv/riscv-isa-sim/Makefile.in b/vendor/riscv/riscv-isa-sim/Makefile.in
+index d8cf491c..d32a7a9b 100644
+--- a/vendor/riscv/riscv-isa-sim/Makefile.in
++++ b/vendor/riscv/riscv-isa-sim/Makefile.in
+@@ -127,15 +127,15 @@ yaml-cpp-static: $(install_libs_dir)/libyaml-cpp.a
+ $(install_hdrs_dir)/yaml-cpp $(install_libs_dir)/libyaml-cpp.so :
+ 	rm -rf $(YAMLDIR)/build
+ 	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(INSTALLDIR) -DCMAKE_INSTALL_LIBDIR=$(install_libs_dir) -DYAML_BUILD_SHARED_LIBS=on
+-	make -C $(YAMLDIR)/build
+-	make -C $(YAMLDIR)/build install
++	make -C $(YAMLDIR)/build -j $(NUM_JOBS)
++	make -C $(YAMLDIR)/build install -j $(NUM_JOBS)
+ 
+ # Build and install the static version of the library.
+ $(install_libs_dir)/libyaml-cpp.a :
+ 	rm -rf $(YAMLDIR)/build
+ 	cmake -S $(YAMLDIR) -B $(YAMLDIR)/build -DCMAKE_INSTALL_PREFIX=$(INSTALLDIR) -DCMAKE_INSTALL_LIBDIR=$(install_libs_dir) -DYAML_BUILD_SHARED_LIBS=off
+-	make -C $(YAMLDIR)/build
+-	make -C $(YAMLDIR)/build install
++	make -C $(YAMLDIR)/build -j $(NUM_JOBS)
++	make -C $(YAMLDIR)/build install -j $(NUM_JOBS)
+ 
+ .PHONY : yaml-cpp yaml-cpp-static
+ 
+@@ -327,7 +327,7 @@ $(2)_prog_libarg    := $$(patsubst %, -l%, $$($(2)_prog_libs))
+ $$($(2)_prog_objs) : %.o : %.cc
+ 	$(COMPILE) -c $$<
+ 
+-$$($(2)_prog_exes) : % : %.o $$($(2)_prog_libnames) 
++$$($(2)_prog_exes) : % : %.o $$($(2)_prog_libnames)
+ 	$(LINK) -o $$@ $$< $$($(2)_prog_libnames) $(LIBS_EXE) $$($(2)_LDFLAGS)
+ 
+ $(2)_deps += $$($(2)_prog_deps)
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 4795067f..48c7d529 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -170,17 +170,26 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+             }
+ 
+             // If it is set or clear we need to inject also the value in the CSR
+-            if (reg_t read_csr = this->get_state()->last_inst_fetched.rs1()) {
++            if (this->get_state()->last_inst_fetched.rs1()) {
+                 if ((rvfi.insn & MASK_CSRRC) == MATCH_CSRRC   ||
+                     (rvfi.insn & MASK_CSRRS) == MATCH_CSRRS   ||
+                     (rvfi.insn & MASK_CSRRCI) == MATCH_CSRRCI ||
+                     (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI) {
++
+                     if (reference->csr_valid[INDEX_CSR(read_csr)]) {
+                         this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
+                         rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
+                     }
+                 }
+             }
++            if ((rvfi.insn & MASK_CSRRW) == MATCH_CSRRW   ||
++                (rvfi.insn & MASK_CSRRWI) == MATCH_CSRRWI) {
++
++                if (reference->csr_valid[INDEX_CSR(read_csr)]) {
++                    this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
++                    rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
++                }
++            }
+             break;
+           default:
+             break;
+@@ -211,7 +220,7 @@ Processor::Processor(
+   registered_extensions_v["cvxif"] = false;
+ 
+   base = "/top/core/" + std::to_string(id) + "/";
+-  Processor::default_params(base, this->params);
++  Processor::default_params(base, this->params, this);
+   Params::parse_params(base, this->params, params_);
+ 
+   string isa_str = this->params[base + "isa"].a_string;
+@@ -221,18 +230,28 @@ Processor::Processor(
+   std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str << std::endl;
+   std::cout << "[SPIKE]     Non standard interrupts " << this->params[base + "non_standard_interrupts"].a_bool << std::endl;
+ 
++  uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
++  std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions_max << std::endl;
++  processor_t::set_pmp_num(pmpregions_max);
++
+   ((cfg_t *)cfg)->priv = priv_str.c_str();
+ 
+   uint64_t trigger_count = this->params[base + "trigger_count"].a_uint64_t;
+   ((cfg_t *)cfg)->trigger_count = trigger_count;
+ 
+-  disassembler = new disassembler_t(this->isa);
++  if (disassembler != NULL)
++      delete disassembler;
++
++  this->disassembler = new disassembler_t(this->isa);
+ 
+   for (auto e : this->isa->get_extensions()) {
+     register_extension(e.second);
+   }
+ 
+-  processor_t::set_pmp_num(this->params[base + "pmpregions"].a_uint64_t);
++  this->taken_trap = false;
++  this->taken_debug = false;
++  this->nmi_inject = false;
++
+ 
+   ((cfg_t *)cfg)->misaligned =
+       (this->params[base + "misaligned"]).a_bool;
+@@ -246,7 +265,7 @@ Processor::Processor(
+ 
+   extensions_str = extensions_str + delimiter;
+ 
+-  size_t found = extensions_str.rfind(delimiter);
++  size_t found = extensions_str.find(delimiter);
+ 
+   while (found != string::npos) {
+     string token = extensions_str.substr(0, found);
+@@ -299,20 +318,20 @@ Processor::~Processor() {
+         delete e.second;
+ }
+ 
+-void Processor::default_params(string base, openhw::Params &params) {
+-  if (!params.exist(base, "isa"))
+-    params.set_string(base, "isa", "RV32GC", "RV32GC", "ISA");
+-  if (!params.exist(base, "priv"))
+-    params.set_string(base, "priv", DEFAULT_PRIV, DEFAULT_PRIV, "Privilege Level");
+-  if (!params.exist(base, "boot_addr"))
+-    params.set_uint64_t(base, "boot_addr", 0x80000000UL, "0x80000000UL",
+-                        "First PC of the core");
+-  if (!params.exist(base, "mmu_mode"))
+-    params.set_string(base, "mmu_mode", "sv39", "sv39",
+-                      "Memory virtualization mode");
+-
+-  if (!params.exist(base, "pmpregions"))
+-    params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
++void Processor::default_params(string base, openhw::Params &params, Processor *proc) {
++  params.set_string(base, "isa", "RV32GC", "RV32GC",
++             "ISA");
++  params.set_string(base, "priv", DEFAULT_PRIV, DEFAULT_PRIV, "Privilege Level");
++  params.set_uint64_t(base, "boot_addr", 0x80000000UL, "0x80000000UL",
++             "First PC of the core");
++  params.set_string(base, "mmu_mode", "sv39", "sv39",
++             "Memory virtualization mode");
++
++  if (!params.exist(base, "pmpregions_max"))
++    params.set_uint64_t(base, "pmpregions_max", 0x0UL, "0x0",
++                        "Number of PMP regions");
++  if (!params.exist(base, "pmpregions_writable"))
++    params.set_uint64_t(base, "pmpregions_writable", 0x0UL, "0x0",
+                         "Number of PMP regions");
+   if (!params.exist(base, "pmpaddr0"))
+     params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
+@@ -383,33 +402,23 @@ void Processor::default_params(string base, openhw::Params &params) {
+     params.set_uint64_t(base, "nmi_mcause", 0x00000020, "0x00000020",
+ 			"Value of MCAUSE in case of NMI. It does not include the interrupt bit.");
+ 
+-  for (auto it = Processor::csr_params.begin(); it != Processor::csr_params.end(); it++) {
+-      string csr_name = it->second.name;
+-      if (it->second.override_mask_param) {
+-	if (!params.exist(base, csr_name + "_override_value"))
+-          params.set_uint64_t(base, csr_name + "_override_value", (0x0UL), "0x0",
+-			      csr_name + " CSR override value");
+-        if (!params.exist(base, csr_name + "_override_mask"))
+-          params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
+-			      csr_name + " CSR override mask");
+-      }
+-      if (it->second.presence_param) {
+-        if (!params.exist(base, csr_name + "_presence"))
+-          params.set_bool(base, csr_name + "_presence", true, "true",
+-			  csr_name + " CSR presence");
+-      }
+-      if (it->second.write_enable_param) {
+-        if (!params.exist(base, csr_name + "_we_enable"))
+-          params.set_bool(base, csr_name + "_we_enable", false, "false",
+-			  csr_name +" CSR Write Enable param enable");
+-        if (!params.exist(base, csr_name + "_we"))
+-          params.set_bool(base, csr_name + "_we", false, "false",
+-			  csr_name + " CSR Write Enable value");
+-      }
+-      if (it->second.write_mask_param) {
+-        if (!params.exist(base, csr_name + "_write_mask"))
+-          params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
+-                    csr_name + " CSR write mask");
++  for (auto it = proc->get_state()->csrmap.begin(); it != proc->get_state()->csrmap.end(); it++) {
++      string csr_name = it->second.get()->get_name();
++      if (csr_name != "noname") {
++        params.set_uint64_t(base, csr_name + "_override_value", (0x0UL), "0x0",
++                    csr_name + " CSR override value");
++        params.set_uint64_t(base, csr_name + "_override_mask", (0x0UL), "0x0",
++                    csr_name + " CSR override mask");
++        params.set_bool(base, csr_name + "_accessible", true, "true",
++                    csr_name + " CSR accessible");
++        params.set_bool(base, csr_name + "_implemented", true, "true",
++                    csr_name + " CSR implemented");
++        params.set_bool(base, csr_name + "_we_enable", false, "false",
++                    csr_name +" CSR Write Enable param enable");
++        params.set_bool(base, csr_name + "_we", false, "false",
++                    csr_name + " CSR Write Enable value");
++        params.set_uint64_t(base, csr_name + "_write_mask", ((uint64_t) -1ULL), "0xFFFFFFFF",
++                        csr_name + " CSR write mask");
+       }
+   }
+ 
+@@ -436,6 +445,11 @@ void Processor::put_csr(int which, reg_t val)
+   }
+ }
+ 
++reg_t Processor::get_csr(int which)
++{
++    return this->get_csr(which, 0, 0, 1);
++}
++
+ reg_t Processor::get_csr(int which, insn_t insn, bool write, bool peek)
+ {
+   auto search = get_state()->csrmap.find(which);
+@@ -469,12 +483,14 @@ void Processor::reset()
+ 
+     this->get_state()->debug_mode = 1;
+ 
+-    for (auto it = Processor::csr_params.begin(); it != Processor::csr_params.end(); it++) {
+-        string csr_name = it->second.name;
++    auto it = this->get_state()->csrmap.begin();
++    while (it != this->get_state()->csrmap.end()) {
+ 
+-        openhw::reg* p_csr = (openhw::reg*) this->state.csrmap[it->first].get();
++        openhw::reg* p_csr = (openhw::reg*) it->second.get();
++        std::string csr_name = reg::addr2name(it->first);
++        if (csr_name != "") {
++            p_csr->set_name(csr_name);
+ 
+-        if (it->second.override_mask_param) {
+             uint64_t override_mask = (this->params[base + csr_name + "_override_mask"]).a_uint64_t;
+             uint64_t override_value = (this->params[base + csr_name + "_override_value"]).a_uint64_t;
+ 
+@@ -483,27 +499,32 @@ void Processor::reset()
+             // Write the value to the CSR
+             p_csr->backdoor_write(val);
+             // Affect possible dependencies
+-            p_csr->write(val);
+-        }
+-
+-        if (it->second.presence_param) {
+-            bool presence = (this->params[base + csr_name + "_presence"]).a_bool;
+-            auto csr_it = state.csrmap.find(it->first);
+-            if (csr_it != state.csrmap.end() and !presence)
+-                state.csrmap.erase(csr_it);
+-        }
++            if (val != p_csr->read())
++                p_csr->write(val);
+ 
+-        if (it->second.write_enable_param) {
+-            bool we_enable = (this->params[base + csr_name + "_we_enable"]).a_bool;
+-            bool we = (this->params[base + csr_name + "_we"]).a_bool;
+-            if (we_enable)
+-                p_csr->set_we(we);
+-        }
+-        if (it->second.write_mask_param) {
++            string write_mask_string = base + csr_name + "_write_mask";
+             uint64_t write_mask = (this->params[base + csr_name + "_write_mask"]).a_uint64_t;
+             p_csr->set_param_write_mask(write_mask);
+-        }
+ 
++            bool implemented = (this->params[base + csr_name + "_implemented"]).a_bool;
++            p_csr->set_param_implemented(implemented);
++            if (!implemented) {
++                p_csr->set_param_write_mask(0x0);
++                p_csr->backdoor_write(0x0);
++                if (p_csr->read())
++                    p_csr->write(0);
++            }
++
++            bool accessible = (this->params[base + csr_name + "_accessible"]).a_bool;
++            p_csr->set_param_accessible(accessible);
++            if (!accessible)
++                state.csrmap.erase(it++);
++            else
++                it++;
++
++        }
++        else
++            it++;
+     }
+ 
+     this->get_state()->debug_mode = 0;
+@@ -528,6 +549,26 @@ void Processor::reset()
+         }
+     }
+ 
++    uint64_t pmpregions_writable = this->params[base + "pmpregions_writable"].a_uint64_t;
++    uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
++
++    for (int i = pmpregions_writable; i < pmpregions_max; i++) {
++        uint64_t csr_pmpaddr = CSR_PMPADDR0 + i;
++        uint64_t csr_pmpcfg = CSR_PMPCFG0 + (i/4);
++
++        auto addr_it = this->get_state()->csrmap.find(csr_pmpaddr);
++        if (addr_it != this->get_state()->csrmap.end()) {
++            openhw::reg* p_csr = (openhw::reg*) addr_it->second.get();
++            p_csr->set_param_write_mask(0x0);
++            p_csr->set_param_implemented(0x0);
++
++        }
++        auto cfg_it = this->get_state()->csrmap.find(csr_pmpcfg);
++        if (cfg_it != this->get_state()->csrmap.end()) {
++            openhw::reg* p_csr = (openhw::reg*) cfg_it->second.get();
++            p_csr->set_param_implemented(0x0);
++        }
++    }
+ }
+ 
+ void Processor::take_pending_interrupt() {
+@@ -540,8 +581,8 @@ void Processor::take_interrupt(reg_t pending_interrupts) {
+ 
+   processor_t::take_interrupt(pending_interrupts);
+ 
+-  if (nmi_inject && !this->taken_trap && pending_interrupts == 0) {
+-    nmi_inject = false;
++  if (this->nmi_inject && !this->taken_trap && pending_interrupts == 0) {
++    this->nmi_inject = false;
+     uint64_t nmi_mcause = (this->params[base + "nmi_mcause"]).a_uint64_t;
+     throw trap_t(((reg_t)1 << (isa->get_max_xlen() - 1)) | nmi_mcause);
+   }
+@@ -579,20 +620,6 @@ void Processor::enter_debug_mode(uint8_t cause) {
+ 
+ }
+ 
+-std::unordered_map<uint64_t, openhw::csr_param_t> Processor::csr_params = {
+-    // ADDRESS          NAME      OVERRIDE_MASKS         PRESENCE        WRITE_ENABLE        WRITE_MASK
+-    { CSR_MSTATUS   , {"mstatus"    ,  true    ,           false       ,   true             , true} },
+-    { CSR_MISA      , {"misa"       ,  true    ,           false       ,   true             , true} },
+-    { CSR_MHARTID   , {"mhartid"    ,  true    ,           false       ,   true             , true} },
+-    { CSR_MARCHID   , {"marchid"    ,  true    ,           false       ,   true             , true} },
+-    { CSR_MVENDORID , {"mvendorid"  ,  true    ,           false       ,   true             , true} },
+-    { CSR_TDATA1    , {"tdata1"     ,  true    ,           false       ,   true             , true} },
+-    { CSR_TINFO     , {"tinfo"      ,  true    ,           true        ,   true             , true} },
+-    { CSR_MSCONTEXT , {"mscontext"  ,  true    ,           true        ,   true             , true} },
+-    { CSR_MTVAL     , {"mtval"      ,  true    ,           false       ,   true             , true} },
+-    { CSR_MTVEC     , {"mtvec"      ,  true    ,           false       ,   true             , true} },
+-  };
+-
+ std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {
+     { 'M',  {0x300, 0xFFF} },
+     { 'S',  {0x100, 0x200} },
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index 7e55bb92..070a6bd7 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -23,7 +23,7 @@ public:
+   ~Processor();
+   st_rvfi step(size_t n, st_rvfi reference);
+ 
+-  static void default_params(string base, openhw::Params &params);
++  static void default_params(string base, openhw::Params &params, openhw::Processor *proc);
+ 
+   inline void set_XPR(reg_t num, reg_t value);
+   inline void set_FPR(reg_t num, float128_t value);
+@@ -48,6 +48,8 @@ public:
+ 
+   virtual reg_t get_csr(int which, insn_t insn, bool write, bool peek = 0);
+ 
++  virtual reg_t get_csr(int which);
++
+   inline uint32_t mcause_to_mip(uint32_t mcause);
+ 
+ protected:
+@@ -67,8 +69,6 @@ protected:
+ 
+   commit_log_reg_t last_log_reg_write;
+ 
+-  static std::unordered_map<uint64_t, csr_param_t> csr_params;
+-
+   static std::unordered_map<char, std::tuple<uint64_t, uint64_t>> priv_ranges;
+ 
+ };
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+index cff33ca0..d960966c 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+@@ -69,7 +69,6 @@ void Simulation::default_params(openhw::Params &params) {
+     params.set_bool("/top/", "max_steps_enabled", 200000UL, "200000",
+                     "Maximum steps that the simulation can do ");
+ 
+-  Processor::default_params("/top/cores/", params);
+ }
+ 
+ Simulation::Simulation(
+@@ -128,7 +127,8 @@ Simulation::Simulation(const cfg_t *cfg, string elf_path,
+                  NULL,         // cmd_file
+                  params) {}
+ 
+-Simulation::~Simulation() {}
++Simulation::~Simulation() {
++}
+ 
+ int Simulation::run() {
+   try {
+@@ -210,6 +210,14 @@ std::vector<st_rvfi> Simulation::step(size_t n,
+   return vspike;
+ }
+ 
++Processor* Simulation::get_core_by_id(size_t id) {
++    for (size_t i = 0; i < procs.size(); i++) {
++        if (procs[i]->get_id() == id)
++            return (Processor*) procs[i];
++    }
++    return nullptr;
++}
++
+ #if 0 // FORNOW Unused code, disable until needed.
+ void Simulation::set_debug(bool value)
+ {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+index 9ade57a0..a4536a2d 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+@@ -67,6 +67,8 @@ public:
+    * */
+   Simulation(Params &params);
+ 
++  Processor* get_core_by_id(size_t i);
++
+ private:
+   uint64_t total_steps = 0;
+   uint64_t max_steps;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/YamlParamSetter.cc b/vendor/riscv/riscv-isa-sim/riscv/YamlParamSetter.cc
+index 887ceeaa..81128e68 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/YamlParamSetter.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/YamlParamSetter.cc
+@@ -36,20 +36,28 @@ namespace openhw {
+     void YamlParamSetter::redefineParameter(std::string base, std::string paramBase, YAML::const_iterator paramIterator) {
+         std::string paramName = paramIterator->first.as<std::string>();
+         std::string setValue = "";
+-        Param param = this->params->get(base, paramName);
+-        if (param.type == "string") {
++        std::string paramValue = paramIterator->second.as<std::string>();
++        std::string paramType;
++        if (paramValue == "true" or paramValue == "false")
++            paramType = "bool";
++        else if (paramValue[0] >= '0' && paramValue[0] <= '9' )
++            paramType = "uint64_t";
++        else
++            paramType = "string";
++
++        if (paramType == "string") {
+             std::string stringValue = paramIterator->second.as<std::string>();
+-            this->params->set_string(paramBase, paramName, stringValue, param.default_value, param.description);
++            this->params->set_string(paramBase, paramName, stringValue);
+             std::cout << "[OK] " << paramBase + paramName << ": " << stringValue << endl;
+         }
+-        else if (param.type == "bool") {
++        else if (paramType == "bool") {
+             bool boolValue = paramIterator->second.as<bool>();
+-            this->params->set_bool(paramBase, paramName, boolValue, param.default_value, param.description);
++            this->params->set_bool(paramBase, paramName, boolValue);
+             std::cout << "[OK] " << paramBase + paramName << ": " << boolValue << endl;
+         }
+-        else if (param.type == "uint64_t") {
++        else if (paramType == "uint64_t") {
+             uint64_t uint64Value = paramIterator->second.as<uint64_t>();
+-            this->params->set_uint64_t(paramBase, paramName, uint64Value, param.default_value, param.description);
++            this->params->set_uint64_t(paramBase, paramName, uint64Value);
+             std::cout << "[OK] " << paramBase + paramName << ": 0x" << std::hex << uint64Value << endl;
+         }
+     }
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
+index 72fbc3db..373c76aa 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
+@@ -21,14 +21,12 @@
+ namespace openhw {
+ // implement a middle csr class
+ reg::reg(processor_t *const proc, const reg_t addr, const reg_t init)
+-    : address(addr), value(init), param_write_mask(-1), param_we(true),
+-      proc(proc), state(proc->get_state()) {
++    : address(addr), value(init), param_write_mask(-1), param_implemented(true),
++      param_accessible(true),
++      proc(proc), state(proc->get_state()), name("") {
++          this->name = csr_t::addr2name(addr);
+       }
+ 
+-void reg::set_we(bool we) noexcept { this->param_we = we; }
+-
+-bool reg::get_we() noexcept { return this->param_we; }
+-
+ void reg::set_param_write_mask(reg_t mask) noexcept {
+   this->param_write_mask = mask;
+ }
+@@ -94,8 +92,16 @@ inline bool reg::backdoor_write(reg_t val) noexcept {
+   return true;
+ }
+ 
++inline string reg::get_name() noexcept {
++  return this->name;
++}
++
++inline void reg::set_name(string new_name) noexcept {
++  this->name = new_name;
++}
++
+ void reg::write(const reg_t val, const bool log) noexcept {
+-  if (!this->param_we)
++  if (!this->param_implemented)
+     return;
+ 
+   this->pre_write(val);
+@@ -114,4 +120,310 @@ reg_t reg::read() const noexcept {
+   return ret_val;
+ }
+ 
++std::string reg::addr2name(uint64_t addr) {
++    switch(addr) {
++        case CSR_FFLAGS         : return "fflags";
++        case CSR_FRM            : return "frm";
++        case CSR_FCSR           : return "fcsr";
++        case CSR_CYCLE          : return "cycle";
++        case CSR_TIME           : return "time";
++        case CSR_INSTRET        : return "instret";
++        case CSR_HPMCOUNTER3    : return "hpmcounter3";
++        case CSR_HPMCOUNTER4    : return "hpmcounter4";
++        case CSR_HPMCOUNTER5    : return "hpmcounter5";
++        case CSR_HPMCOUNTER6    : return "hpmcounter6";
++        case CSR_HPMCOUNTER7    : return "hpmcounter7";
++        case CSR_HPMCOUNTER8    : return "hpmcounter8";
++        case CSR_HPMCOUNTER9    : return "hpmcounter9";
++        case CSR_HPMCOUNTER10   : return "hpmcounter10";
++        case CSR_HPMCOUNTER11   : return "hpmcounter11";
++        case CSR_HPMCOUNTER12   : return "hpmcounter12";
++        case CSR_HPMCOUNTER13   : return "hpmcounter13";
++        case CSR_HPMCOUNTER14   : return "hpmcounter14";
++        case CSR_HPMCOUNTER15   : return "hpmcounter15";
++        case CSR_HPMCOUNTER16   : return "hpmcounter16";
++        case CSR_HPMCOUNTER17   : return "hpmcounter17";
++        case CSR_HPMCOUNTER18   : return "hpmcounter18";
++        case CSR_HPMCOUNTER19   : return "hpmcounter19";
++        case CSR_HPMCOUNTER20   : return "hpmcounter20";
++        case CSR_HPMCOUNTER21   : return "hpmcounter21";
++        case CSR_HPMCOUNTER22   : return "hpmcounter22";
++        case CSR_HPMCOUNTER23   : return "hpmcounter23";
++        case CSR_HPMCOUNTER24   : return "hpmcounter24";
++        case CSR_HPMCOUNTER25   : return "hpmcounter25";
++        case CSR_HPMCOUNTER26   : return "hpmcounter26";
++        case CSR_HPMCOUNTER27   : return "hpmcounter27";
++        case CSR_HPMCOUNTER28   : return "hpmcounter28";
++        case CSR_HPMCOUNTER29   : return "hpmcounter29";
++        case CSR_HPMCOUNTER30   : return "hpmcounter30";
++        case CSR_HPMCOUNTER31   : return "hpmcounter31";
++        case CSR_CYCLEH         : return "cycleh";
++        case CSR_TIMEH          : return "timeh";
++        case CSR_INSTRETH       : return "instreth";
++        case CSR_HPMCOUNTER3H   : return "hpmcounter3h";
++        case CSR_HPMCOUNTER4H   : return "hpmcounter4h";
++        case CSR_HPMCOUNTER5H   : return "hpmcounter5h";
++        case CSR_HPMCOUNTER6H   : return "hpmcounter6h";
++        case CSR_HPMCOUNTER7H   : return "hpmcounter7h";
++        case CSR_HPMCOUNTER8H   : return "hpmcounter8h";
++        case CSR_HPMCOUNTER9H   : return "hpmcounter9h";
++        case CSR_HPMCOUNTER10H  : return "hpmcounter10h";
++        case CSR_HPMCOUNTER11H  : return "hpmcounter11h";
++        case CSR_HPMCOUNTER12H  : return "hpmcounter12h";
++        case CSR_HPMCOUNTER13H  : return "hpmcounter13h";
++        case CSR_HPMCOUNTER14H  : return "hpmcounter14h";
++        case CSR_HPMCOUNTER15H  : return "hpmcounter15h";
++        case CSR_HPMCOUNTER16H  : return "hpmcounter16h";
++        case CSR_HPMCOUNTER17H  : return "hpmcounter17h";
++        case CSR_HPMCOUNTER18H  : return "hpmcounter18h";
++        case CSR_HPMCOUNTER19H  : return "hpmcounter19h";
++        case CSR_HPMCOUNTER20H  : return "hpmcounter20h";
++        case CSR_HPMCOUNTER21H  : return "hpmcounter21h";
++        case CSR_HPMCOUNTER22H  : return "hpmcounter22h";
++        case CSR_HPMCOUNTER23H  : return "hpmcounter23h";
++        case CSR_HPMCOUNTER24H  : return "hpmcounter24h";
++        case CSR_HPMCOUNTER25H  : return "hpmcounter25h";
++        case CSR_HPMCOUNTER26H  : return "hpmcounter26h";
++        case CSR_HPMCOUNTER27H  : return "hpmcounter27h";
++        case CSR_HPMCOUNTER28H  : return "hpmcounter28h";
++        case CSR_HPMCOUNTER29H  : return "hpmcounter29h";
++        case CSR_HPMCOUNTER30H  : return "hpmcounter30h";
++        case CSR_HPMCOUNTER31H  : return "hpmcounter31h";
++        case CSR_SSTATUS        : return "sstatus";
++        case CSR_SEDELEG        : return "sedeleg";
++        case CSR_SIDELEG        : return "sideleg";
++        case CSR_SIE            : return "sie";
++        case CSR_STVEC          : return "stvec";
++        case CSR_SCOUNTEREN     : return "scounteren";
++        case CSR_SSCRATCH       : return "sscratch";
++        case CSR_SEPC           : return "sepc";
++        case CSR_SCAUSE         : return "scause";
++        case CSR_STVAL          : return "stval";
++        case CSR_SIP            : return "sip";
++        case CSR_SATP           : return "satp";
++        case CSR_MVENDORID      : return "mvendorid";
++        case CSR_MARCHID        : return "marchid";
++        case CSR_MIMPID         : return "mimpid";
++        case CSR_MHARTID        : return "mhartid";
++        case CSR_MSTATUS        : return "mstatus";
++        case CSR_MISA           : return "misa";
++        case CSR_MEDELEG        : return "medeleg";
++        case CSR_MIDELEG        : return "mideleg";
++        case CSR_MIE            : return "mie";
++        case CSR_MTVEC          : return "mtvec";
++        case CSR_MCOUNTEREN     : return "mcounteren";
++        case CSR_MENVCFG        : return "menvcfg";
++        case CSR_MSTATUSH       : return "mstatush";
++        case CSR_MENVCFGH       : return "menvcfgh";
++        case CSR_MSCRATCH       : return "mscratch";
++        case CSR_MEPC           : return "mepc";
++        case CSR_MCAUSE         : return "mcause";
++        case CSR_MTVAL          : return "mtval";
++        case CSR_MIP            : return "mip";
++        case CSR_MTINST         : return "mtinst";
++        case CSR_MTVAL2         : return "mtval2";
++        case CSR_PMPCFG0        : return "pmpcfg0";
++        case CSR_PMPCFG1        : return "pmpcfg1";
++        case CSR_PMPCFG2        : return "pmpcfg2";
++        case CSR_PMPCFG3        : return "pmpcfg3";
++        case CSR_PMPCFG4        : return "pmpcfg4";
++        case CSR_PMPCFG5        : return "pmpcfg5";
++        case CSR_PMPCFG6        : return "pmpcfg6";
++        case CSR_PMPCFG7        : return "pmpcfg7";
++        case CSR_PMPCFG8        : return "pmpcfg8";
++        case CSR_PMPCFG9        : return "pmpcfg9";
++        case CSR_PMPCFG10       : return "pmpcfg10";
++        case CSR_PMPCFG11       : return "pmpcfg11";
++        case CSR_PMPCFG12       : return "pmpcfg12";
++        case CSR_PMPCFG13       : return "pmpcfg13";
++        case CSR_PMPCFG14       : return "pmpcfg14";
++        case CSR_PMPCFG15       : return "pmpcfg15";
++        case CSR_PMPADDR0       : return "pmpaddr0";
++        case CSR_PMPADDR1       : return "pmpaddr1";
++        case CSR_PMPADDR2       : return "pmpaddr2";
++        case CSR_PMPADDR3       : return "pmpaddr3";
++        case CSR_PMPADDR4       : return "pmpaddr4";
++        case CSR_PMPADDR5       : return "pmpaddr5";
++        case CSR_PMPADDR6       : return "pmpaddr6";
++        case CSR_PMPADDR7       : return "pmpaddr7";
++        case CSR_PMPADDR8       : return "pmpaddr8";
++        case CSR_PMPADDR9       : return "pmpaddr9";
++        case CSR_PMPADDR10      : return "pmpaddr10";
++        case CSR_PMPADDR11      : return "pmpaddr11";
++        case CSR_PMPADDR12      : return "pmpaddr12";
++        case CSR_PMPADDR13      : return "pmpaddr13";
++        case CSR_PMPADDR14      : return "pmpaddr14";
++        case CSR_PMPADDR15      : return "pmpaddr15";
++        case CSR_PMPADDR16      : return "pmpaddr16";
++        case CSR_PMPADDR17      : return "pmpaddr17";
++        case CSR_PMPADDR18      : return "pmpaddr18";
++        case CSR_PMPADDR19      : return "pmpaddr19";
++        case CSR_PMPADDR20      : return "pmpaddr20";
++        case CSR_PMPADDR21      : return "pmpaddr21";
++        case CSR_PMPADDR22      : return "pmpaddr22";
++        case CSR_PMPADDR23      : return "pmpaddr23";
++        case CSR_PMPADDR24      : return "pmpaddr24";
++        case CSR_PMPADDR25      : return "pmpaddr25";
++        case CSR_PMPADDR26      : return "pmpaddr26";
++        case CSR_PMPADDR27      : return "pmpaddr27";
++        case CSR_PMPADDR28      : return "pmpaddr28";
++        case CSR_PMPADDR29      : return "pmpaddr29";
++        case CSR_PMPADDR30      : return "pmpaddr30";
++        case CSR_PMPADDR31      : return "pmpaddr31";
++        case CSR_PMPADDR32      : return "pmpaddr32";
++        case CSR_PMPADDR33      : return "pmpaddr33";
++        case CSR_PMPADDR34      : return "pmpaddr34";
++        case CSR_PMPADDR35      : return "pmpaddr35";
++        case CSR_PMPADDR36      : return "pmpaddr36";
++        case CSR_PMPADDR37      : return "pmpaddr37";
++        case CSR_PMPADDR38      : return "pmpaddr38";
++        case CSR_PMPADDR39      : return "pmpaddr39";
++        case CSR_PMPADDR40      : return "pmpaddr40";
++        case CSR_PMPADDR41      : return "pmpaddr41";
++        case CSR_PMPADDR42      : return "pmpaddr42";
++        case CSR_PMPADDR43      : return "pmpaddr43";
++        case CSR_PMPADDR44      : return "pmpaddr44";
++        case CSR_PMPADDR45      : return "pmpaddr45";
++        case CSR_PMPADDR46      : return "pmpaddr46";
++        case CSR_PMPADDR47      : return "pmpaddr47";
++        case CSR_PMPADDR48      : return "pmpaddr48";
++        case CSR_PMPADDR49      : return "pmpaddr49";
++        case CSR_PMPADDR50      : return "pmpaddr50";
++        case CSR_PMPADDR51      : return "pmpaddr51";
++        case CSR_PMPADDR52      : return "pmpaddr52";
++        case CSR_PMPADDR53      : return "pmpaddr53";
++        case CSR_PMPADDR54      : return "pmpaddr54";
++        case CSR_PMPADDR55      : return "pmpaddr55";
++        case CSR_PMPADDR56      : return "pmpaddr56";
++        case CSR_PMPADDR57      : return "pmpaddr57";
++        case CSR_PMPADDR58      : return "pmpaddr58";
++        case CSR_PMPADDR59      : return "pmpaddr59";
++        case CSR_PMPADDR60      : return "pmpaddr60";
++        case CSR_PMPADDR61      : return "pmpaddr61";
++        case CSR_PMPADDR62      : return "pmpaddr62";
++        case CSR_PMPADDR63      : return "pmpaddr63";
++        case CSR_MCYCLE         : return "mcycle";
++        case CSR_MINSTRET       : return "minstret";
++        case CSR_MHPMCOUNTER3   : return "mhpmcounter3";
++        case CSR_MHPMCOUNTER4   : return "mhpmcounter4";
++        case CSR_MHPMCOUNTER5   : return "mhpmcounter5";
++        case CSR_MHPMCOUNTER6   : return "mhpmcounter6";
++        case CSR_MHPMCOUNTER7   : return "mhpmcounter7";
++        case CSR_MHPMCOUNTER8   : return "mhpmcounter8";
++        case CSR_MHPMCOUNTER9   : return "mhpmcounter9";
++        case CSR_MHPMCOUNTER10  : return "mhpmcounter10";
++        case CSR_MHPMCOUNTER11  : return "mhpmcounter11";
++        case CSR_MHPMCOUNTER12  : return "mhpmcounter12";
++        case CSR_MHPMCOUNTER13  : return "mhpmcounter13";
++        case CSR_MHPMCOUNTER14  : return "mhpmcounter14";
++        case CSR_MHPMCOUNTER15  : return "mhpmcounter15";
++        case CSR_MHPMCOUNTER16  : return "mhpmcounter16";
++        case CSR_MHPMCOUNTER17  : return "mhpmcounter17";
++        case CSR_MHPMCOUNTER18  : return "mhpmcounter18";
++        case CSR_MHPMCOUNTER19  : return "mhpmcounter19";
++        case CSR_MHPMCOUNTER20  : return "mhpmcounter20";
++        case CSR_MHPMCOUNTER21  : return "mhpmcounter21";
++        case CSR_MHPMCOUNTER22  : return "mhpmcounter22";
++        case CSR_MHPMCOUNTER23  : return "mhpmcounter23";
++        case CSR_MHPMCOUNTER24  : return "mhpmcounter24";
++        case CSR_MHPMCOUNTER25  : return "mhpmcounter25";
++        case CSR_MHPMCOUNTER26  : return "mhpmcounter26";
++        case CSR_MHPMCOUNTER27  : return "mhpmcounter27";
++        case CSR_MHPMCOUNTER28  : return "mhpmcounter28";
++        case CSR_MHPMCOUNTER29  : return "mhpmcounter29";
++        case CSR_MHPMCOUNTER30  : return "mhpmcounter30";
++        case CSR_MHPMCOUNTER31  : return "mhpmcounter31";
++        case CSR_MCYCLEH        : return "mcycleh";
++        case CSR_MINSTRETH      : return "minstreth";
++        case CSR_MHPMCOUNTER3H  : return "mhpmcounter3h";
++        case CSR_MHPMCOUNTER4H  : return "mhpmcounter4h";
++        case CSR_MHPMCOUNTER5H  : return "mhpmcounter5h";
++        case CSR_MHPMCOUNTER6H  : return "mhpmcounter6h";
++        case CSR_MHPMCOUNTER7H  : return "mhpmcounter7h";
++        case CSR_MHPMCOUNTER8H  : return "mhpmcounter8h";
++        case CSR_MHPMCOUNTER9H  : return "mhpmcounter9h";
++        case CSR_MHPMCOUNTER10H : return "mhpmcounter10h";
++        case CSR_MHPMCOUNTER11H : return "mhpmcounter11h";
++        case CSR_MHPMCOUNTER12H : return "mhpmcounter12h";
++        case CSR_MHPMCOUNTER13H : return "mhpmcounter13h";
++        case CSR_MHPMCOUNTER14H : return "mhpmcounter14h";
++        case CSR_MHPMCOUNTER15H : return "mhpmcounter15h";
++        case CSR_MHPMCOUNTER16H : return "mhpmcounter16h";
++        case CSR_MHPMCOUNTER17H : return "mhpmcounter17h";
++        case CSR_MHPMCOUNTER18H : return "mhpmcounter18h";
++        case CSR_MHPMCOUNTER19H : return "mhpmcounter19h";
++        case CSR_MHPMCOUNTER20H : return "mhpmcounter20h";
++        case CSR_MHPMCOUNTER21H : return "mhpmcounter21h";
++        case CSR_MHPMCOUNTER22H : return "mhpmcounter22h";
++        case CSR_MHPMCOUNTER23H : return "mhpmcounter23h";
++        case CSR_MHPMCOUNTER24H : return "mhpmcounter24h";
++        case CSR_MHPMCOUNTER25H : return "mhpmcounter25h";
++        case CSR_MHPMCOUNTER26H : return "mhpmcounter26h";
++        case CSR_MHPMCOUNTER27H : return "mhpmcounter27h";
++        case CSR_MHPMCOUNTER28H : return "mhpmcounter28h";
++        case CSR_MHPMCOUNTER29H : return "mhpmcounter29h";
++        case CSR_MHPMCOUNTER30H : return "mhpmcounter30h";
++        case CSR_MHPMCOUNTER31H : return "mhpmcounter31h";
++        case CSR_MCOUNTINHIBIT  : return "mcountinhibit";
++        case CSR_MHPMEVENT3     : return "mhpmevent3";
++        case CSR_MHPMEVENT4     : return "mhpmevent4";
++        case CSR_MHPMEVENT5     : return "mhpmevent5";
++        case CSR_MHPMEVENT6     : return "mhpmevent6";
++        case CSR_MHPMEVENT7     : return "mhpmevent7";
++        case CSR_MHPMEVENT8     : return "mhpmevent8";
++        case CSR_MHPMEVENT9     : return "mhpmevent9";
++        case CSR_MHPMEVENT10    : return "mhpmevent10";
++        case CSR_MHPMEVENT11    : return "mhpmevent11";
++        case CSR_MHPMEVENT12    : return "mhpmevent12";
++        case CSR_MHPMEVENT13    : return "mhpmevent13";
++        case CSR_MHPMEVENT14    : return "mhpmevent14";
++        case CSR_MHPMEVENT15    : return "mhpmevent15";
++        case CSR_MHPMEVENT16    : return "mhpmevent16";
++        case CSR_MHPMEVENT17    : return "mhpmevent17";
++        case CSR_MHPMEVENT18    : return "mhpmevent18";
++        case CSR_MHPMEVENT19    : return "mhpmevent19";
++        case CSR_MHPMEVENT20    : return "mhpmevent20";
++        case CSR_MHPMEVENT21    : return "mhpmevent21";
++        case CSR_MHPMEVENT22    : return "mhpmevent22";
++        case CSR_MHPMEVENT23    : return "mhpmevent23";
++        case CSR_MHPMEVENT24    : return "mhpmevent24";
++        case CSR_MHPMEVENT25    : return "mhpmevent25";
++        case CSR_MHPMEVENT26    : return "mhpmevent26";
++        case CSR_MHPMEVENT27    : return "mhpmevent27";
++        case CSR_MHPMEVENT28    : return "mhpmevent28";
++        case CSR_MHPMEVENT29    : return "mhpmevent29";
++        case CSR_MHPMEVENT30    : return "mhpmevent30";
++        case CSR_MHPMEVENT31    : return "mhpmevent31";
++        case CSR_MSECCFG        : return "mseccfg";
++        case CSR_MSECCFGH       : return "mseccfgh";
++        case CSR_TSELECT        : return "tselect";
++        case CSR_TDATA1         : return "tdata1";
++        case CSR_TDATA2         : return "tdata2";
++        case CSR_TDATA3         : return "tdata3";
++        case CSR_TINFO          : return "tinfo";
++        case CSR_TCONTROL       : return "tcontrol";
++        case CSR_MCONTEXT       : return "mcontext";
++        case CSR_SCONTEXT       : return "scontext";
++        case CSR_DCSR           : return "dcsr";
++        case CSR_DPC            : return "dpc";
++        case CSR_DSCRATCH0      : return "dscratch0";
++        case CSR_DSCRATCH1      : return "dscratch1";
++        case CSR_VSTART         : return "vstart";
++        case CSR_VXSAT          : return "vxsat";
++        case CSR_VXRM           : return "vxrm";
++        case CSR_VL             : return "vl";
++        case CSR_VTYPE          : return "vtype";
++        case CSR_VLENB          : return "vlenb";
++        case CSR_MCONFIGPTR     : return "mconfigptr";
++        // Old CSR
++        case CSR_MSCONTEXT      : return "mscontext";
++    }
++    return "";
++};
++
++void reg::set_param_accessible(bool accessible) noexcept { this->param_accessible = accessible; }
++
++void reg::set_param_implemented(bool implemented) noexcept { this->param_implemented = implemented; }
++
++
+ } // namespace openhw
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
+index eaaed34d..024caaf2 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
+@@ -12,7 +12,9 @@
+ #include "memtracer.h"
+ #include "csrs.h"
+ #include <unordered_map>
++#include <map>
+ #include <cassert>
++#include <string>
+ 
+ class processor_t;
+ namespace openhw {
+@@ -57,18 +59,32 @@ public:
+ 
+   virtual bool backdoor_write(const reg_t val) noexcept;
+ 
++  virtual std::string get_name() noexcept;
++
++  virtual void set_name(std::string new_name) noexcept;
++
++  virtual void set_param_accessible(bool accessible) noexcept;
++
++  virtual void set_param_implemented(bool implemented) noexcept;
++
+ private:
+   reg_t value;
+ 
+ protected:
+   reg_t param_write_mask;
+-  bool param_we;
++  bool param_implemented;
++  bool param_accessible;
+ 
+   processor_t *const proc;
+   state_t *const state;
+   friend class Processor;
++
++  static std::string addr2name(uint64_t addr);
++
++  std::string name;
+ };
+ 
++
+ } // namespace openhw
+ 
+ #endif
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.cc b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+index c8260ebd..b6139b94 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+@@ -37,7 +37,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
+   log_file(log_file), sout_(sout_.rdbuf()), halt_on_reset(halt_on_reset),
+   in_wfi(false), check_triggers_icount(false),
+   impl_table(256, false), extension_enable_table(isa->get_extension_table()),
+-  last_pc(1), executions(1), TM(cfg->trigger_count)
++  last_pc(1), executions(1), TM(cfg->trigger_count), disassembler(nullptr)
+ {
+ 
+   VU.p = this;
+@@ -56,6 +56,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
+   mmu = new mmu_t(sim, cfg->endianness, this);
+ 
+   disassembler = new disassembler_t(isa);
++
+   for (auto e : isa->get_extensions())
+     register_extension(e.second);
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+index 3b2dcb53..f50a476b 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -103,6 +103,10 @@ extern "C" void spike_set_params_from_file(const char *yaml_config_path) {
+   paramSetter->setParams();
+ }
+ 
++extern "C" void spike_delete() {
++    delete sim;
++}
++
+ extern "C" void spike_create(const char *filename) {
+   std::cerr << "[SPIKE] Starting 'spike_create'...\n";
+   // TODO parse params from yaml
+@@ -216,3 +220,15 @@ extern "C" void spike_step_svLogic(svLogicVecVal* reference,
+   spike_step_struct(reference_rvfi, spike_rvfi);
+   rvfi2sv(spike_rvfi, spike);
+ }
++
++extern "C" void spike_get_csr(uint64_t proc_id, uint64_t csr_addr, uint64_t &value) {
++  auto proc = sim->get_core_by_id(proc_id);
++  if (proc != nullptr)
++    value = proc->get_csr(csr_addr);
++}
++
++extern "C" void spike_put_csr(uint64_t proc_id, uint64_t csr_addr, uint64_t value) {
++  auto proc = sim->get_core_by_id(proc_id);
++  if (proc != nullptr)
++    proc->put_csr(csr_addr, value);
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.cc b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+index 9a970dd6..e9a9f244 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+@@ -103,6 +103,9 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+   uint64_t num_procs = a_num_procs.a_uint64_t ? (a_num_procs).a_uint64_t : cfg->nprocs();
+ 
+   for (size_t i = 0; i < num_procs; i++) {
++    if (procs[i])
++        delete procs[i];
++
+     procs[i] = new openhw::Processor(&isa, cfg, this, cfg->hartids()[i], halted,
+                                log_file.get(), sout_, params);
+     harts[cfg->hartids()[i]] = procs[i];
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.h b/vendor/riscv/riscv-isa-sim/riscv/sim.h
+index 06bed908..07d7a4e2 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.h
+@@ -62,8 +62,8 @@ public:
+   // Callback for processors to let the simulation know they were reset.
+   virtual void proc_reset(unsigned id) override;
+ 
+-  void switch_to_target() { this->target.switch_to();}
+-  void switch_to_host() { this->host->switch_to();}
++  void switch_to_target() {this->target.switch_to();}
++  void switch_to_host() {this->host->switch_to();}
+ 
+ protected:
+   isa_parser_t isa;
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike-dpi.cc b/vendor/riscv/riscv-isa-sim/spike_main/spike-dpi.cc
+index e98dac1f..75b7eb00 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike-dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike-dpi.cc
+@@ -22,8 +22,8 @@ int main(int UNUSED argc, char** argv)
+     for (int i = 0; i < argc; ++i) {
+         std::cout << argv[i] << "\n";
+     }
+-    std::string binary;
+     if (argc > 1) {
++      std::string binary;
+       binary = argv[1];
+       spike_set_param_bool("/top/core/0/", "csr_counters_injection", true);
+       spike_set_param_str("/top/", "isa", "rv32imc");
+@@ -33,11 +33,16 @@ int main(int UNUSED argc, char** argv)
+ 
+       spike_create(binary.c_str());
+       st_rvfi spike, reference;
+-      uint64_t max_steps = 1000;
+-      for(uint64_t i = 0; i < max_steps && ((spike.halt & 1) == 0); i++ ) {
++      memset(&reference, 0, sizeof(st_rvfi));
++      memset(&spike, 0, sizeof(st_rvfi));
++      uint64_t max_steps = 100000;
++      for(uint64_t i = 0; ((spike.halt & 1) == 0); i++ ) {
+         spike_step_struct(reference, spike);
+-        std::cout << "[TANDEM][PC: " << std::hex << spike.pc_rdata << "][INSN:" << spike.insn << "]" << std::endl;
++        uint64_t mstatus_value;
++        spike_get_csr(0, 0x300, mstatus_value);
+         i++;
+       }
++      spike_step_struct(reference, spike);
++      spike_delete();
+     }
+ }
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike_main.mk.in b/vendor/riscv/riscv-isa-sim/spike_main/spike_main.mk.in
+index 504fdd45..c80a5edd 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike_main.mk.in
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike_main.mk.in
+@@ -7,6 +7,7 @@ spike_main_subproject_deps = \
+ 
+ spike_main_install_prog_srcs = \
+ 	spike.cc \
++	spike-dpi.cc \
+ 	spike-log-parser.cc \
+ 	xspike.cc \
+ 	termios-xspike.cc \
