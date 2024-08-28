@@ -91,6 +91,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
                 void'(spike_set_param_uint64_t("/top/", "dram_base", core_cfg.dram_base));
                 void'(spike_set_param_uint64_t("/top/", "dram_size", core_cfg.dram_size));
             end
+            void'(spike_set_param_bool(base, "unified_traps", core_cfg.unified_traps));
 
             // FORNOW FIXME TODO: Hardcoded bootrom base address
             boot_addr = 64'h10000;
@@ -130,7 +131,6 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             void'(spike_set_param_bool(base, "tinfo_presence", 1'h0));
             void'(spike_set_param_uint64_t(base, "trigger_count", 64'h0001));
         end
-        void'(spike_set_param_bool(base, "unified_traps", core_cfg.unified_traps));
 
         void'(spike_create(binary));
 
