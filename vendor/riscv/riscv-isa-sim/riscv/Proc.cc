@@ -147,7 +147,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
         }
     }
 
-    if (csr_counters_injection) {
+    if (csr_counters_injection & !rvfi.trap) {
       // Inject values comming from the reference
       if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS ||
           (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI ||

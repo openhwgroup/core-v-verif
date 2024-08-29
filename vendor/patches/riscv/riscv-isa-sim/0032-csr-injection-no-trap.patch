@@ -1,0 +1,13 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 48c7d529..3844d895 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -147,7 +147,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+         }
+     }
+ 
+-    if (csr_counters_injection) {
++    if (csr_counters_injection & !rvfi.trap) {
+       // Inject values comming from the reference
+       if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS ||
+           (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI ||
