@@ -25,6 +25,7 @@ public:
 
   static void default_params(string base, openhw::Params &params, openhw::Processor *proc);
 
+  inline uint64_t get_XPR(reg_t num);
   inline void set_XPR(reg_t num, reg_t value);
   inline void set_FPR(reg_t num, float128_t value);
   inline const Params& get_params() const { return params; }
