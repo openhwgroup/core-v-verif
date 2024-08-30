@@ -108,9 +108,9 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
     int flen = this->get_state()->last_inst_flen;
 
     rvfi.rs1_addr = this->get_state()->last_inst_fetched.rs1();
-    // TODO add rs1_value
+    rvfi.rs1_rdata = this->get_XPR(reference->rs1_addr);
     rvfi.rs2_addr = this->get_state()->last_inst_fetched.rs2();
-    // TODO add rs2_value
+    rvfi.rs2_rdata = this->get_XPR(reference->rs2_addr);
 
     bool got_commit = false;
 
@@ -425,6 +425,10 @@ void Processor::default_params(string base, openhw::Params &params, Processor *p
   if (!params.exist(base, "trigger_count"))
     params.set_uint64_t(base, "trigger_count", 0x0000004, "0x00000004",
 			"Number of enabled triggers");
+}
+
+inline uint64_t Processor::get_XPR(reg_t num) {
+  return this->state.XPR[num];
 }
 
 inline void Processor::set_XPR(reg_t num, reg_t value) {

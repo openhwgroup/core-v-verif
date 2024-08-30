@@ -30,6 +30,12 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
 import "DPI-C" function void spike_step_svLogic(inout vector_rvfi core, inout vector_rvfi reference_model);
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
 
+import "DPI-C" function void spike_get_csr(input longint unsigned proc_id,
+    input longint unsigned csr_addr, inout longint unsigned value);
+
+import "DPI-C" function void spike_put_csr(input longint unsigned proc_id,
+    input longint unsigned csr_addr, input longint unsigned value);
+
     function automatic void rvfi_initialize_spike(string core_name, st_core_cntrl_cfg core_cfg);
         string binary, config_file;
         string rtl_isa, rtl_priv;
