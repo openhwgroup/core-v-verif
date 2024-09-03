@@ -165,7 +165,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
           case 0xB80: // mcycleh
 
             if (reference->rd1_addr) {
-              this->set_XPR(reference->rd1_addr, reference->rd1_wdata);
+              this->set_XPR(reference->rd1_addr, this->xlen_format(reference->rd1_wdata));
               rvfi.rd1_wdata = reference->rd1_wdata;
             }
 
@@ -177,7 +177,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
                     (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI) {
 
                     if (reference->csr_valid[INDEX_CSR(read_csr)]) {
-                        this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
+                        this->put_csr(read_csr, this->xlen_format(reference->csr_wdata[INDEX_CSR(read_csr)]));
                         rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
                     }
                 }
@@ -186,7 +186,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
                 (rvfi.insn & MASK_CSRRWI) == MATCH_CSRRWI) {
 
                 if (reference->csr_valid[INDEX_CSR(read_csr)]) {
-                    this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
+                    this->put_csr(read_csr, this->xlen_format(reference->csr_wdata[INDEX_CSR(read_csr)]));
                     rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
                 }
             }
@@ -622,6 +622,14 @@ void Processor::enter_debug_mode(uint8_t cause) {
     this->taken_debug = true;
     this->which_debug = cause;
 
+}
+
+uint64_t Processor::xlen_format(uint64_t value) {
+    if (this->get_xlen() == 32) {
+        return sreg_t((int32_t) value);
+    } else {
+        return value;
+    }
 }
 
 std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {
