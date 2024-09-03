@@ -53,6 +53,8 @@ public:
 
   inline uint32_t mcause_to_mip(uint32_t mcause);
 
+  inline uint64_t xlen_format(uint64_t value);
+
 protected:
   bool nmi_inject;
 

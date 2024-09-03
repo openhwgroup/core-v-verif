@@ -1,0 +1,59 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 65f0a3c8..cba92b2e 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -165,7 +165,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+           case 0xB80: // mcycleh
+ 
+             if (reference->rd1_addr) {
+-              this->set_XPR(reference->rd1_addr, reference->rd1_wdata);
++              this->set_XPR(reference->rd1_addr, this->xlen_format(reference->rd1_wdata));
+               rvfi.rd1_wdata = reference->rd1_wdata;
+             }
+ 
+@@ -177,7 +177,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+                     (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI) {
+ 
+                     if (reference->csr_valid[INDEX_CSR(read_csr)]) {
+-                        this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
++                        this->put_csr(read_csr, this->xlen_format(reference->csr_wdata[INDEX_CSR(read_csr)]));
+                         rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
+                     }
+                 }
+@@ -186,7 +186,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+                 (rvfi.insn & MASK_CSRRWI) == MATCH_CSRRWI) {
+ 
+                 if (reference->csr_valid[INDEX_CSR(read_csr)]) {
+-                    this->put_csr(read_csr, reference->csr_wdata[INDEX_CSR(read_csr)]);
++                    this->put_csr(read_csr, this->xlen_format(reference->csr_wdata[INDEX_CSR(read_csr)]));
+                     rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
+                 }
+             }
+@@ -624,6 +624,14 @@ void Processor::enter_debug_mode(uint8_t cause) {
+ 
+ }
+ 
++uint64_t Processor::xlen_format(uint64_t value) {
++    if (this->get_xlen() == 32) {
++        return sreg_t((int32_t) value);
++    } else {
++        return value;
++    }
++}
++
+ std::unordered_map<char, std::tuple<uint64_t,uint64_t>> Processor::priv_ranges = {
+     { 'M',  {0x300, 0xFFF} },
+     { 'S',  {0x100, 0x200} },
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index 59e330e7..dfd19c31 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -53,6 +53,8 @@ public:
+ 
+   inline uint32_t mcause_to_mip(uint32_t mcause);
+ 
++  inline uint64_t xlen_format(uint64_t value);
++
+ protected:
+   bool nmi_inject;
+ 
