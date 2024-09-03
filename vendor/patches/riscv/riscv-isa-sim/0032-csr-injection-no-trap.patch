@@ -1,0 +1,48 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 48c7d529..65f0a3c8 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -108,9 +108,9 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+     int flen = this->get_state()->last_inst_flen;
+ 
+     rvfi.rs1_addr = this->get_state()->last_inst_fetched.rs1();
+-    // TODO add rs1_value
++    rvfi.rs1_rdata = this->get_XPR(reference->rs1_addr);
+     rvfi.rs2_addr = this->get_state()->last_inst_fetched.rs2();
+-    // TODO add rs2_value
++    rvfi.rs2_rdata = this->get_XPR(reference->rs2_addr);
+ 
+     bool got_commit = false;
+ 
+@@ -147,7 +147,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
+         }
+     }
+ 
+-    if (csr_counters_injection) {
++    if (csr_counters_injection & !rvfi.trap) {
+       // Inject values comming from the reference
+       if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS ||
+           (rvfi.insn & MASK_CSRRSI) == MATCH_CSRRSI ||
+@@ -427,6 +427,10 @@ void Processor::default_params(string base, openhw::Params &params, Processor *p
+ 			"Number of enabled triggers");
+ }
+ 
++inline uint64_t Processor::get_XPR(reg_t num) {
++  return this->state.XPR[num];
++}
++
+ inline void Processor::set_XPR(reg_t num, reg_t value) {
+   this->state.XPR.write(num, value);
+ }
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index 070a6bd7..59e330e7 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -25,6 +25,7 @@ public:
+ 
+   static void default_params(string base, openhw::Params &params, openhw::Processor *proc);
+ 
++  inline uint64_t get_XPR(reg_t num);
+   inline void set_XPR(reg_t num, reg_t value);
+   inline void set_FPR(reg_t num, float128_t value);
+   inline const Params& get_params() const { return params; }
