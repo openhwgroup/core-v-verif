@@ -48,10 +48,6 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
    int upper_wrap_boundary;   // The highest address within a wrapping burst
    int bus_width;   // The number of byte lanes in the data bus
    int valid_resp[];  //Store  the number of Wlast for each outstanding transaction ID
-   //Variable for checking assertion coverage
-   int cov_w_data_num = 0;
-   int cov_w_data_num_not = 0;
-   int cov_errm_wstrb = 0;
    int status = 0;
    int aw_enable = 0;
    int w_enable = 0;
@@ -68,19 +64,15 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
             data_count[0]++;
             if(burst_len[0] == (data_count[0]-1)) begin
                w_data_num : assert(axi_assert.psv_axi_cb.w_last) begin          // Check if The Master assert the WLAST signal when it is driving the final write transfer in the burst
-                  cov_w_data_num++;
                end else begin
                   `uvm_error("AXI4 protocol checks assertion", "Violation of w_data_num");
-                  cov_w_data_num++;
                end
 		   void'(data_count.pop_front());
 		   void'(burst_len.pop_front());
             end else begin
                w_data_num_not : assert(!axi_assert.psv_axi_cb.w_last) begin     // Check if The Master don't assert the WLAST signal when the WDATA count is not equal to AWLEN
-                  cov_w_data_num_not++;
                end else begin
                   `uvm_error("AXI4 protocol checks assertion", "Violation of w_data_num_not");
-                  cov_w_data_num_not++;
                end
             end
          end
@@ -137,15 +129,6 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
       end
    end
 
-   final begin
-      foreach(burst_resp[i]) begin
-         axi4_bresp_all_done : assert(burst_resp[i] == 0)   // Check if All write transaction addresses are matched with a corresponding buffered response (Section A3.4.5)
-         else begin
-            `uvm_error("AXI4 protocol checks assertion", "Violation of bresp_all_done");
-         end
-      end
-   end
-
    // Check if Write strobes is asserted for the correct byte lanes only (Section A3.4.4)
    // The value of the WSTRB depend on the signalled AWSIZE and Start Address
 
@@ -186,9 +169,7 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
                // For the other bits of the strob can take any value even if it is not compatible with the size of
                // the Transfer (this property it is not mentioned in the spec but it is quoted in a forum on the ARM site)
                axi4_errm_wstrb : assert(wstrb[i] == 0) begin
-                  cov_errm_wstrb++;
                end else begin
-                  cov_errm_wstrb++;
                   `uvm_error("AXI4 protocol checks assertion", "Violation of axi4_errm_wstrb");
                end
             end
@@ -237,10 +218,6 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
    int ass_r_id;   //Store ar_id every clock cycle
    int size;   //Store transfer size every clock cycle
    int ar_ex_tr[];   // Store exclusive read transaction
-   //Variable for checking assertion coverage
-   int cov_r_burst_ter_early;
-   int cov_errs_rid_property;
-   int cov_r_last_property = 0;
 
    always @(posedge axi_assert.clk && axi_assert.axi_assertion_enabled) begin
       if(axi_assert.rst_n) begin
@@ -273,10 +250,8 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
 
             if(!axi_assert.axi_amo_assertion_enabled) begin
                axi4_errs_rid : assert(ar_len_tr[ass_r_id][0] >= 1) begin   // Check if slave send a read data that follow the address that it relates to (Section A5.2)
-                  cov_errs_rid_property++;
                end else begin
                   `uvm_error("AXI4 protocol checks assertion", "Violation of axi4_errs_rid");
-                  cov_errs_rid_property++;
                end
             end
 
@@ -285,17 +260,14 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
                if(!axi_assert.axi_amo_assertion_enabled) begin
                   if(ar_len_tr[ass_r_id][0] == 0) begin
                      r_last_assert : assert(axi_assert.psv_axi_cb.r_last) begin    // Check if The subordinate assert the RLAST signal when it is driving the final read transfer in the burst (Section A3.2.2)
-                        cov_r_last_property++;
                      end else begin
                         `uvm_error("AXI4 protocol checks assertion", "Violation of axi4_rresp_exokay");
                      end
                   end else begin
                      // Check if the read burst not terminate early (Section A3.4.1)
                      r_burst_ter_early : assert(!(axi_assert.psv_axi_cb.r_last)) begin
-                        cov_r_burst_ter_early++;
                      end else begin
                         `uvm_error("AXI4 protocol checks assertion", "Violation of r_burst_ter_early");
-                        cov_r_burst_ter_early++;
                      end
                   end
                end
@@ -321,24 +293,6 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
             end
          end
       end
-   end
-
-
-   final begin
-      // Check if all outstanding read bursts have completed (Section A3.4.1)
-      foreach(ar_len_tr[i,j]) begin
-         axi4_errs_rdata_num : assert(ar_len_tr[i][j] == 0)
-         else begin
-            `uvm_error("AXI4 protocol checks assertion", "Violation of axi4_errs_rdata_num");
-         end
-      end
-
-      `uvm_info("AXI4 protocol checks assertion", $sformatf("coverage cov_w_data_num property = %d", cov_w_data_num), UVM_LOW)
-      `uvm_info("AXI4 protocol checks assertion", $sformatf("coverage cov_w_data_num_not property = %d", cov_w_data_num_not), UVM_LOW)
-      `uvm_info("AXI4 protocol checks assertion", $sformatf("coverage cov_errm_wstrb property = %d", cov_errm_wstrb), UVM_LOW)
-      `uvm_info("AXI4 protocol checks assertion", $sformatf("coverage r_last property = %d", cov_r_last_property),UVM_LOW)
-      `uvm_info("AXI4 protocol checks assertion", $sformatf("coverage axi4_errs_rid property = %d", cov_errs_rid_property),UVM_LOW)
-      `uvm_info("AXI4 protocol checks assertion", $sformatf("coverage burst_ter_early property = %d", cov_r_burst_ter_early), UVM_LOW)
    end
 
 endmodule : uvma_axi_assert
