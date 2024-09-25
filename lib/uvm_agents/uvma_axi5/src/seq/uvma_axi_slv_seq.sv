@@ -123,6 +123,7 @@ task uvma_axi_slv_seq_c::body();
 
       begin
          forever begin
+            $display("aw_mon_trn");
             p_sequencer.aw_mon2seq_fifo_port.get(aw_mon_trn);
             do_mem_operation(aw_mon_trn);
          end

@@ -24,7 +24,8 @@ class uvma_axi_drv_c extends uvm_driver #(uvma_axi_transaction_c);
    uvma_axi_cntxt_c                    cntxt;
 
    // Handles to virtual interface modport
-   virtual uvma_axi_intf.slave        slave_mp;
+   virtual uvma_axi_intf              slave_mp;      //Temp edit
+   virtual uvma_axi_intf.slave        slave_mp_temp; //Temp edit
 
    event reset_asserted ;
    event reset_deasserted ;
@@ -139,7 +140,8 @@ function void uvma_axi_drv_c::build_phase(uvm_phase phase);
       `uvm_fatal("CFG", "Configuration handle is null")
    end
 
-   this.slave_mp = this.cntxt.axi_vi.slave;
+   this.slave_mp_temp = this.cntxt.axi_vi_slave;
+   this.slave_mp      = this.cntxt.axi_vi;
 
 endfunction
 
@@ -391,7 +393,7 @@ task uvma_axi_drv_c::drive_R_channel_signals( uvma_axi_transaction_c  r_txn = nu
    if ( ( r_txn == null ) && ( cfg.driver_idle_value_cfg == RANDOM ) ) begin
      r_txn = new();
      r_txn.m_txn_config = cfg.txn_config;
-     if (!r_txn.randomize() with 
+     if (!r_txn.randomize() with
        { m_txn_type    == UVMA_AXI_READ_RSP ;
        } )
        `uvm_error(get_type_name(),"Error randomizing the read response metadata");
