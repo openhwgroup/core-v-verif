@@ -205,7 +205,7 @@ endclass : uvma_axi_covg_c
 function uvma_axi_covg_c::new(string name="uvma_axi_covg", uvm_component parent=null);
 
    super.new(name, parent);
-
+   $display("uvma_axi_covg_c is running here");
 endfunction : new
 
 
@@ -248,26 +248,30 @@ task uvma_axi_covg_c::run_phase(uvm_phase phase);
       join_any
 
       if(aw_item != null) begin
-         `uvm_info(get_type_name(), $sformatf("WRITE REQ ITEM DETECTED"), UVM_LOW)
+         `uvm_info(get_type_name(), $sformatf("WRITE REQ ITEM DETECTED XX"), UVM_LOW)
          w_axi_cg.sample(aw_item);
          for(int i = 1; i <= aw_item.m_len; i++) begin
             t_aw_to_w = aw_item.m_timestamp_x[i] - aw_item.m_timestamp_ax;
             order_axi_cg.sample(aw_item, t_aw_to_w, i);
          end
+      end else begin
+        $display("aw_item is null");
       end
 
       if(b_item != null) begin
-          `uvm_info(get_type_name(), $sformatf("WRITE RESP ITEM DETECTED"), UVM_LOW)
+          `uvm_info(get_type_name(), $sformatf("WRITE RESP ITEM DETECTED XX"), UVM_LOW)
           b_axi_cg.sample(b_item);
+      end else begin
+        $display("b_item is null");
       end
 
       if(ar_item != null) begin
-         `uvm_info(get_type_name(), $sformatf("READ ADDRESS ITEM DETECTED"), UVM_LOW)
+         `uvm_info(get_type_name(), $sformatf("READ ADDRESS ITEM DETECTED XX"), UVM_LOW)
          ar_axi_cg.sample(ar_item);
       end
 
       if(r_item != null) begin
-         `uvm_info(get_type_name(), $sformatf("READ DATA ITEM DETECTED"), UVM_LOW)
+         `uvm_info(get_type_name(), $sformatf("READ DATA ITEM DETECTED XX"), UVM_LOW)
          for(int i = 0; i <= r_item.m_len; i++) begin
             r_axi_cg.sample(r_item, i);
          end

@@ -38,11 +38,12 @@ endclass : uvma_axi_fw_preload_seq_c
 function uvma_axi_fw_preload_seq_c::new(string name="uvma_axi_fw_preload_seq");
 
    super.new(name);
-
+   $display("uvma_axi_fw_preload_seq_c constructor is calling");
 endfunction : new
 
 task uvma_axi_fw_preload_seq_c::body();
 
+   $display("uvma_axi_fw_preload_seq_c body is calling");
    if ($value$plusargs("firmware=%s", fw_file_path)) begin
       cntxt.mem.readmemh(fw_file_path);
    end

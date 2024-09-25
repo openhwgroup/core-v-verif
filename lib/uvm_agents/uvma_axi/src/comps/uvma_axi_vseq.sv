@@ -32,8 +32,8 @@ class uvma_axi_vseq_c extends uvm_sequence;
     * Retrieve cfg and cntxt handles from p_sequencer.
     */
    extern virtual task pre_start();
-   
-   
+
+
    extern virtual task body();
 
 endclass : uvma_axi_vseq_c
@@ -61,14 +61,16 @@ task uvma_axi_vseq_c::body();
    fork
       begin
          if(cfg.is_active == UVM_ACTIVE) begin
+            $display("aw_axi_seq start");
             uvma_axi_aw_seq_c  aw_axi_seq;
             aw_axi_seq = uvma_axi_aw_seq_c::type_id::create("aw_axi_seq");
             aw_axi_seq.start(p_sequencer.aw_sequencer);
          end
       end
-      
+
       begin
          if(cfg.is_active == UVM_ACTIVE) begin
+            $display("w_axi_seq start");
             uvma_axi_w_seq_c  w_axi_seq;
             w_axi_seq = uvma_axi_w_seq_c::type_id::create("w_axi_seq");
             w_axi_seq.start(p_sequencer.w_sequencer);
@@ -77,22 +79,25 @@ task uvma_axi_vseq_c::body();
 
       begin
          if(cfg.is_active == UVM_ACTIVE) begin
+            $display("ar_axi_seq start");
             uvma_axi_ar_seq_c  ar_axi_seq;
             ar_axi_seq = uvma_axi_ar_seq_c::type_id::create("ar_axi_seq");
             ar_axi_seq.start(p_sequencer.ar_sequencer);
          end
       end
-      
+
       begin
          if(cfg.is_active == UVM_ACTIVE) begin
+            $display("r_axi_seq start");
             uvma_axi_r_seq_c  r_axi_seq;
             r_axi_seq = uvma_axi_r_seq_c::type_id::create("r_axi_seq");
             r_axi_seq.start(p_sequencer.r_sequencer);
          end
       end
-      
+
       begin
          if(cfg.is_active == UVM_ACTIVE) begin
+            $display("b_axi_seq start");
             uvma_axi_b_seq_c  b_axi_seq;
             b_axi_seq = uvma_axi_b_seq_c::type_id::create("b_axi_seq");
             b_axi_seq.start(p_sequencer.b_sequencer);
