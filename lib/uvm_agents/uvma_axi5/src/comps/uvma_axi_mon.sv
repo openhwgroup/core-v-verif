@@ -67,8 +67,7 @@ class uvma_axi_mon_c extends uvm_monitor;
    // ------------------------------------------------------------------------
    // Virtual interfaces
    // ------------------------------------------------------------------------
-   virtual uvma_axi_intf.passive                 passive_mp_temp;
-   virtual uvma_axi_intf                         passive_mp;
+   virtual uvma_axi_intf.passive                 passive_mp;
 
    // ------------------------------------------------------------------------
    // Local variable
@@ -131,8 +130,7 @@ class uvma_axi_mon_c extends uvm_monitor;
          `uvm_fatal("build_phase", "monitor cntxt class failed")
       end
 
-      passive_mp_temp = cntxt.axi_vi_passive; //Temp edit
-      passive_mp      = cntxt.axi_vi; //Temp edit
+      passive_mp = cntxt.axi_vi.passive;
 
       void'(uvm_config_db#(uvma_axi_cfg_c)::get(this, "", "cfg", cfg));
       if (cfg == null) begin
@@ -337,11 +335,9 @@ class uvma_axi_mon_c extends uvm_monitor;
          // -----------------------------------------------------------------------
          if (passive_mp.psv_axi_cb.w_valid) begin
 
-            $display("w_valid is occur");
             w_hck_status++;
             if (passive_mp.psv_axi_cb.w_ready) begin
 
-               $display("w_read is occur");
                // A new txn arrived, raise the uvm objection until its
                // response comes out
                // phase.raise_objection(this);
@@ -369,7 +365,6 @@ class uvma_axi_mon_c extends uvm_monitor;
                // Print informations about the transaction
                `uvm_info( this.name, $sformatf("WRITE_DAT=%0d(d), Info: %0s",m_num_wdat_pkts, wreq_data.convert2string()) , UVM_DEBUG)
 
-               $display("receive_W_channel_transaction_task is calling");
                // Push the Write data packet into the queue for the
                // combine_write_req_data_task
                m_queue_write_dat.push_back(wreq_data);

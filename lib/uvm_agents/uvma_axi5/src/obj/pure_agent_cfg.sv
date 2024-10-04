@@ -121,7 +121,7 @@ class uvma_axi_cfg_c extends uvm_object;
          external_mem                == 0;
       }
      }
-
+  
 
    // Number of RAM partitions
    constraint part_numb_const {

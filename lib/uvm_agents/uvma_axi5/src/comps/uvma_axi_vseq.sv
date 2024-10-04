@@ -23,6 +23,7 @@ class uvma_axi_vseq_c extends uvm_sequence;
    `uvm_object_utils(uvma_axi_vseq_c)
    `uvm_declare_p_sequencer(uvma_axi_vsqr_c)
 
+
    /**
     * Default constructor.
     */
@@ -32,7 +33,7 @@ class uvma_axi_vseq_c extends uvm_sequence;
     * Retrieve cfg and cntxt handles from p_sequencer.
     */
    extern virtual task pre_start();
-
+   
    /**
     * Start sequences
     */
@@ -53,7 +54,6 @@ task uvma_axi_vseq_c::pre_start();
    cfg   = p_sequencer.cfg  ;
    cntxt = p_sequencer.cntxt;
 
-   $display("uvma_axi_vseq_c pre_start is working");
 endtask : pre_start
 
 task uvma_axi_vseq_c::body();
@@ -61,7 +61,7 @@ task uvma_axi_vseq_c::body();
    uvma_axi_fw_preload_seq_c   axi_preload_seq;
    axi_preload_seq = uvma_axi_fw_preload_seq_c::type_id::create("axi_preload_seq");
    //Start preload sequence to instantiate the memory class
-   axi_preload_seq.start(this.p_sequencer);
+   axi_preload_seq.start(p_sequencer);
    fork
       begin
          if(cfg.is_active == UVM_ACTIVE) begin
