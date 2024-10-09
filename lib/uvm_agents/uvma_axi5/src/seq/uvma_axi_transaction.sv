@@ -200,8 +200,8 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
    uvma_axi_trs_status_t              m_trs_status;
 
    // Field that specify wich byte contain valid data
-   int                        lower_byte_lane;
-   int                        upper_byte_lane;
+   rand int                        lower_byte_lane;
+   rand int                        upper_byte_lane;
 
     // Configuration field: this fields contains the width of the configurable
     // bus width
