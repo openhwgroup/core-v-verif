@@ -56,7 +56,7 @@
 //   as part of the randomization of the transaction depending on its configuration.
 // - The randomization is in charge of fixing to 0 the unused bits between the
 //   configurated bus width and the MAX width.
-// - When created, the transaction does not have a default configuration. The user must pass their desired 
+// - When created, the transaction does not have a default configuration. The user must pass their desired
 // configuration, otherwise a UVM_FATAL will be triggered.
 //
 // Concerning the axi transaction, the class contains the following elements:
@@ -88,7 +88,7 @@
 //    specification IHI022H_c is randomized. Then in the driver, depending of
 //    the transaction type, the corresponding cache value is sent on the
 //    interface. The user should be aware of the memory type that should be
-//    sent when randomizing the transaction. Also, only preferred axi4 cache 
+//    sent when randomizing the transaction. Also, only preferred axi4 cache
 //    value from the specification are used, not the legal axi3 values
 //
 // This class also contains fields to define delays. The delays are expressed
@@ -200,8 +200,8 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
    uvma_axi_trs_status_t              m_trs_status;
 
    // Field that specify wich byte contain valid data
-   int                        lower_byte_lane;
-   int                        upper_byte_lane;
+   rand int                        lower_byte_lane;
+   rand int                        upper_byte_lane;
 
     // Configuration field: this fields contains the width of the configurable
     // bus width
