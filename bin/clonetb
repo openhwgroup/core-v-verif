@@ -21,7 +21,7 @@
 
 
 # Description:
-#   This script is used to clone core-specific verification environments.
+#   This script clones core-specific verification environments.
 #   (E.g. "core-v-verif/cv32e40x/".)
 #   Try running it, and it will assist you with helpful messages.
 #
@@ -41,6 +41,7 @@ usage() {
   echo "usage: $0 [-x] [--clone] [--ignore] [--unignore]"
   echo "  -x          clone cv32e40x subtree, known stable hash"
   echo "  --x-main    clone cv32e40x subtree, latest main branch"
+  echo "  --s-main    clone cv32e40s subtree, latest main branch"
   echo "  --clone     clone a subtree based on env vars"
   echo "  --ignore    tell git to ignore the cloned subtree"
   echo "  --unignore  tell git to not ignore the cloned subtree"
@@ -97,6 +98,16 @@ clone_cv32e40x_main() {
   ignore_cloned_directory
 }
 
+clone_cv32e40s_main() {
+  CV_CORE=cv32e40s
+  VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40s-dv.git
+  VERIF_ENV_REF=main
+
+  clone
+
+  ignore_cloned_directory
+}
+
 ignore_cloned_directory() {
   check_env_vars_cvcore
 
@@ -127,6 +138,9 @@ main() {
       ;;
     "--x-main")
       clone_cv32e40x_main
+      ;;
+    "--s-main")
+      clone_cv32e40s_main
       ;;
     "--clone")
       clone
