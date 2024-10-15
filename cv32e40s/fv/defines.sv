@@ -1,1 +1,0 @@
-`define  FORMAL  1

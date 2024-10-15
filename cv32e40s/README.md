@@ -1,12 +1,10 @@
-# CV32E40S: Verification Environment for the CV32E40S CORE-V processor core.
+# Verification Environment for the CV32E40S CORE-V processor core.
 
-## Directories:
-- **bsp**:   the "board support package" for test-programs compiled/assembled/linked for the CV32E40S.  This BSP is used by both the `core` testbench and the `uvmt` UVM verification environment.
-- **env**:   the UVM environment class and its associated infrastrucutre.
-- **sim**:   directory where you run the simulations.
-- **fv**:    directory where you run formal verification.
-- **tb**:    the Testbench module that instanitates the core.
-- **tests**: this is where all the testcases are.
+This directory is empty, because the content must be cloned with git.
 
-There are README files in each directory with additional information.
+Run "core-v-verif/bin/clonetb" to clone the [correct content](https://github.com/openhwgroup/cv32e40s-dv/).
 
+Examples:
+* `./bin/clonetb`
+* `./bin/clonetb --s-main`
+* `./bin/clonetb -s`
