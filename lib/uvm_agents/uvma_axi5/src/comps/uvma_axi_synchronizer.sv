@@ -112,12 +112,22 @@ class uvma_axi_synchronizer_c extends uvm_component;
    /**
     * Standard api to read data from the memory
     */
-   extern virtual task memory_read_access_api(uvma_axi_transaction_c axi_item, output uvma_axi_sig_data_t read_data);
+   extern virtual task memory_read_access_api(ref uvma_axi_transaction_c axi_item, output longint read_data);
 
    /**
     * Standard api to write data in the memory
     */
    extern virtual task memory_write_access_api(uvma_axi_transaction_c axi_item);
+
+   /**
+    * Standard api to write data in the memory
+    */
+   extern virtual task mem_write_api(uvma_axi_transaction_c axi_item, int item_index);
+
+   /**
+    * Standard api to write data in the memory
+    */
+   extern virtual task mem_read_api(ref uvma_axi_transaction_c axi_item, output longint read_data);
 
    /**
    * check the memory access permission
@@ -215,7 +225,7 @@ task uvma_axi_synchronizer_c::add_w_trs(uvma_axi_transaction_c axi_witem);
             w_trs_queue[axi_item.m_id][index].m_data.push_back(w_trs_item_bp[0].m_data[0]);
             w_trs_queue[axi_item.m_id][index].m_wstrb.push_back(w_trs_item_bp[0].m_wstrb[0]);
             w_trs_queue[axi_item.m_id][index].m_last.push_back(w_trs_item_bp[0].m_last[0]);
-            w_trs_queue[axi_item.m_id][index].m_user       = w_trs_item_bp[0].m_user;
+            w_trs_queue[axi_item.m_id][index].m_x_user.push_back(w_trs_item_bp[0].m_x_user[0]);
             w_trs_queue[axi_item.m_id][index].m_trs_status = ADDR_DATA_COMPLETE;
             last_w_req = new w_trs_item_bp[0];
             w_trs_item_bp.delete(0);
@@ -236,7 +246,7 @@ task uvma_axi_synchronizer_c::add_w_trs(uvma_axi_transaction_c axi_witem);
                w_trs_queue[w_trs_class[0]][i].m_data.push_back(axi_item.m_data[0]);
                w_trs_queue[w_trs_class[0]][i].m_wstrb.push_back(axi_item.m_wstrb[0]);
                w_trs_queue[w_trs_class[0]][i].m_last.push_back(axi_item.m_last[0]);
-               w_trs_queue[w_trs_class[0]][i].m_user       = axi_item.m_user;
+               w_trs_queue[w_trs_class[0]][i].m_x_user.push_back(axi_item.m_x_user[0]);
                w_trs_queue[w_trs_class[0]][i].m_trs_status = ADDR_DATA_COMPLETE;
                if(axi_item.m_last[0]) begin
                   w_trs_class.delete(0);
@@ -299,7 +309,7 @@ task uvma_axi_synchronizer_c::add_r_trs(uvma_axi_transaction_c axi_ritem);
          r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_resp.push_back(1);
          exclusive_addr[r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_addr] = 1;
       end else r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_resp.push_back(0);
-      r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_user = 0;
+      r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_x_user.push_back(0);
       r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_txn_type = UVMA_AXI_READ_RSP;
       r_trs_queue[axi_item.m_id][r_trs_queue[axi_item.m_id].size()-1].m_data[0] = init_data;
 
@@ -405,9 +415,7 @@ task uvma_axi_synchronizer_c::write_data();
                         end
                      end
                   end else begin
-                     for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
-                        if(w_trs_queue[i][j].m_wstrb[0][k]) cntxt.mem.write(w_trs_queue[i][j].m_addr + k, w_trs_queue[i][j].m_data[0][((k+1)*8-1)-:8]);
-                     end
+                     mem_write_api(w_trs_queue[i][j], 0);
                      if(w_trs_queue[i][j].m_last[0] == 1)  w_finished_trs_id.push_back(w_trs_queue[i][j].m_id);
                   end
                end else if(checkexclusive == 0) begin
@@ -700,10 +708,7 @@ task uvma_axi_synchronizer_c::read_data(int selected_id);
                memory_read_access_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
                r_trs_queue[selected_id][i].m_len = length;
             end else begin
-               for(int j = r_trs_queue[selected_id][i].lower_byte_lane; j <= r_trs_queue[selected_id][i].upper_byte_lane; j++) begin
-                  r_trs_queue[selected_id][i].m_data[0][((j+1)*8-1)-:8]   = cntxt.mem.read(r_trs_queue[selected_id][i].m_addr + j);
-                  //[(j*8)+:7]
-               end
+               mem_read_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
             end
          end else begin
             `uvm_error(get_full_name(), "YOU CAN NOT WRITE DATA IN THIS ADDRESS LOCATION")
@@ -714,27 +719,39 @@ task uvma_axi_synchronizer_c::read_data(int selected_id);
 
 endtask : read_data
 
-task uvma_axi_synchronizer_c::memory_read_access_api(uvma_axi_transaction_c axi_item, output uvma_axi_sig_data_t read_data);
+task uvma_axi_synchronizer_c::memory_read_access_api(ref uvma_axi_transaction_c axi_item, output longint read_data);
 
-   read_data = 0;
    #5;
-   for(int j = axi_item.lower_byte_lane; j <= axi_item.upper_byte_lane; j++) begin
-      read_data[((j+1)*8-1)-:8]   = cntxt.mem.read(axi_item.m_addr + j);
-      //[(j*8)+:7]
-   end
+   `uvm_info(get_type_name(), $sformatf("API READ DATA"), UVM_HIGH)
+   mem_read_api(axi_item, read_data);
 
 endtask : memory_read_access_api
 
 task uvma_axi_synchronizer_c::memory_write_access_api(uvma_axi_transaction_c axi_item);
 
    #10;
+   `uvm_info(get_type_name(), $sformatf("API WRITE DATA"), UVM_HIGH)
    for(int i = 0; i <= axi_item.m_len; i++) begin
-      for(int k = axi_item.lower_byte_lane; k <= axi_item.upper_byte_lane; k++) begin
-         if(axi_item.m_wstrb[i][k]) cntxt.mem.write(axi_item.m_addr + k, axi_item.m_data[i][((k+1)*8-1)-:8]);
-      end
+      mem_write_api(axi_item, i);
    end
 
 endtask : memory_write_access_api
+
+task uvma_axi_synchronizer_c::mem_write_api(uvma_axi_transaction_c axi_item, int item_index);
+
+   for(int k = axi_item.lower_byte_lane; k <= axi_item.upper_byte_lane; k++) begin
+      if(axi_item.m_wstrb[item_index][k]) cntxt.mem.write(axi_item.m_addr + k, axi_item.m_data[item_index][((k+1)*8-1)-:8]);
+   end
+
+endtask : mem_write_api
+
+task uvma_axi_synchronizer_c::mem_read_api(ref uvma_axi_transaction_c axi_item, output longint read_data);
+
+   for(int j = axi_item.lower_byte_lane; j <= axi_item.upper_byte_lane; j++) begin
+      read_data[((j+1)*8-1)-:8]   = cntxt.mem.read(axi_item.m_addr + j);
+   end
+
+endtask : mem_read_api
 
 
 function int uvma_axi_synchronizer_c::check_memory_access(uvma_axi_transaction_c axi_item);

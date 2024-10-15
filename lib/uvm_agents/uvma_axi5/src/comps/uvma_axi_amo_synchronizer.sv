@@ -75,7 +75,6 @@ task uvma_axi_amo_synchronizer_c::write_data();
    int checkexclusive;
 
    ex_r_data = uvma_axi_transaction_c::type_id::create("ex_r_data");
-
    foreach(w_trs_queue[i]) begin
       for(int j = 0; j < w_trs_queue[i].size(); j++) begin
 
@@ -87,10 +86,7 @@ task uvma_axi_amo_synchronizer_c::write_data();
                if(cfg.external_mem) begin
                   memory_read_access_api(w_trs_queue[i][j], init_data);
                end else begin
-                  for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
-                     init_data[((k+1)*8-1)-:8]   = cntxt.mem.read(w_trs_queue[i][j].m_addr + k);
-                     //[(j*8)+:7]
-                  end
+                  mem_read_api(w_trs_queue[i][j], init_data);
                end
                foreach(r_trs_queue[w_trs_queue[i][j].m_id][k]) begin
                    if(r_trs_queue[w_trs_queue[i][j].m_id][k].m_trs_status == ADDR_DATA_NOT_COMPLETE) begin
@@ -230,9 +226,7 @@ task uvma_axi_amo_synchronizer_c::write_data();
                         end
                      end
                   end else begin
-                     for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
-                        if(w_trs_queue[i][j].m_wstrb[0][k]) cntxt.mem.write(w_trs_queue[i][j].m_addr + k, w_trs_queue[i][j].m_data[0][((k+1)*8-1)-:8]);
-                     end
+                     mem_write_api(w_trs_queue[i][j], 0);
                      if(w_trs_queue[i][j].m_last[0] == 1)  w_finished_trs_id.push_back(w_trs_queue[i][j].m_id);
                   end
                end else if(checkexclusive == 0) begin
@@ -264,10 +258,7 @@ task uvma_axi_amo_synchronizer_c::read_data(int selected_id);
                   memory_read_access_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
                   r_trs_queue[selected_id][i].m_len = length;
                end else begin
-                  for(int j = r_trs_queue[selected_id][i].lower_byte_lane; j <= r_trs_queue[selected_id][i].upper_byte_lane; j++) begin
-                     r_trs_queue[selected_id][i].m_data[0][((j+1)*8-1)-:8]   = cntxt.mem.read(r_trs_queue[selected_id][i].m_addr + j);
-                     //[(j*8)+:7]
-                  end
+                  mem_read_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
                end
             end else begin
                `uvm_error(get_full_name(), "YOU CAN NOT WRITE DATA IN THIS ADDRESS LOCATION")

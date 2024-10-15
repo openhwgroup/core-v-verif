@@ -228,11 +228,10 @@ task uvma_axi_slv_seq_c::prepare_w_resp();
       w_slv_rsp.m_err.rand_mode(0);
 //      w_slv_rsp.lower_byte_lane.rand_mode(0);
 //      w_slv_rsp.upper_byte_lane.rand_mode(0);
-      if(cfg.randomization_enabled == 1) begin
-         w_slv_rsp.m_resp.rand_mode(1);
-         w_slv_rsp.m_user.rand_mode(1);
-      end else begin
+      if(!cfg.resp_randomization_enabled) begin
          w_slv_rsp.m_resp.rand_mode(0);
+      end
+      if(!cfg.user_randomization_enabled) begin
          w_slv_rsp.m_user.rand_mode(0);
       end
 
@@ -277,12 +276,11 @@ task uvma_axi_slv_seq_c::prepare_r_resp();
       r_slv_rsp.m_err.rand_mode(0);
 //      r_slv_rsp.lower_byte_lane.rand_mode(0);
 //      r_slv_rsp.upper_byte_lane.rand_mode(0);
-      if(cfg.randomization_enabled == 1) begin
-         r_slv_rsp.m_resp.rand_mode(1);
-         r_slv_rsp.m_user.rand_mode(1);
-      end else begin
+      if(!cfg.resp_randomization_enabled == 1) begin
          r_slv_rsp.m_resp.rand_mode(0);
-         r_slv_rsp.m_user.rand_mode(0);
+      end
+      if(!cfg.user_randomization_enabled == 1) begin
+         r_slv_rsp.m_x_user.rand_mode(0);
       end
       r_slv_rsp.m_last.rand_mode(0);
       r_slv_rsp.m_data.rand_mode(0);

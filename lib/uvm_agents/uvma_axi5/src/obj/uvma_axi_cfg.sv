@@ -24,7 +24,8 @@ class uvma_axi_cfg_c extends uvm_object;
    rand bit                                preload_mem;
    rand bit                                external_mem;
    rand bit                                pure_mode_agent;
-   rand bit                                randomization_enabled;
+   rand bit                                resp_randomization_enabled;
+   rand bit                                user_randomization_enabled;
    rand bit                                rand_channel_delay_enabled;
    rand bit                                cov_model_enabled;
    rand bit                                trn_log_enabled;
@@ -70,7 +71,8 @@ class uvma_axi_cfg_c extends uvm_object;
       `uvm_field_int   (trn_log_enabled, UVM_DEFAULT)
       `uvm_field_int   (axi_lock_enabled, UVM_DEFAULT)
       `uvm_field_int   (cov_model_enabled, UVM_DEFAULT)
-      `uvm_field_int   (randomization_enabled, UVM_DEFAULT)
+      `uvm_field_int   (resp_randomization_enabled, UVM_DEFAULT)
+      `uvm_field_int   (user_randomization_enabled, UVM_DEFAULT)
       `uvm_field_int   (rand_channel_delay_enabled, UVM_DEFAULT)
       `uvm_field_enum  (uvma_axi_slv_drv_ordering_mode, ordering_read_mode, UVM_DEFAULT);
       `uvm_field_enum  (uvma_axi_slv_drv_ordering_mode, ordering_write_mode, UVM_DEFAULT);
@@ -102,7 +104,7 @@ class uvma_axi_cfg_c extends uvm_object;
       soft axi_region_enabled          == 0;
       soft axi_prot_enabled            == 0;
       soft preload_mem                 == 0;
-      soft pure_mode_agent             == 0;
+      pure_mode_agent                  == 0;
       soft max_outstanding_write_trs   == 2;
       soft max_outstanding_read_trs    == 2;
       soft max_write_response_latency  == 15;
@@ -112,13 +114,15 @@ class uvma_axi_cfg_c extends uvm_object;
 
    constraint pure_config {
       if(pure_mode_agent) {
-         soft randomization_enabled       == 0;
+         soft resp_randomization_enabled  == 0;
+         soft user_randomization_enabled  == 0;
          soft rand_channel_delay_enabled  == 0;
          soft ordering_read_mode          == UVMA_AXI_ORDERING_MODE_FIFO;
          soft ordering_write_mode         == UVMA_AXI_ORDERING_MODE_FIFO;
          soft external_mem                == 1;
       } else {
-         soft randomization_enabled       == 0;
+         soft resp_randomization_enabled  == 0;
+         soft user_randomization_enabled  == 0;
          soft rand_channel_delay_enabled  == 1;
          soft ordering_read_mode          == UVMA_AXI_ORDERING_MODE_RANDOM;
          soft ordering_write_mode         == UVMA_AXI_OUTSTANDING_MODE;
