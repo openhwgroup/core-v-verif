@@ -120,14 +120,18 @@ class uvma_axi_synchronizer_c extends uvm_component;
    extern virtual task memory_write_access_api(uvma_axi_transaction_c axi_item);
 
    /**
-    * Standard api to write data in the memory
+    * API to write single axi transfer in the memory
+    * take in input the address of access the number of bytes to write, the write data and the write mask
+    * The mask is extracted from the strob and is used if we want to mask a byte into the data
     */
-   extern virtual task mem_write_api(uvma_axi_transaction_c axi_item, int item_index);
+   extern virtual task mem_write_transfer_api(uvma_axi_transaction_c axi_item, uvma_axi_sig_addr_t write_address, uvma_axi_sig_data_t write_data, int size, uvma_axi_sig_wstrb_t mask, int item_index);
 
    /**
-    * Standard api to write data in the memory
+    * API to read single axi transfer from the memory
+    * take in input the address of access and the number of bytes to read
+    * The output read data contain the returned data
     */
-   extern virtual task mem_read_api(ref uvma_axi_transaction_c axi_item, output longint read_data);
+   extern virtual task mem_read_transfer_api(ref uvma_axi_transaction_c axi_item, input uvma_axi_sig_addr_t read_address, input int size, output longint read_data);
 
    /**
    * check the memory access permission
@@ -336,6 +340,9 @@ task uvma_axi_synchronizer_c::write_data();
    uvma_axi_transaction_c ex_r_data;
    int last_trs = -1;
    int checkexclusive;
+   uvma_axi_sig_wstrb_t data_mask  = 0;
+   uvma_axi_sig_data_t  data_write = 0;
+   int index = 0;
 
    ex_r_data = uvma_axi_transaction_c::type_id::create("ex_r_data");
 
@@ -415,7 +422,13 @@ task uvma_axi_synchronizer_c::write_data();
                         end
                      end
                   end else begin
-                     mem_write_api(w_trs_queue[i][j], 0);
+                     for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
+                        data_mask[index] = w_trs_queue[i][j].m_wstrb[0][k];
+                        data_write[((index+1)*8-1)-:8] = w_trs_queue[i][j].m_data[0][((k+1)*8-1)-:8];
+                        index++;
+                     end
+                     index = 0;
+                     mem_write_transfer_api(w_trs_queue[i][j], w_trs_queue[i][j].m_addr + w_trs_queue[i][j].lower_byte_lane, data_write, w_trs_queue[i][j].upper_byte_lane - w_trs_queue[i][j].lower_byte_lane, data_mask, 0);
                      if(w_trs_queue[i][j].m_last[0] == 1)  w_finished_trs_id.push_back(w_trs_queue[i][j].m_id);
                   end
                end else if(checkexclusive == 0) begin
@@ -697,6 +710,8 @@ endtask : r_select_id
 
 task uvma_axi_synchronizer_c::read_data(int selected_id);
    int length;
+   uvma_axi_sig_data_t data_read = 0;
+   int index = 0;
 
    foreach(r_trs_queue[selected_id][i]) begin
       if(r_trs_queue[selected_id][i].m_trs_status == ADDR_DATA_NOT_COMPLETE) begin
@@ -708,7 +723,11 @@ task uvma_axi_synchronizer_c::read_data(int selected_id);
                memory_read_access_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
                r_trs_queue[selected_id][i].m_len = length;
             end else begin
-               mem_read_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
+               mem_read_transfer_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_addr + r_trs_queue[selected_id][i].lower_byte_lane, r_trs_queue[selected_id][i].upper_byte_lane - r_trs_queue[selected_id][i].lower_byte_lane, data_read);
+               for(int j = r_trs_queue[selected_id][i].lower_byte_lane; j <= r_trs_queue[selected_id][i].upper_byte_lane; j++) begin
+                  r_trs_queue[selected_id][i].m_data[0][((j+1)*8-1)-:8]   = data_read[((index+1)*8-1)-:8];
+                  index++;
+               end
             end
          end else begin
             `uvm_error(get_full_name(), "YOU CAN NOT WRITE DATA IN THIS ADDRESS LOCATION")
@@ -720,38 +739,57 @@ task uvma_axi_synchronizer_c::read_data(int selected_id);
 endtask : read_data
 
 task uvma_axi_synchronizer_c::memory_read_access_api(ref uvma_axi_transaction_c axi_item, output longint read_data);
+   uvma_axi_sig_data_t data_read = 0;
+   int index = 0;
 
-   #5;
    `uvm_info(get_type_name(), $sformatf("API READ DATA"), UVM_HIGH)
-   mem_read_api(axi_item, read_data);
+   #10;
+   mem_read_transfer_api(axi_item, axi_item.m_addr + axi_item.lower_byte_lane, axi_item.upper_byte_lane - axi_item.lower_byte_lane, data_read);
+   for(int j = axi_item.lower_byte_lane; j <= axi_item.upper_byte_lane; j++) begin
+      read_data[((j+1)*8-1)-:8] = data_read[((index+1)*8-1)-:8];
+      index++;
+   end
+   index     = 0;
+   data_read = 0;
 
 endtask : memory_read_access_api
 
 task uvma_axi_synchronizer_c::memory_write_access_api(uvma_axi_transaction_c axi_item);
+   uvma_axi_sig_data_t  data_write = 0;
+   uvma_axi_sig_wstrb_t data_mask  = 0;
+   int index = 0;
 
-   #10;
    `uvm_info(get_type_name(), $sformatf("API WRITE DATA"), UVM_HIGH)
+   #10;
    for(int i = 0; i <= axi_item.m_len; i++) begin
-      mem_write_api(axi_item, i);
+      for(int j = axi_item.lower_byte_lane; j <= axi_item.upper_byte_lane; j++) begin
+         data_mask[index]  = axi_item.m_wstrb[i][j];
+         data_write[((index+1)*8-1)-:8] = axi_item.m_data[i][((j+1)*8-1)-:8];
+         index++;
+      end
+      mem_write_transfer_api(axi_item, axi_item.m_addr + axi_item.lower_byte_lane, data_write, axi_item.upper_byte_lane - axi_item.lower_byte_lane, data_mask, i);
+      index      = 0;
+      data_write = 0;
+      data_mask = 0;
    end
 
 endtask : memory_write_access_api
 
-task uvma_axi_synchronizer_c::mem_write_api(uvma_axi_transaction_c axi_item, int item_index);
+task uvma_axi_synchronizer_c::mem_write_transfer_api(uvma_axi_transaction_c axi_item, uvma_axi_sig_addr_t write_address, uvma_axi_sig_data_t write_data, int size, uvma_axi_sig_wstrb_t mask, int item_index);
 
-   for(int k = axi_item.lower_byte_lane; k <= axi_item.upper_byte_lane; k++) begin
-      if(axi_item.m_wstrb[item_index][k]) cntxt.mem.write(axi_item.m_addr + k, axi_item.m_data[item_index][((k+1)*8-1)-:8]);
+   for(int k = 0; k <= size; k++) begin
+      if(mask[k]) cntxt.mem.write(write_address + k, write_data[((k+1)*8-1)-:8]);
    end
 
-endtask : mem_write_api
+endtask : mem_write_transfer_api
 
-task uvma_axi_synchronizer_c::mem_read_api(ref uvma_axi_transaction_c axi_item, output longint read_data);
+task uvma_axi_synchronizer_c::mem_read_transfer_api(ref uvma_axi_transaction_c axi_item, input uvma_axi_sig_addr_t read_address, input int size, output longint read_data);
 
-   for(int j = axi_item.lower_byte_lane; j <= axi_item.upper_byte_lane; j++) begin
-      read_data[((j+1)*8-1)-:8]   = cntxt.mem.read(axi_item.m_addr + j);
+   for(int j = 0; j <= size; j++) begin
+      read_data[((j+1)*8-1)-:8]   = cntxt.mem.read(read_address + j);
    end
 
-endtask : mem_read_api
+endtask : mem_read_transfer_api
 
 
 function int uvma_axi_synchronizer_c::check_memory_access(uvma_axi_transaction_c axi_item);
