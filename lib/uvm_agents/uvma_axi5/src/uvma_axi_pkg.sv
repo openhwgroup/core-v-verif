@@ -68,6 +68,7 @@ package uvma_axi_pkg;
 
     // Sequences
    `include "uvma_axi_seq_lib.sv"
+   `include "uvma_axi_mst_seq.svh"
 
 endpackage : uvma_axi_pkg
 

@@ -47,6 +47,14 @@ class uvma_axi_cfg_c extends uvm_object;
 
    uvma_axi_transaction_cfg_c              txn_config;
 
+   // Master configuration 
+   uvma_axi_dv_lite_t      axi_lite                ;
+   string                  interface_name          ;
+   bit                     is_reactive             ;
+   bit                     id_management_enable    ;
+   bit                     covergroup_enable       ;
+
+
    typedef struct{
             rand longint  unsigned    m_part_addr_start;
             rand longint  unsigned    m_part_size;
@@ -157,6 +165,52 @@ class uvma_axi_cfg_c extends uvm_object;
    */
    extern function new(string name = "uvma_axi_cfg");
 
+   // -----------------------------------------------------------------------
+   // AXI version
+   // -----------------------------------------------------------------------
+   extern function void set_axi_version( uvma_axi_dv_ver_t new_axi_version );
+   
+   extern function uvma_axi_dv_ver_t get_axi_version( );
+   
+   // -----------------------------------------------------------------------
+   // AXI Lite version
+   // -----------------------------------------------------------------------
+   extern function void set_axi_lite( uvma_axi_dv_lite_t new_axi_lite );
+   
+   extern function uvma_axi_dv_lite_t get_axi_lite( );
+   
+   // -----------------------------------------------------------------------
+   // Interface name
+   // -----------------------------------------------------------------------
+   extern function void set_interface_name( string interface_name );
+   
+   extern function string get_interface_name( );
+
+   // -----------------------------------------------------------------------
+   // uvma_axi_cfg_c::set/Get idle value tasks
+   // -----------------------------------------------------------------------
+   extern function void set_driver_idle_value_cfg( uvma_axi_dv_driver_idle_t driver_idle_value_cfg );
+   
+   extern function uvma_axi_dv_driver_idle_t get_driver_idle_value_cfg( );
+   
+   // TXN CONFIGURATION
+   extern function uvma_axi_transaction_cfg_c get_txn_config();
+   
+   extern function void set_txn_config( uvma_axi_transaction_cfg_c config_i );
+
+   // -----------------------------------------------------------------------
+   // Master/Slave
+   // -----------------------------------------------------------------------
+   extern function void set_is_master_side( bit master_side );
+   
+   extern function bit get_is_master_side( );
+
+   // -----------------------------------------------------------------------
+   // id_management_enable
+   // -----------------------------------------------------------------------
+   extern function void set_id_management_enable( bit management_enable );
+   
+   extern function bit get_id_management_enable( );
 endclass : uvma_axi_cfg_c
 
 function uvma_axi_cfg_c::new(string name = "uvma_axi_cfg");
@@ -165,5 +219,84 @@ function uvma_axi_cfg_c::new(string name = "uvma_axi_cfg");
    txn_config = uvma_axi_transaction_cfg_c::type_id::create("txn_config");
 
 endfunction : new
+
+// -----------------------------------------------------------------------
+// AXI version
+// -----------------------------------------------------------------------
+function void uvma_axi_cfg_c::set_axi_version( uvma_axi_dv_ver_t new_axi_version );
+  version = new_axi_version;
+endfunction : uvma_axi_cfg_c::set_axi_version
+
+function uvma_axi_dv_ver_t uvma_axi_cfg_c::get_axi_version( );
+  return version;
+endfunction : uvma_axi_cfg_c::get_axi_version
+
+// -----------------------------------------------------------------------
+// AXI Lite version
+// -----------------------------------------------------------------------
+function void uvma_axi_cfg_c::set_axi_lite( uvma_axi_dv_lite_t new_axi_lite );
+  axi_lite = new_axi_lite;
+endfunction : uvma_axi_cfg_c::set_axi_lite
+
+function uvma_axi_dv_lite_t uvma_axi_cfg_c::get_axi_lite( );
+  return axi_lite;
+endfunction : uvma_axi_cfg_c::get_axi_lite
+
+// -----------------------------------------------------------------------
+// Interface name
+// -----------------------------------------------------------------------
+function void uvma_axi_cfg_c::set_interface_name( string interface_name );
+    interface_name = interface_name;
+endfunction
+
+function string uvma_axi_cfg_c::get_interface_name( );
+    return interface_name;
+endfunction
+
+// -----------------------------------------------------------------------
+// uvma_axi_cfg_c::set/Get idle value tasks
+// -----------------------------------------------------------------------
+function void uvma_axi_cfg_c::set_driver_idle_value_cfg( uvma_axi_dv_driver_idle_t driver_idle_value_cfg );
+  driver_idle_value_cfg = driver_idle_value_cfg ;
+endfunction: uvma_axi_cfg_c::set_driver_idle_value_cfg
+
+function uvma_axi_dv_driver_idle_t uvma_axi_cfg_c::get_driver_idle_value_cfg( );
+  return driver_idle_value_cfg;
+endfunction: get_driver_idle_value_cfg
+
+// TXN CONFIGURATION
+function uvma_axi_transaction_cfg_c uvma_axi_cfg_c::get_txn_config();
+  if ( txn_config == null )
+    `uvm_fatal("NO_TXN_CONFIG",
+      $sformatf("The agent was not given any transaction configuration. The user should use create its own transaction configuration when configuring the agent, and use the function uvma_axi_cfg_c::set_txn_config to uvma_axi_cfg_c::set the transaction configuration in the agent configuration ") )
+  return txn_config  ;
+endfunction : get_txn_config
+
+function void uvma_axi_cfg_c::set_txn_config( uvma_axi_transaction_cfg_c config_i );
+  txn_config =  config_i ;
+endfunction: uvma_axi_cfg_c::set_txn_config
+
+
+// -----------------------------------------------------------------------
+// Master/Slave
+// -----------------------------------------------------------------------
+function void uvma_axi_cfg_c::set_is_master_side( bit master_side );
+  is_slave = ~master_side;
+endfunction : uvma_axi_cfg_c::set_is_master_side
+
+function bit uvma_axi_cfg_c::get_is_master_side( );
+  return ~is_slave;
+endfunction : uvma_axi_cfg_c::get_is_master_side
+
+// -----------------------------------------------------------------------
+// id_management_enable
+// -----------------------------------------------------------------------
+function void uvma_axi_cfg_c::set_id_management_enable( bit management_enable );
+  id_management_enable = management_enable;
+endfunction : uvma_axi_cfg_c::set_id_management_enable
+
+function bit uvma_axi_cfg_c::get_id_management_enable( );
+  return id_management_enable;
+endfunction : uvma_axi_cfg_c::get_id_management_enable
 
 `endif //__UVMA_AXI_CFG_SV__
