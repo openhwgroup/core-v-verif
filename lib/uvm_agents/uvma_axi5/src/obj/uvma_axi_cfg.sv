@@ -225,22 +225,22 @@ endfunction : new
 // -----------------------------------------------------------------------
 function void uvma_axi_cfg_c::set_axi_version( uvma_axi_dv_ver_t new_axi_version );
   version = new_axi_version;
-endfunction : uvma_axi_cfg_c::set_axi_version
+endfunction: set_axi_version
 
 function uvma_axi_dv_ver_t uvma_axi_cfg_c::get_axi_version( );
   return version;
-endfunction : uvma_axi_cfg_c::get_axi_version
+endfunction: get_axi_version
 
 // -----------------------------------------------------------------------
 // AXI Lite version
 // -----------------------------------------------------------------------
 function void uvma_axi_cfg_c::set_axi_lite( uvma_axi_dv_lite_t new_axi_lite );
   axi_lite = new_axi_lite;
-endfunction : uvma_axi_cfg_c::set_axi_lite
+endfunction: set_axi_lite
 
 function uvma_axi_dv_lite_t uvma_axi_cfg_c::get_axi_lite( );
   return axi_lite;
-endfunction : uvma_axi_cfg_c::get_axi_lite
+endfunction: get_axi_lite
 
 // -----------------------------------------------------------------------
 // Interface name
@@ -258,7 +258,7 @@ endfunction
 // -----------------------------------------------------------------------
 function void uvma_axi_cfg_c::set_driver_idle_value_cfg( uvma_axi_dv_driver_idle_t driver_idle_value_cfg );
   driver_idle_value_cfg = driver_idle_value_cfg ;
-endfunction: uvma_axi_cfg_c::set_driver_idle_value_cfg
+endfunction: set_driver_idle_value_cfg
 
 function uvma_axi_dv_driver_idle_t uvma_axi_cfg_c::get_driver_idle_value_cfg( );
   return driver_idle_value_cfg;
@@ -274,7 +274,7 @@ endfunction : get_txn_config
 
 function void uvma_axi_cfg_c::set_txn_config( uvma_axi_transaction_cfg_c config_i );
   txn_config =  config_i ;
-endfunction: uvma_axi_cfg_c::set_txn_config
+endfunction: set_txn_config
 
 
 // -----------------------------------------------------------------------
@@ -282,21 +282,21 @@ endfunction: uvma_axi_cfg_c::set_txn_config
 // -----------------------------------------------------------------------
 function void uvma_axi_cfg_c::set_is_master_side( bit master_side );
   is_slave = ~master_side;
-endfunction : uvma_axi_cfg_c::set_is_master_side
+endfunction: set_is_master_side
 
 function bit uvma_axi_cfg_c::get_is_master_side( );
   return ~is_slave;
-endfunction : uvma_axi_cfg_c::get_is_master_side
+endfunction: get_is_master_side
 
 // -----------------------------------------------------------------------
 // id_management_enable
 // -----------------------------------------------------------------------
 function void uvma_axi_cfg_c::set_id_management_enable( bit management_enable );
   id_management_enable = management_enable;
-endfunction : uvma_axi_cfg_c::set_id_management_enable
+endfunction: set_id_management_enable
 
 function bit uvma_axi_cfg_c::get_id_management_enable( );
   return id_management_enable;
-endfunction : uvma_axi_cfg_c::get_id_management_enable
+endfunction: get_id_management_enable
 
 `endif //__UVMA_AXI_CFG_SV__
