@@ -47,9 +47,6 @@ function uvma_axi_base_seq_c::new(string name="uvma_axi_base_seq");
 endfunction : new
 
 
-
-
-
 task uvma_axi_base_seq_c::pre_start();
 
    if(p_sequencer == null) begin

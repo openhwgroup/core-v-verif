@@ -21,88 +21,88 @@ interface uvma_axi_intf (
 
    // AXI4 signals
    // Write Address channel
-   uvma_axi_sig_id_t          aw_id;
-   uvma_axi_sig_addr_t        aw_addr;
-   uvma_axi_sig_user_t        aw_user;
-   uvma_axi_sig_len_t         aw_len;
-   uvma_axi_sig_size_t        aw_size;
-   uvma_axi_sig_burst_t       aw_burst;
-   uvma_axi_sig_lock_t        aw_lock;
-   uvma_axi_sig_cache_t       aw_cache;
-   uvma_axi_sig_prot_t        aw_prot;
-   uvma_axi_sig_qos_t         aw_qos;
-   uvma_axi_sig_region_t      aw_region;
-   logic                      aw_valid;
-   logic                      aw_ready;
-   uvma_axi_sig_atop_t        aw_atop;
-   logic                      aw_trace;
-   uvma_axi_sig_loop_t        aw_loop;
-   logic                      aw_mmusecsid;
-   uvma_axi_sig_mmusid_t      aw_mmusid;
-   logic                      aw_mmussidv;
-   uvma_axi_sig_mmussid_t     aw_mmussid;
-   logic                      aw_mmuatst;
-   uvma_axi_sig_nsaid_t       aw_nsaid;
-   logic                      aw_idunq;
+   wire [MAX_ID_WIDTH-1:0]      aw_id;
+   wire [MAX_ADDR_WIDTH-1:0]    aw_addr;
+   wire [MAX_USER_WIDTH-1:0]    aw_user;
+   wire [7:0]                   aw_len;
+   wire [2:0]                   aw_size;
+   wire [1:0]                   aw_burst;
+   wire                         aw_lock;
+   wire [3:0]                   aw_cache;
+   wire [2:0]                   aw_prot;
+   wire [3:0]                   aw_qos;
+   wire [3:0]                   aw_region;
+   wire                         aw_valid;
+   wire                         aw_ready;
+   wire [5:0]                   aw_atop;
+   wire                         aw_trace;
+   wire [MAX_LOOP_WIDTH-1:0]    aw_loop;
+   wire                         aw_mmusecsid;
+   wire [MAX_MMUSID_WIDTH-1:0]  aw_mmusid;
+   wire                         aw_mmussidv;
+   wire [MAX_MMUSSID_WIDTH-1:0] aw_mmussid;
+   wire                         aw_mmuatst;
+   wire [3:0]                   aw_nsaid;
+   wire                         aw_idunq;
 
    //write data channel
-   uvma_axi_sig_data_t        w_data;
-   uvma_axi_sig_wstrb_t       w_strb;
-   uvma_axi_sig_user_t        w_user;
-   logic                      w_last;
-   uvma_axi_sig_datachk_t     w_datachk;
-   uvma_axi_sig_poison_t      w_poison;
-   logic                      w_trace;
-   logic                      w_valid;
-   logic                      w_ready;
+   wire [MAX_DATA_WIDTH-1:0]    w_data;
+   wire [MAX_DATA_WIDTH/8-1:0]  w_strb;
+   wire [MAX_USER_WIDTH-1:0]    w_user;
+   wire                         w_last;
+   wire [MAX_DATA_WIDTH/8-1:0]  w_datachk;
+   wire [MAX_DATA_WIDTH/64-1:0] w_poison;
+   wire                         w_trace;
+   wire                         w_valid;
+   wire                         w_ready;
 
    // write response channel
-   uvma_axi_sig_id_t          b_id;
-   uvma_axi_sig_user_t        b_user;
-   uvma_axi_sig_resp_t        b_resp;
-   logic                      b_trace;
-   uvma_axi_sig_loop_t        b_loop;
-   logic                      b_idunq;
-   logic                      b_valid;
-   logic                      b_ready;
+   wire [MAX_ID_WIDTH-1:0]      b_id;
+   wire [MAX_USER_WIDTH-1:0]    b_user;
+   wire [1:0]                   b_resp;
+   wire                         b_trace;
+   wire [MAX_LOOP_WIDTH-1:0]    b_loop;
+   wire                         b_idunq;
+   wire                         b_valid;
+   wire                         b_ready;
 
    // read address channel
-   uvma_axi_sig_id_t          ar_id;
-   uvma_axi_sig_addr_t        ar_addr;
-   uvma_axi_sig_user_t        ar_user;
-   uvma_axi_sig_len_t         ar_len;
-   uvma_axi_sig_size_t        ar_size;
-   uvma_axi_sig_burst_t       ar_burst;
-   uvma_axi_sig_lock_t        ar_lock;
-   uvma_axi_sig_cache_t       ar_cache;
-   uvma_axi_sig_prot_t        ar_prot;
-   uvma_axi_sig_qos_t         ar_qos;
-   uvma_axi_sig_region_t      ar_region;
-   logic                      ar_valid;
-   logic                      ar_ready;
-   logic                      ar_trace;
-   uvma_axi_sig_loop_t        ar_loop;
-   logic                      ar_mmusecsid;
-   uvma_axi_sig_mmusid_t      ar_mmusid;
-   logic                      ar_mmussidv;
-   uvma_axi_sig_mmussid_t     ar_mmussid;
-   logic                      ar_mmuatst;
-   uvma_axi_sig_nsaid_t       ar_nsaid;
-   logic                      ar_idunq;
+   wire [MAX_ID_WIDTH-1:0]      ar_id;
+   wire [MAX_ADDR_WIDTH-1:0]    ar_addr;
+   wire [MAX_USER_WIDTH-1:0]    ar_user;
+   wire [7:0]                   ar_len;
+   wire [2:0]                   ar_size;
+   wire [1:0]                   ar_burst;
+   wire                         ar_lock;
+   wire [3:0]                   ar_cache;
+   wire [2:0]                   ar_prot;
+   wire [3:0]                   ar_qos;
+   wire [3:0]                   ar_region;
+   wire                         ar_valid;
+   wire                         ar_ready;
+   wire                         ar_trace;
+   wire [MAX_LOOP_WIDTH-1:0]    ar_loop;
+   wire                         ar_mmusecsid;
+   wire [MAX_MMUSID_WIDTH-1:0]  ar_mmusid;
+   wire                         ar_mmussidv;
+   wire [MAX_MMUSSID_WIDTH-1:0] ar_mmussid;
+   wire                         ar_mmuatst;
+   wire logic [3:0]             ar_nsaid;
+   wire                         ar_idunq;
 
    //read data channel
-   uvma_axi_sig_id_t          r_id;
-   uvma_axi_sig_data_t        r_data;
-   uvma_axi_sig_user_t        r_user;
-   uvma_axi_sig_resp_t        r_resp;
-   logic                      r_last;
-   uvma_axi_sig_datachk_t     r_datachk;
-   uvma_axi_sig_poison_t      r_poison;
-   logic                      r_trace;
-   uvma_axi_sig_loop_t        r_loop;
-   logic                      r_idunq;
-   logic                      r_valid;
-   logic                      r_ready;
+   wire [MAX_ID_WIDTH-1:0]      r_id;
+   wire [MAX_DATA_WIDTH-1:0]    r_data;
+   wire [MAX_USER_WIDTH-1:0]    r_user;
+   wire [1:0]                   r_resp;
+   wire                         r_last;
+   wire [MAX_DATA_WIDTH/8-1:0]  r_datachk;
+   wire [MAX_DATA_WIDTH/64-1:0] r_poison;
+   wire                         r_trace;
+   wire [MAX_LOOP_WIDTH-1:0]    r_loop;
+   wire                         r_idunq;
+   wire                         r_valid;
+   wire                         r_ready;
 
    bit                        aw_assertion_enabled;
    bit                        w_assertion_enabled;
@@ -156,6 +156,7 @@ interface uvma_axi_intf (
 
 
 endinterface : uvma_axi_intf
+
 
 interface uvma_axi_mst_intf (
    input bit clk,

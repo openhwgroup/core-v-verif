@@ -23,8 +23,9 @@ public:
   ~Processor();
   st_rvfi step(size_t n, st_rvfi reference);
 
-  static void default_params(string base, openhw::Params &params);
+  static void default_params(string base, openhw::Params &params, openhw::Processor *proc);
 
+  inline uint64_t get_XPR(reg_t num);
   inline void set_XPR(reg_t num, reg_t value);
   inline void set_FPR(reg_t num, float128_t value);
   inline const Params& get_params() const { return params; }
@@ -48,7 +49,11 @@ public:
 
   virtual reg_t get_csr(int which, insn_t insn, bool write, bool peek = 0);
 
+  virtual reg_t get_csr(int which);
+
   inline uint32_t mcause_to_mip(uint32_t mcause);
+
+  inline uint64_t xlen_format(uint64_t value);
 
 protected:
   bool nmi_inject;
@@ -66,8 +71,6 @@ protected:
   st_rvfi *step_rvfi;
 
   commit_log_reg_t last_log_reg_write;
-
-  static std::unordered_map<uint64_t, csr_param_t> csr_params;
 
   static std::unordered_map<char, std::tuple<uint64_t, uint64_t>> priv_ranges;
 

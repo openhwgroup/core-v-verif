@@ -43,6 +43,3 @@ ${CV_DV_UTILS_DIR}/uvm/clock_mon/xrtl_clock_mon_vif.sv
 ${CV_DV_UTILS_DIR}/uvm/clock_mon/clock_mon_vif_xrtl_pkg.sv
 ${CV_DV_UTILS_DIR}/uvm/clock_mon/clock_monitor_pkg.sv
 ${CV_DV_UTILS_DIR}/uvm/perf_mon/perf_mon_pkg.sv
-${CV_DV_UTILS_DIR}/uvm/dram_monitor/dram_monitor_pkg.sv
-${CV_DV_UTILS_DIR}/uvm/dram_monitor/user_vif.sv
-${CV_DV_UTILS_DIR}/uvm/dram_monitor/simple_dram_vif.sv

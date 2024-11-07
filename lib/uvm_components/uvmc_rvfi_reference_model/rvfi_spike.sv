@@ -16,6 +16,7 @@
 `define __RVFI_SPIKE_SV__
 
 import "DPI-C" function int spike_create(string filename);
+import "DPI-C" function void spike_delete();
 
 import "DPI-C" function void spike_set_param_uint64_t(string base, string name, longint unsigned value);
 import "DPI-C" function void spike_set_param_str(string base, string name, string value);
@@ -28,6 +29,12 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
 
 import "DPI-C" function void spike_step_svLogic(inout vector_rvfi core, inout vector_rvfi reference_model);
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
+
+import "DPI-C" function void spike_get_csr(input longint unsigned proc_id,
+    input longint unsigned csr_addr, inout longint unsigned value);
+
+import "DPI-C" function void spike_put_csr(input longint unsigned proc_id,
+    input longint unsigned csr_addr, input longint unsigned value);
 
     function automatic void rvfi_initialize_spike(string core_name, st_core_cntrl_cfg core_cfg);
         string binary, config_file;
@@ -68,14 +75,11 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
             void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
 
-            void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
-            void'(spike_set_param_uint64_t(base, "mhartid", core_cfg.mhartid));
-            void'(spike_set_param_uint64_t(base, "marchid", core_cfg.marchid));
-            void'(spike_set_param_uint64_t(base, "mvendorid", core_cfg.mvendorid));
+            void'(spike_set_param_uint64_t(base, "pmpregions_max", core_cfg.pmp_regions));
+            void'(spike_set_param_uint64_t(base, "pmpregions_writable", core_cfg.pmp_regions));
             void'(spike_set_param_bool(base, "misaligned", core_cfg.unaligned_access_supported));
 
             void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
-            void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
 
             void'(spike_set_param_uint64_t(base, "mhartid_override_mask", 64'hFFFFFFFF));
             void'(spike_set_param_uint64_t(base, "mhartid_override_value", core_cfg.mhartid));
@@ -93,6 +97,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
                 void'(spike_set_param_uint64_t("/top/", "dram_base", core_cfg.dram_base));
                 void'(spike_set_param_uint64_t("/top/", "dram_size", core_cfg.dram_size));
             end
+            void'(spike_set_param_bool(base, "unified_traps", core_cfg.unified_traps));
 
             // FORNOW FIXME TODO: Hardcoded bootrom base address
             boot_addr = 64'h10000;
@@ -132,7 +137,6 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             void'(spike_set_param_bool(base, "tinfo_presence", 1'h0));
             void'(spike_set_param_uint64_t(base, "trigger_count", 64'h0001));
         end
-        void'(spike_set_param_bool(base, "unified_traps", core_cfg.unified_traps));
 
         void'(spike_create(binary));
 

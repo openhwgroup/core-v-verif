@@ -103,6 +103,10 @@ extern "C" void spike_set_params_from_file(const char *yaml_config_path) {
   paramSetter->setParams();
 }
 
+extern "C" void spike_delete() {
+    delete sim;
+}
+
 extern "C" void spike_create(const char *filename) {
   std::cerr << "[SPIKE] Starting 'spike_create'...\n";
   // TODO parse params from yaml
@@ -215,4 +219,16 @@ extern "C" void spike_step_svLogic(svLogicVecVal* reference,
   sv2rvfi(reference_rvfi, reference);
   spike_step_struct(reference_rvfi, spike_rvfi);
   rvfi2sv(spike_rvfi, spike);
+}
+
+extern "C" void spike_get_csr(uint64_t proc_id, uint64_t csr_addr, uint64_t &value) {
+  auto proc = sim->get_core_by_id(proc_id);
+  if (proc != nullptr)
+    value = proc->get_csr(csr_addr);
+}
+
+extern "C" void spike_put_csr(uint64_t proc_id, uint64_t csr_addr, uint64_t value) {
+  auto proc = sim->get_core_by_id(proc_id);
+  if (proc != nullptr)
+    proc->put_csr(csr_addr, value);
 }

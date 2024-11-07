@@ -231,6 +231,7 @@ function uvma_axi_dv_ver_t uvma_axi_cfg_c::get_axi_version( );
   return version;
 endfunction: get_axi_version
 
+
 // -----------------------------------------------------------------------
 // AXI Lite version
 // -----------------------------------------------------------------------
@@ -287,6 +288,7 @@ endfunction: set_is_master_side
 function bit uvma_axi_cfg_c::get_is_master_side( );
   return ~is_slave;
 endfunction: get_is_master_side
+
 
 // -----------------------------------------------------------------------
 // id_management_enable
