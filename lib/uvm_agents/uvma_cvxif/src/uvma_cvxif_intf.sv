@@ -12,21 +12,41 @@
 `define __UVMA_CVXIF_INTF_SV__
 
 
-//the CoreV-X-Interface for the CVA6
-interface uvma_cvxif_intf import cvxif_pkg::*;
-(input logic  clk,
- input logic  reset_n);
+//CoreV-X-Interface v1.0.0
+interface uvma_cvxif_intf (
 
-   cvxif_req_t   cvxif_req_i;
-   cvxif_resp_t  cvxif_resp_o;
+  input logic  clk,
+  input logic  reset_n);
+
+   import uvma_cvxif_pkg::*;
+
+   x_compressed_req_t    compressed_req;
+   x_issue_req_t         issue_req;
+   x_commit_t            commit_req;
+   x_register_t          register;
+
+   x_compressed_resp_t   compressed_resp;
+   x_issue_resp_t        issue_resp;
+   x_result_t            result;
+
+   logic                 issue_ready;
+   logic                 compressed_ready;
+   logic                 register_ready;
+   logic                 result_valid;
+
+   logic                 issue_valid;
+   logic                 compressed_valid;
+   logic                 register_valid;
+   logic                 commit_valid;
+   logic                 result_ready;
 
    /**
-    * Used by the monitor.
+    * cvxif clocking block
    */
-   clocking monitor_cb @(posedge clk);
-      input cvxif_resp_o,
-            cvxif_req_i;
-   endclocking : monitor_cb
+   clocking slv_cvxif_cb @(posedge clk or reset_n);
+      input  issue_req, compressed_req, commit_req, register, issue_valid, register_valid, commit_valid, compressed_valid, result_ready;
+      output issue_resp, compressed_resp, result, issue_ready, register_ready, compressed_ready, result_valid;
+   endclocking : slv_cvxif_cb
 
 endinterface;
 
