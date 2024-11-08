@@ -19,6 +19,20 @@
 `ifndef __UVMA_CVXIF_MACROS_SV__
 `define __UVMA_CVXIF_MACROS_SV__
 
+  `define IFNDEF_DEFINE(name,value) \
+    `ifndef name \
+      `define name value \
+  `endif
+
+  `IFNDEF_DEFINE(X_MAX_NUM_RS         , 3     )
+  `IFNDEF_DEFINE(X_MAX_ID_WIDTH       , 32    )
+  `IFNDEF_DEFINE(X_MAX_RFR_WIDTH      , 64    )
+  `IFNDEF_DEFINE(X_MAX_RFW_WIDTH      , 64    )
+  `IFNDEF_DEFINE(X_MAX_NUM_HARTS      , 2**64 )
+  `IFNDEF_DEFINE(X_MAX_HARTID_WIDTH   , 64    )
+  `IFNDEF_DEFINE(X_MAX_DUALREAD       , 3     )
+  `IFNDEF_DEFINE(X_MAX_DUALWRITE      , 1     )
+
 `define CVXIF_CP_BITWISE(name, field, iff_exp) \
 ``name``: coverpoint(``field``) iff (``iff_exp``) { \
     wildcard bins BIT0_0  = {32'b???????????????????????????????0}; \
