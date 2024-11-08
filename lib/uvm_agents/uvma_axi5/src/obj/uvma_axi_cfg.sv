@@ -47,6 +47,7 @@ class uvma_axi_cfg_c extends uvm_object;
    rand int                                max_write_response_latency;
 
    uvma_axi_transaction_cfg_c              txn_config;
+   rand bit                                zero_delay_mode;
 
    // Master configuration 
    uvma_axi_dv_lite_t      axi_lite                ;
@@ -90,6 +91,7 @@ class uvma_axi_cfg_c extends uvm_object;
       `uvm_field_int   (preload_mem, UVM_DEFAULT)
       `uvm_field_int   (external_mem, UVM_DEFAULT)
       `uvm_field_int   (pure_mode_agent, UVM_DEFAULT)
+      `uvm_field_int   (zero_delay_mode, UVM_DEFAULT)
       `uvm_field_object(txn_config, UVM_DEFAULT)
       `uvm_field_enum  (uvma_axi_dv_driver_idle_t , driver_idle_value_cfg   , UVM_DEFAULT)
    `uvm_object_utils_end
@@ -105,6 +107,7 @@ class uvma_axi_cfg_c extends uvm_object;
       soft axi_prot_enabled            == 0;
       soft preload_mem                 == 0;
       pure_mode_agent                  == 0;
+      soft zero_delay_mode             == 0;
       soft max_outstanding_write_trs   == 2;
       soft max_outstanding_read_trs    == 2;
       soft max_write_response_latency  == 15;
@@ -127,6 +130,14 @@ class uvma_axi_cfg_c extends uvm_object;
          soft ordering_read_mode          == UVMA_AXI_ORDERING_MODE_RANDOM;
          soft ordering_write_mode         == UVMA_AXI_OUTSTANDING_MODE;
          soft external_mem                == 0;
+      }
+     }
+
+     constraint delay_mode_c {
+      if(zero_delay_mode) {
+         rand_channel_delay_enabled  == 0;
+         ordering_read_mode          == UVMA_AXI_ORDERING_MODE_FIFO;
+         ordering_write_mode         == UVMA_AXI_ORDERING_MODE_FIFO;
       }
      }
 

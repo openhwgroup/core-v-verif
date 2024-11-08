@@ -235,6 +235,11 @@ task uvma_axi_slv_seq_c::prepare_w_resp();
          w_slv_rsp.m_user.rand_mode(0);
       end
 
+      if(!cfg.rand_channel_delay_enabled) begin
+         w_slv_rsp.m_delay_cycle_chan_X.rand_mode(0);
+         w_slv_rsp.m_delay_cycle_chan_X = 0;
+      end
+
       `uvm_info(get_type_name(), $sformatf("FINICH WRITE TRANSACTION"), UVM_HIGH)
       synchronizer.write_burst_complete(w_selected_id);
 
@@ -281,6 +286,11 @@ task uvma_axi_slv_seq_c::prepare_r_resp();
       end
       if(!cfg.user_randomization_enabled == 1) begin
          r_slv_rsp.m_x_user.rand_mode(0);
+      end
+      if(!cfg.rand_channel_delay_enabled) begin
+         r_slv_rsp.m_delay_cycle_flits.rand_mode(0);
+         for(int i = 0; i <= r_slv_rsp.m_len; i++)
+            r_slv_rsp.m_delay_cycle_flits.push_back(0);
       end
       r_slv_rsp.m_last.rand_mode(0);
       r_slv_rsp.m_data.rand_mode(0);
