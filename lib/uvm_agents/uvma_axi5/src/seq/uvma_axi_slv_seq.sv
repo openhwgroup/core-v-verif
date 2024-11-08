@@ -221,30 +221,37 @@ task uvma_axi_slv_seq_c::prepare_w_resp();
       w_slv_rsp.m_txn_type   = UVMA_AXI_WRITE_RSP;
 
       w_slv_rsp.set_config(cfg.txn_config) ;
-      w_slv_rsp.m_id.rand_mode(0);
-      w_slv_rsp.m_txn_type.rand_mode(0);
-      w_slv_rsp.m_axi_version.rand_mode(0);
-      w_slv_rsp.m_lite.rand_mode(0);
-      w_slv_rsp.m_err.rand_mode(0);
-//      w_slv_rsp.lower_byte_lane.rand_mode(0);
-//      w_slv_rsp.upper_byte_lane.rand_mode(0);
-      if(!cfg.resp_randomization_enabled) begin
-         w_slv_rsp.m_resp.rand_mode(0);
-      end
-      if(!cfg.user_randomization_enabled) begin
-         w_slv_rsp.m_user.rand_mode(0);
-      end
 
-      if(!cfg.rand_channel_delay_enabled) begin
-         w_slv_rsp.m_delay_cycle_chan_X.rand_mode(0);
+      if(!cfg.disable_trs_randomization) begin
+         w_slv_rsp.m_id.rand_mode(0);
+         w_slv_rsp.m_txn_type.rand_mode(0);
+         w_slv_rsp.m_axi_version.rand_mode(0);
+         w_slv_rsp.m_lite.rand_mode(0);
+         w_slv_rsp.m_err.rand_mode(0);
+//         w_slv_rsp.lower_byte_lane.rand_mode(0);
+//         w_slv_rsp.upper_byte_lane.rand_mode(0);
+
+         if(!cfg.resp_randomization_enabled) begin
+            w_slv_rsp.m_resp.rand_mode(0);
+         end
+         if(!cfg.user_randomization_enabled) begin
+            w_slv_rsp.m_user.rand_mode(0);
+         end
+
+         if(!cfg.rand_channel_delay_enabled) begin
+            w_slv_rsp.m_delay_cycle_chan_X.rand_mode(0);
+            w_slv_rsp.m_delay_cycle_chan_X = 0;
+         end
+
+         // Randomization of the transaction
+         w_slv_rsp.randomize();
+      end else begin
          w_slv_rsp.m_delay_cycle_chan_X = 0;
       end
 
       `uvm_info(get_type_name(), $sformatf("FINICH WRITE TRANSACTION"), UVM_HIGH)
       synchronizer.write_burst_complete(w_selected_id);
 
-      // Randomization of the transaction
-      w_slv_rsp.randomize();
       w_slv_rsp.set_sequencer(p_sequencer);
 
       `uvm_send(w_slv_rsp)
@@ -274,30 +281,36 @@ task uvma_axi_slv_seq_c::prepare_r_resp();
 
       r_slv_rsp.set_config(cfg.txn_config) ;
       r_slv_rsp.m_txn_type = UVMA_AXI_READ_RSP;
-      r_slv_rsp.m_id.rand_mode(0);
-      r_slv_rsp.m_txn_type.rand_mode(0);
-      r_slv_rsp.m_axi_version.rand_mode(0);
-      r_slv_rsp.m_lite.rand_mode(0);
-      r_slv_rsp.m_err.rand_mode(0);
-//      r_slv_rsp.lower_byte_lane.rand_mode(0);
-//      r_slv_rsp.upper_byte_lane.rand_mode(0);
-      if(!cfg.resp_randomization_enabled == 1) begin
-         r_slv_rsp.m_resp.rand_mode(0);
-      end
-      if(!cfg.user_randomization_enabled == 1) begin
-         r_slv_rsp.m_x_user.rand_mode(0);
-      end
-      if(!cfg.rand_channel_delay_enabled) begin
-         r_slv_rsp.m_delay_cycle_flits.rand_mode(0);
+
+      if(!cfg.disable_trs_randomization) begin
+         r_slv_rsp.m_id.rand_mode(0);
+         r_slv_rsp.m_txn_type.rand_mode(0);
+         r_slv_rsp.m_axi_version.rand_mode(0);
+         r_slv_rsp.m_lite.rand_mode(0);
+         r_slv_rsp.m_err.rand_mode(0);
+//         r_slv_rsp.lower_byte_lane.rand_mode(0);
+//         r_slv_rsp.upper_byte_lane.rand_mode(0);
+         if(!cfg.resp_randomization_enabled == 1) begin
+            r_slv_rsp.m_resp.rand_mode(0);
+         end
+         if(!cfg.user_randomization_enabled == 1) begin
+            r_slv_rsp.m_x_user.rand_mode(0);
+         end
+         if(!cfg.rand_channel_delay_enabled) begin
+            r_slv_rsp.m_delay_cycle_flits.rand_mode(0);
+            for(int i = 0; i <= r_slv_rsp.m_len; i++)
+               r_slv_rsp.m_delay_cycle_flits.push_back(0);
+         end
+         r_slv_rsp.m_last.rand_mode(0);
+         r_slv_rsp.m_data.rand_mode(0);
+         r_slv_rsp.c_last.constraint_mode(0);
+
+	     // Randomization of the transaction
+         r_slv_rsp.randomize();
+      end else begin
          for(int i = 0; i <= r_slv_rsp.m_len; i++)
             r_slv_rsp.m_delay_cycle_flits.push_back(0);
       end
-      r_slv_rsp.m_last.rand_mode(0);
-      r_slv_rsp.m_data.rand_mode(0);
-      r_slv_rsp.c_last.constraint_mode(0);
-
-	  // Randomization of the transaction
-      r_slv_rsp.randomize();
       r_slv_rsp.set_sequencer(p_sequencer);
 
       `uvm_send(r_slv_rsp)

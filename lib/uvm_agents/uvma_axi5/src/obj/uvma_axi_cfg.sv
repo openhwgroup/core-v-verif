@@ -48,6 +48,7 @@ class uvma_axi_cfg_c extends uvm_object;
 
    uvma_axi_transaction_cfg_c              txn_config;
    rand bit                                zero_delay_mode;
+   rand bit                                disable_trs_randomization;
 
    // Master configuration 
    uvma_axi_dv_lite_t      axi_lite                ;
@@ -92,6 +93,7 @@ class uvma_axi_cfg_c extends uvm_object;
       `uvm_field_int   (external_mem, UVM_DEFAULT)
       `uvm_field_int   (pure_mode_agent, UVM_DEFAULT)
       `uvm_field_int   (zero_delay_mode, UVM_DEFAULT)
+      `uvm_field_int   (disable_trs_randomization, UVM_DEFAULT)
       `uvm_field_object(txn_config, UVM_DEFAULT)
       `uvm_field_enum  (uvma_axi_dv_driver_idle_t , driver_idle_value_cfg   , UVM_DEFAULT)
    `uvm_object_utils_end
@@ -113,6 +115,7 @@ class uvma_axi_cfg_c extends uvm_object;
       soft max_write_response_latency  == 15;
       soft max_read_response_latency   == 15;
       soft driver_idle_value_cfg       == RANDOM;
+      soft disable_trs_randomization   == 0;
      }
 
    constraint pure_config {
