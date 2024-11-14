@@ -25,9 +25,6 @@
 //
 // ----------------------------------------------------------------------------
 
-timeunit 1ps;
-timeprecision 1ps;
-
 import uvm_pkg::*;
 
 `include "uvm_macros.svh"

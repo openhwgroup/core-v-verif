@@ -19,6 +19,7 @@ class uvma_axi_cntxt_c extends uvm_object;
 
    // Handle to agent interface
    virtual uvma_axi_intf  axi_vi;
+   virtual uvma_axi_mst_intf  axi_mst_vi;
 
    // Handle to memory storage for active slaves
    uvml_mem_c#(MAX_ADDR_WIDTH) mem;
