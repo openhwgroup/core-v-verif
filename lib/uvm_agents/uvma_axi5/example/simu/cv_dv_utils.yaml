@@ -1,0 +1,5 @@
+- tool: questa
+  compile:
+    work_lib    : "cv_uvm_dv_utils_lib"
+    svlog_option: "-note 13314"
+    svlog_flist : "$CORE_V_VERIF/lib/cv_dv_utils/uvm/Files.f" 

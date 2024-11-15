@@ -1,0 +1,8 @@
+- tool: vcs
+  compile:
+    svlog_option: "<svlog options>" 
+    svlog_option: "<vlog options to propgate>"
+    svlog_flist : "file list (example $MODULE/module_pkg.Flit)"     
+    top_entity  :  "<name>"
+  sim:
+    sim_option  : "sim option" 
