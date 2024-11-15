@@ -1,0 +1,5 @@
+- tool: questa
+  compile:
+    work_lib    : "module1 lib name"
+    svlog_option: "local svlog options"
+    svlog_flist : "file lists (ex module2_pkg.Flist)" 
