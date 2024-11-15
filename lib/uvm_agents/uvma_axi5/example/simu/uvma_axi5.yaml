@@ -1,0 +1,9 @@
+- tool: questa
+  compile:
+    work_lib    : "tb_lib"
+    svlog_option: "-suppress 2583"     
+    svlog_source: "$DV_UVMA_AXI_PATH/src/uvma_axi_intf.sv" 
+    svlog_flist : "$CORE_V_VERIF/lib/uvm_libs/uvml_mem/uvml_mem_pkg.flist 
+                   $CORE_V_VERIF/lib/uvm_libs/uvml_trn/uvml_trn_pkg.flist 
+                   $CORE_V_VERIF/lib/uvm_libs/uvml_logs/uvml_logs_pkg.flist 
+                   $CORE_V_VERIF/lib/uvm_agents/uvma_axi5/src/uvma_axi_pkg.flist"
