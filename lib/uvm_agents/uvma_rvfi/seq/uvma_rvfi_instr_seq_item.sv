@@ -31,7 +31,8 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    rand bit [TRAP_WL-1:0]        trap;
    rand bit                      halt;
    rand bit [RVFI_INTR_WL-1:0]   intr;
-   rand uvma_rvfi_mode           mode;
+ //rand uvma_rvfi_mode           mode;
+   rand bit [63:0]               mode;
    rand bit [IXL_WL-1:0]         ixl;
    rand bit [RVFI_DBG_WL-1:0]    dbg;
    rand bit                      dbg_mode;
@@ -87,7 +88,7 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
       `uvm_field_int(insn_bus_fault, UVM_DEFAULT)
       `uvm_field_int(insn_nmi_load_fault, UVM_DEFAULT)
       `uvm_field_int(insn_nmi_store_fault, UVM_DEFAULT)
-      `uvm_field_enum(uvma_rvfi_mode, mode, UVM_DEFAULT)
+    //`uvm_field_enum(uvma_rvfi_mode, mode, UVM_DEFAULT)
       `uvm_field_int(ixl, UVM_DEFAULT)
       `uvm_field_int(pc_rdata, UVM_DEFAULT)
       `uvm_field_int(pc_wdata, UVM_DEFAULT)
@@ -179,7 +180,7 @@ endfunction : new
 function string uvma_rvfi_instr_seq_item_c::convert2string();
 
    convert2string = $sformatf("Order: %0d, insn: 0x%08x, pc: 0x%08x, nret_id: %0d, mode: %s, ixl: 0x%01x",
-                              order, insn, pc_rdata, this.nret_id, mode.name(), ixl);
+                              order, insn, pc_rdata, this.nret_id, mode/*.name()*/, ixl);
    if (rs1_addr)
       convert2string = $sformatf("%s rs1: x%0d = 0x%08x", convert2string, rs1_addr, rs1_rdata);
    if (rs2_addr)

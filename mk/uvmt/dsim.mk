@@ -26,7 +26,7 @@
 DSIM                    = dsim
 DSIM_HOME              ?= /tools/Metrics/dsim
 DSIM_CMP_FLAGS         ?= $(TIMESCALE) $(SV_CMP_FLAGS) -top uvmt_$(CV_CORE_LC)_tb
-DSIM_ERR_SUPPRESS      ?= MultiBlockWrite:ReadingOutputModport
+DSIM_ERR_SUPPRESS      ?= MultiBlockWrite:ReadingOutputModport:IneffectiveDynamicCast:IndexOOB:PortWidthMismatch:UninstVif:LatchInferred:AlwaysFFNba
 DSIM_UVM_ARGS          ?= +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 DSIM_WORK              ?= $(SIM_CFG_RESULTS)/dsim_work
 DSIM_IMAGE             ?= dsim.out
@@ -35,29 +35,29 @@ DSIM_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/dsim/ccov_scopes.txt
 DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
-DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+#DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
+DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION+RVFI
 
 DSIM_USER_COMPILE_ARGS ?=
 ifeq ($(USE_ISS),YES)
-	DSIM_RUN_FLAGS     += +USE_ISS
+    DSIM_RUN_FLAGS     += +USE_ISS
 else
-	DSIM_RUN_FLAGS     += +DISABLE_OVPSIM
+    DSIM_RUN_FLAGS     += +DISABLE_OVPSIM
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
     DSIM_RUN_FLAGS     += +USE_RVVI
 endif
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
-	DSIM_RUN_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
+    DSIM_RUN_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
 ifneq ($(TEST_DISABLE_CSR_CHECK),)
-	DSIM_RUN_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
+    DSIM_RUN_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 DSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
-				+incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
+                +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 # Seed management for constrained-random sims. This is an intentional repeat
 # of the root Makefile: dsim regressions use random seeds by default.

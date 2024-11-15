@@ -106,6 +106,7 @@ function int unsigned uvma_obi_memory_vp_base_seq_c::get_vp_index(uvma_obi_memor
                                     get_num_words()));
    end
 
+   `uvm_info("uvma_obi_memory_vp_base_seq.sv", $sformatf("return index = %0d", index), UVM_NONE)
    return index;
 
 endfunction : get_vp_index

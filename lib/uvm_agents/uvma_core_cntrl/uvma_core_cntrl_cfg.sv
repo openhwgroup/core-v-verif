@@ -30,7 +30,8 @@
    string                        core_name;
     // Major mode enable controls
    rand bit                      enabled;
-   rand uvm_active_passive_enum  is_active;
+ //rand uvm_active_passive_enum  is_active;
+   rand bit                      is_active;
    rand bit                      scoreboard_enabled;
    bit                           disable_all_csr_checks;
    bit [CSR_MASK_WL-1:0]         disable_csr_check_mask;
@@ -144,7 +145,8 @@
 
    `uvm_field_utils_begin(uvma_core_cntrl_cfg_c);
       `uvm_field_int (                         enabled                        , UVM_DEFAULT          )
-      `uvm_field_enum(uvm_active_passive_enum, is_active                      , UVM_DEFAULT          )
+    //`uvm_field_enum(uvm_active_passive_enum, is_active                      , UVM_DEFAULT          )
+      `uvm_field_int (                         is_active                      , UVM_DEFAULT          )
       `uvm_field_int (                         scoreboard_enabled             , UVM_DEFAULT          )
       `uvm_field_int (                         disable_all_csr_checks         , UVM_DEFAULT          )
       `uvm_field_int (                         disable_csr_check_mask         , UVM_DEFAULT | UVM_NOPRINT )
