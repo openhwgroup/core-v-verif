@@ -671,7 +671,7 @@ typedef enum {
 typedef struct packed {
     // Major mode enable controls
    bit                          enabled;
-   bit                          is_active;
+   uvm_active_passive_enum      is_active;
    bit                          scoreboard_enabled;
    bit                          disable_all_csr_checks;
    bit [CSR_MASK_WL-1:0]        disable_csr_check_mask;
