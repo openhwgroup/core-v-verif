@@ -87,11 +87,14 @@ class clock_driver_c extends uvm_driver #( dummy_txn, dummy_txn ) ;
         end // if
 
         `uvm_info( "CLOCK_DRIVER_C", $sformatf("START clock period = %0f(f) ps, clock duty = %0d(d), low_clock = %0f(f) ps, high_clock = %0f(f) ps", m_nominal_clock_period*1000000, m_clk_cfg.m_duty_cycle, m_v_clock_vif.clk_low*1000000, m_v_clock_vif.clk_high*1000000), UVM_NONE );
+    endfunction : start_of_simulation_phase
+
+
+    virtual task pre_reset_phase( uvm_phase phase );
         fork begin
             start_clock();
         end join
-    endfunction : start_of_simulation_phase
-
+    endtask : pre_reset_phase
     //---------------------------------------------
     // Post shutdown phase  
     //--------------------------------------------
@@ -105,12 +108,12 @@ class clock_driver_c extends uvm_driver #( dummy_txn, dummy_txn ) ;
     //---------------------------------------------
     // Extract phase  
     //--------------------------------------------
-    virtual function void extract_phase( uvm_phase phase );
-        `uvm_info( "CLOCK_DRIVER_C", "STOPPING THE CLOCK", UVM_NONE );
-        fork begin
-            stop_clock();
-        end join
-    endfunction : extract_phase
+//    virtual function void extract_phase( uvm_phase phase );
+//        `uvm_info( "CLOCK_DRIVER_C", "STOPPING THE CLOCK", UVM_NONE );
+//        fork begin
+//            stop_clock();
+//        end join
+//    endfunction : extract_phase
 
    //================================================================================
    // Global Clock Counter 

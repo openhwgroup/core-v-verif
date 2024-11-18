@@ -24,9 +24,6 @@
 // 
 // ----------------------------------------------------------------------------
 
-// Timescale for this interface
-timeunit      1ns;
-timeprecision 100ps;
 
 interface bp_vif ( input bit clk,
                   input bit rstn );
