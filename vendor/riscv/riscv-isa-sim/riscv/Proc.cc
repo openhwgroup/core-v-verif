@@ -234,6 +234,16 @@ Processor::Processor(
   std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions_max << std::endl;
   processor_t::set_pmp_num(pmpregions_max);
 
+  uint64_t pmp_granularity = this->params[base + "pmp_granularity"].a_uint64_t;
+  std::cout << "[SPIKE]                 PMP Granularity " << pmp_granularity;
+  // PMP granularity must be at least 4 and a power of two.
+  if (pmp_granularity < 4 || (pmp_granularity & (pmp_granularity - 1)) != 0)
+    std::cout << " is INVALID, will be IGNORED." << std::endl;
+  else {
+    std::cout << std::endl;
+    processor_t::set_pmp_granularity(pmp_granularity);
+  }
+
   ((cfg_t *)cfg)->priv = priv_str.c_str();
 
   uint64_t trigger_count = this->params[base + "trigger_count"].a_uint64_t;
@@ -333,6 +343,9 @@ void Processor::default_params(string base, openhw::Params &params, Processor *p
   if (!params.exist(base, "pmpregions_writable"))
     params.set_uint64_t(base, "pmpregions_writable", 0x0UL, "0x0",
                         "Number of PMP regions");
+  if (!params.exist(base, "pmp_granularity"))
+    params.set_uint64_t(base, "pmp_granularity", 0x8UL, "0x8",
+                        "Granularity of PMP addresses in bytes");
   if (!params.exist(base, "pmpaddr0"))
     params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
 			"Default PMPADDR0 value");

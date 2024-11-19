@@ -60,7 +60,8 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
   for (auto e : isa->get_extensions())
     register_extension(e.second);
 
-  set_pmp_granularity(1 << PMP_SHIFT);
+  // Assume G=1, i.e., PMP granularity 8.
+  set_pmp_granularity(1 << (1 + PMP_SHIFT));
   set_pmp_num(cfg->pmpregions);
 
   if (isa->get_max_xlen() == 32)
