@@ -184,6 +184,14 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
    // Memory type for the m_cache encoding
    rand uvma_axi_dv_mem_type_t     m_mem_type     ;
 
+  // Internal fields to store the addr, lower byte / upper byte / wrap
+  // boundary.
+  // Can serve for debug purpose on master side, or to have the necessary
+  // value to write in the memory for each flit on slave side.
+  rand uvma_axi_sig_addr_t   m_flit_addr[$] ;
+  rand int unsigned          m_flit_lower_byte_lane[$];
+  rand int unsigned          m_flit_upper_byte_lane[$];
+
    // Channel delay fields
    rand int unsigned          m_delay_cycle_chan_X   ; // Delay before driving the transaction on the AW/AR/B/R channels
    rand int unsigned          m_delay_cycle_chan_W   ; // Delay before driving the transaction on the W channel
@@ -263,6 +271,9 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
         `uvm_field_int        (                     m_timestamp_ax       , UVM_DEFAULT | UVM_NOCOMPARE)
         `uvm_field_int        (                     m_timestamp_b        , UVM_DEFAULT | UVM_NOCOMPARE)
         `uvm_field_queue_int  (                     m_timestamp_x        , UVM_DEFAULT | UVM_NOCOMPARE)
+        `uvm_field_queue_int  (                     m_flit_addr          , UVM_DEFAULT | UVM_NOCOMPARE)
+        `uvm_field_queue_int  (                     m_flit_upper_byte_lane , UVM_DEFAULT | UVM_NOCOMPARE)
+        `uvm_field_queue_int  (                     m_flit_lower_byte_lane , UVM_DEFAULT | UVM_NOCOMPARE)
         `uvm_field_int        (                     lower_byte_lane   , UVM_DEFAULT | UVM_NOCOMPARE)
         `uvm_field_int        (                     upper_byte_lane   , UVM_DEFAULT | UVM_NOCOMPARE)
     `uvm_object_utils_end
@@ -458,38 +469,79 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
     endfunction : pre_randomize
 
     function void post_randomize();
-      int bus_nbytes, nb_bytes ;
-      int lower_byte_lane, upper_byte_lane ;
+      int unsigned bus_nbytes, nb_bytes ;
+      int unsigned lower_byte_lane, upper_byte_lane ;
       uvma_axi_sig_addr_t aligned_addr, address_n ;
+      uvma_axi_sig_addr_t wrap_boundary ; 
 
       super.post_randomize();
 
       // Using the equation of the specification, section A3.4 of the IHI022H
       // version of the amba axi protocol to regenerate a valid write strobe
       // for the transaction
-      if ( m_txn_type == UVMA_AXI_WRITE_REQ ) begin
-        foreach ( m_wstrb[i] ) begin
-          logic flag ; // Flag which is only used for debug purpose: if there is a problem in the write strobe generation, an error is printed
+      // Computing some variables
+      bus_nbytes    = m_txn_config.get_data_width() / 8;
+      nb_bytes      = 2**m_size ;
+      wrap_boundary = uvma_axi_sig_addr_t'( m_addr / ( nb_bytes * ( m_len + 1 ) ) ) * ( nb_bytes * ( m_len + 1 ) ) ;
 
-          // Computing some variables
-          bus_nbytes   = m_txn_config.get_data_width() / 8;
-          nb_bytes     = 2**m_size ;
-          aligned_addr = int'( m_addr / nb_bytes ) * nb_bytes ;
+      if ( m_txn_type == UVMA_AXI_WRITE_REQ ) begin
+        logic flag_wrap = 0 ; // Flag to determine when the address has wrapped, if BURST_TYPE == WRAP
+        foreach ( m_wstrb[i] ) begin
+          logic flag_error ; // Flag which is only used for debug purpose: if there is a problem in the write strobe generation, an error is printed
 
           // Equation from the specification
-          if ( i == 0 ) begin
-            address_n       = m_addr ;
+          if ( m_burst != FIXED ) begin // Burst mode INCR or WRAP
+
+            // Computing the address and byte lane for the first flit of the
+            // transaction
+            if ( i == 0 ) begin
+              address_n       = m_addr ;
+              lower_byte_lane = m_addr - int'( m_addr / bus_nbytes ) * bus_nbytes;
+              upper_byte_lane = aligned_addr + ( nb_bytes - 1 ) - int'( m_addr / bus_nbytes ) * bus_nbytes ;
+            end else begin
+              // Computing the flit address depending of the burst mode, and
+              // if the transaction has wrapped or not.
+              if ( ( m_burst == WRAP ) && flag_wrap ) begin // If burst mode is WRAP and the transaction has already wrapped
+                address_n = m_addr + ( i * nb_bytes ) - ( nb_bytes * ( m_len + 1 ) ) ;
+              end else begin // For burst mode INCR, and WRAP if the transaction has not wrapped
+                // address_n = ( ( m_addr + ( i * nb_bytes ) ) / bus_nbytes ) * bus_nbytes;
+               address_n = m_addr + ( i * nb_bytes ) ;
+              end
+
+              // Computing the byte lane
+              lower_byte_lane = address_n - int'( address_n / bus_nbytes ) * bus_nbytes;
+              upper_byte_lane = lower_byte_lane + nb_bytes - 1;
+            end
+            aligned_addr  = uvma_axi_sig_addr_t'( address_n / bus_nbytes ) * bus_nbytes ;
+
+            // Checking for the burst mode WRAP if the address has wrapped
+            if ( ( address_n == ( wrap_boundary + ( nb_bytes * ( m_len + 1 ) ) ) ) &&
+                 ( m_burst == WRAP ) ) begin
+              flag_wrap = 1 ;
+              address_n = wrap_boundary ;
+
+              // Computing the byte lane again since address_n has been
+              // changed
+              lower_byte_lane = address_n - int'( address_n / bus_nbytes ) * bus_nbytes;
+              upper_byte_lane = lower_byte_lane + nb_bytes - 1;
+            end // if wrap
+
+          end else begin // Burst mode FIXED
+            // Constant addr and byte lane for all flits of the transaction
+            address_n = m_addr ;
             lower_byte_lane = m_addr - int'( m_addr / bus_nbytes ) * bus_nbytes;
             upper_byte_lane = aligned_addr + ( nb_bytes - 1 ) - int'( m_addr / bus_nbytes ) * bus_nbytes ;
-          end else begin
-            address_n       = aligned_addr + i * nb_bytes;
-            lower_byte_lane = address_n - int'( address_n / bus_nbytes ) * bus_nbytes;
-            upper_byte_lane = lower_byte_lane + nb_bytes - 1;
-          end
+          end // if FIXED
+
+          // Filling the lower byte / upper byte / flit addr queue for the
+          // corresponding flit
+          m_flit_addr[i]            = address_n       ;
+          m_flit_lower_byte_lane[i] = lower_byte_lane ;
+          m_flit_upper_byte_lane[i] = upper_byte_lane ;
 
           // Cleaning the write strobe, to re randomize it bit by bit
           m_wstrb[i] = 'h0 ;
-          flag = 1;
+          flag_error = 1;
           for ( int j = 0 ; j < bus_nbytes ; j++ ) begin
             if ( ( j <= upper_byte_lane ) && ( j >= lower_byte_lane ) ) begin
               logic strb;
@@ -497,10 +549,10 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
                 `uvm_error(this.name,"Randomizing strb error")
               m_wstrb[i][j] = strb ;
             end
-            flag = 0;
+            flag_error = 0;
           end
 
-          if ( flag )
+          if ( flag_error )
             `uvm_error(this.name,"Not entered the wstrb loop: error of byte lane computing")
         end
       end
@@ -509,13 +561,9 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
         `uvm_fatal("UNSUPPORTED_ERROR_MODE",
           $sformatf("The error mode %0p is not supported by this agent. Only the error mode NO_ERR is supported by this agent currently",m_err) )
 
-      if ( m_burst != INCR )
-        `uvm_fatal("UNSUPPORTED_BURST_MODE",
-          $sformatf("The burst mode %0p is not supported by this agent. Only the burst mode INCR is supported by this agent currently", m_burst) )
-
-      if ( m_prot != UNPRIVILEGED_SECURE_DATA_ACCESS )
-        `uvm_fatal("UNSUPPORTED_PROT_MODE",
-          $sformatf("The prot mode %0p is not supported by this agent. Only the burst mode UNPRIVILEGED_SECURE_DATA_ACCESS is supported by this agent currently", m_prot) )
+      if ( m_burst == RESERVED )
+        `uvm_fatal("UNSUPPORTED_BURST_MODE", 
+          $sformatf("The burst mode RESERVED is not supported by this agent. ") )
 
     endfunction : post_randomize
 

@@ -427,7 +427,8 @@ class uvma_axi_mst_base_seq  extends uvma_axi_base_seq_c;
         m_axi_version == ver  ;
         m_lite        == lite ;
         m_err         == err  ;
-        m_len         <= 15   ;
+        m_len         <= 4   ;
+        m_addr inside {[0:64]};
         m_lock        == NORMAL ;
       } )
         `uvm_error(this.name,"Error randomizing the request metadata");
