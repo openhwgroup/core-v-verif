@@ -32,21 +32,34 @@ DSIM_WORK              ?= $(SIM_CFG_RESULTS)/dsim_work
 DSIM_IMAGE             ?= dsim.out
 DSIM_RUN_FLAGS         ?=
 DSIM_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/dsim/ccov_scopes.txt
-DSIM_USE_ISS           ?= YES
+#DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-#DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
 DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION+RVFI
-
 DSIM_USER_COMPILE_ARGS ?=
+
+#################################
+# Reference Model selection start
 ifeq ($(USE_ISS),YES)
-    DSIM_RUN_FLAGS     += +USE_ISS
+    DSIM_RUN_FLAGS += +USE_ISS
 else
-    DSIM_RUN_FLAGS     += +DISABLE_OVPSIM
+    DSIM_RUN_FLAGS += +DISABLE_OVPSIM
 endif
-ifeq ($(call IS_YES,$(USE_RVVI)),YES)
-    DSIM_RUN_FLAGS     += +USE_RVVI
+
+ifeq ($(call IS_YES,$(SPIKE)),YES)
+    DSIM_RUN_FLAGS += +SPIKE
 endif
+
+ifeq ($(call IS_YES,$(IMPERAS)),YES)
+    DSIM_RUN_FLAGS += +IMPERAS
+endif
+
+ifeq ($(call IS_YES,$(BOTH)),YES)
+    DSIM_RUN_FLAGS += +BOTH
+endif
+# Reference Model selection end
+#################################
+
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
     DSIM_RUN_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
