@@ -15,23 +15,7 @@
 //limitations under the License.
 //[END OF HEADER]
 // ----------------------------------------------------------------------------
-//   Copyright 2013 Verilab, Inc.
-//   All Rights Reserved Worldwide
-//
-//   Licensed under the Apache License, Version 2.0 (the
-//   "License"); you may not use this file except in
-//   compliance with the License.  You may obtain a copy of
-//   the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in
-//   writing, software distributed under the License is
-//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-//   CONDITIONS OF ANY KIND, either express or implied.  See
-//   the License for the specific language governing
-//   permissions and limitations under the License.
-//----------------------------------------------------------------------
+
 
 class dut_env extends uvm_env;
 
@@ -42,17 +26,12 @@ class dut_env extends uvm_env;
 
   reset_driver_c #(1'b1,10,0) cc_reset_driver;
 
-//  uvma_axi_agent_c  master;
   uvma_axi_agent_c      master; 
   uvma_axi_agent_c      slave; 
-//  uvma_axi_agent_c  slave;
 
-//  uvma_axi_cfg_c  master_cfg ;
   uvma_axi_cfg_c         master_cfg ;
   uvma_axi_cfg_c         slave_cfg ;
-//  uvma_axi_cfg_c  slave_cfg  ;
 
-//  uvma_axi_transaction_cfg_c if_item_cfg;
   uvma_axi_transaction_cfg_c if_item_cfg;
 
   uvma_axi_memory_data_checker_c mem_protocol_checker;
@@ -120,11 +99,7 @@ class dut_env extends uvm_env;
       master_cfg.set_is_master_side(1'b1);
       master_cfg.set_driver_idle_value_cfg(UNDEFINED);
       master_cfg.set_txn_config(if_item_cfg);
-    //  master_cfg.set_is_reactive(1'b0);
       master_cfg.set_id_management_enable(1'b0);
-     // master_cfg.set_protocol_checker_enable(1'b1);
-     // master_cfg.set_covergroup_enable(1'b1);
-     // master.set_agent_config(master_cfg);
      mem_protocol_checker.set_agent_config(master_cfg);
 
       slave_cfg = uvma_axi_cfg_c::type_id::create("SLAVE_CFG", this);
@@ -133,11 +108,7 @@ class dut_env extends uvm_env;
       slave_cfg.set_is_master_side(1'b0);
       slave_cfg.set_driver_idle_value_cfg(UNDEFINED);
       slave_cfg.set_txn_config(if_item_cfg);
-    //  slave_cfg.set_is_reactive(1'b1);
       slave_cfg.set_id_management_enable(1'b0);
-     // slave_cfg.set_protocol_checker_enable(1'b0);
-     // slave_cfg.set_covergroup_enable(1'b0);
-     // slave.set_agent_config(slave_cfg);
       slave_cfg.max_outstanding_write_trs = 256;
       slave_cfg.max_outstanding_read_trs  = 256;
       slave_cfg.ordering_write_mode       = UVMA_AXI_ORDERING_MODE_FIFO;

@@ -18,12 +18,6 @@
 //  Description :
 //
 //
-//  Copyright (C) 2019 CEA-Leti
-//  Author      : $authorname : PERBOST Nicolas $ $authoremail : nicolas.perbost.fr $
-//
-//  Id          : $Id: ebc1c90d292c16718a5f425063aa10baa9553215 $
-//  Date        : $Date : Tue Mar 5 17:22:29 2019 +0100 $
-//
 // ----------------------------------------------------------------------------
 
 package test_pkg;

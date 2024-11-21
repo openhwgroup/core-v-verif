@@ -18,11 +18,6 @@
 //  Description : This class creates, configures and start a test with
 //                the bursty_sequence_c class
 //
-//  Copyright (C) 2019 CEA-Leti
-//  Author      : $authorname : PERBOST Nicolas $ $authoremail : nicolas.perbost.fr $
-//
-//  Id          : $Id: cb3201d9e8b59cbe4fbb6dcef53310adea4869fc $
-//  Date        : $Date : Tue Mar 5 17:22:29 2019 +0100 $
 //
 // ----------------------------------------------------------------------------
 class bursty_test_c extends base_test_c;

@@ -1,6 +1,8 @@
+<!--- // Copyright 2024 CEA // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1 --->
+
 # AXI master to slave example
 ## Introduction
-In this example, an axi master agent is connected to axi slave agent. This example alows a fast verification of changes made in the AXI agent. 
+In this example, an AXI master agent is connected to an AXI slave agent. This example allows a fast verification of changes made in the AXI agent. 
 
 # Configuration 
 Please set memory response model response to random 0
