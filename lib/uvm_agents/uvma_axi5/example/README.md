@@ -2,6 +2,9 @@
 ## Introduction
 In this example, an axi master agent is connected to axi slave agent. This example alows a fast verification of changes made in the AXI agent. 
 
+# Configuration 
+Please set memory response model response to random 0
+
 # Usage
 To compile and run using VCS: 
 python3 $CORE_V_VERIF/lib/cv_dv_utils/python/sim_cmd/compile.py --yaml simulator_vcs.yaml --outdir out

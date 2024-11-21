@@ -15,7 +15,6 @@
 //limitations under the License.
 //[END OF HEADER]
 // ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 //  Description : Collect request/response from the monitor and the response
 //                model and compare them to verify the uvma_axi protocol
 //
