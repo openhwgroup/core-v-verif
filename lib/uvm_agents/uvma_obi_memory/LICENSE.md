@@ -12,14 +12,14 @@ Apache License (thus ignoring all sections written below entirely).
 
 1. Terminology in the Apache License is supplemented or modified as follows:
 
-- "Authorship": any reference to ‘authorship’ shall be taken to read "authorship
+- "Authorship": any reference to authorship shall be taken to read "authorship
   or design".
 
-- "Copyright owner": any reference to ‘copyright owner’ shall be taken to read
+- "Copyright owner": any reference to copyright owner shall be taken to read
   "Rights owner".
 
-- "Copyright statement": the reference to ‘copyright statement’ shall be taken
-  to read ‘copyright or other statement pertaining to Rights’.
+- "Copyright statement": the reference to copyright statement shall be taken
+  to read copyright or other statement pertaining to Rights.
 
 - The following new definition shall be added to the Definitions section of the
   Apache License:
