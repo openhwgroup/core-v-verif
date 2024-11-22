@@ -823,7 +823,7 @@ class uvma_axi_mon_c extends uvm_monitor;
                wreq_data.m_data.push_back( mst_mp.w_data)  ;
                wreq_data.m_wstrb.push_back(mst_mp.w_strb)  ;
                wreq_data.m_last.push_back( mst_mp.w_last)  ;
-               wreq_data.m_w_user       = mst_mp.w_user    ;
+               wreq_data.m_x_user.push_back(mst_mp.w_user) ;
                wreq_data.m_w_trace      = mst_mp.w_trace   ;
                wreq_data.m_datachk      = mst_mp.w_datachk ;
                wreq_data.m_poison       = mst_mp.w_poison  ;
