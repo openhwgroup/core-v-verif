@@ -163,10 +163,6 @@ TBSRC_TOP   := $(TBSRC_HOME)/uvmt/uvmt_$(CV_CORE_LC)_tb.sv
 TBSRC_HOME  := $(CORE_V_VERIF)/$(CV_CORE_LC)/tb
 export TBSRC_HOME = $(CORE_V_VERIF)/$(CV_CORE_LC)/tb
 
-# RVVI (aka IMPERAS_DV templates, but not implementation)
-RVVI_HOME := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv-verification/RVVI
-export RVVI_HOME = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv-verification/RVVI
-
 SIM_LIBS    := $(CORE_V_VERIF)/lib/sim_libs
 
 RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
@@ -182,7 +178,16 @@ RTLSRC_HOME   := $(CV_CORE_PKG)/rtl
 RTLSRC_INCDIR := $(RTLSRC_HOME)/include
 
 # SVLIB
-SVLIB_PKG            := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab/svlib
+SVLIB_PKG        := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab/svlib
+export SVLIB_PKG  = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab/svlib
+
+# RVVI
+RVVI_HOME             := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv-verification/RVVI
+export RVVI_HOME       = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv-verification/RVVI
+RVVI_STUB             := $(RVVI_HOME)/../stubs
+export RVVI_STUB       = $(RVVI_HOME)/../stubs
+RVVI_IMPERASDV        := $(RVVI_HOME)/source/host/rvvi
+export RVVI_IMPERASDV  = $(RVVI_HOME)/source/host/rvvi
 
 ###############################################################################
 # Seed management for constrained-random sims
@@ -429,6 +434,7 @@ echo_env:
 	@echo "   DV_OVPM_MODEL                     = $(DV_OVPM_MODEL)"
 	@echo "   DV_OVPM_DESIGN                    = $(DV_OVPM_DESIGN)"
 	@echo "   DV_SVLIB_PATH                     = $(DV_SVLIB_PATH)"
+	@echo "   SVLIB_PKG                         = $(SVLIB_PKG)"
 	@echo "   RISCV_DV_ROOT                     = $(RISCV_DV_ROOT)"
 	@echo "   COREV_DV_ROOT                     = $(COREV_DV_ROOT)"
 	@echo "   CV_CORE_COREV_DV_ROOT             = $(CV_CORE_COREV_DV_ROOT)"
@@ -436,6 +442,8 @@ echo_env:
 	@echo "   DPI_DASM_SPIKE_ROOT               = $(DPI_DASM_SPIKE_ROOT)"
 	@echo "   TBSRC_HOME                        = $(TBSRC_HOME)"
 	@echo "   RVVI_HOME                         = $(RVVI_HOME)"
+	@echo "   RVVI_STUB                         = $(RVVI_STUB)"
+	@echo "   RVVI_IMPERASDV                    = $(RVVI_IMPERASDV)"
 	@echo "   DESIGN_RTL_DIR                    = $(DESIGN_RTL_DIR)"
 
 ###############################################################################
@@ -471,3 +479,6 @@ clean_dpi_dasm_spike:
 
 clean_svlib:
 	rm -rf $(SVLIB_PKG)
+
+clean_rvvi_stub:
+	rm -rf $(RVVI_STUB_LIB)

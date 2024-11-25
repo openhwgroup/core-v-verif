@@ -712,8 +712,25 @@ SVLIB_LIB    = $(SVLIB_PKG)/../svlib_dpi.so
 SVLIB_CXX    = gcc
 
 svlib: $(SVLIB_PKG)
-	$(SVLIB_CXX) $(SVLIB_CFLAGS) $(SVLIB) $(SVLIB_SRC) -I$(DPI_INCLUDE) -o $(SVLIB_LIB)
+	@echo "$(BANNER)"
+	@echo "Building $(SVLIB_PKG)"
+	@echo "$(BGANNER)"
+	$(SVLIB_CXX) $(SVLIB_CFLAGS) $(SVLIB_SRC) -I$(DPI_INCLUDE) -o $(SVLIB_LIB)
 
+###############################################################################
+# Build Stub for RVVI-API (in the case where ImperasDV is not available)
+RVVI_STUB_SRC    = $(RVVI_STUB)/rvviApiStubs.c
+RVVI_STUB_CFLAGS = -shared -fPIC
+RVVI_STUB_LIB    = $(RVVI_STUB)/rvviApi.so
+RVVI_STUB_CXX    = gcc
+
+rvvi_stub:
+	@echo "$(BANNER)"
+	@echo "Building $(RVVI_STUB)"
+	@echo "$(BANNER)"
+	$(RVVI_STUB_CXX) $(RVVI_STUB_CFLAGS) $(RVVI_STUB_SRC) -I$(DPI_INCLUDE) -o $(RVVI_STUB_LIB)
+
+###############################################################################
 .PHONY: firmware-clean
 firmware-clean:
 	rm -vrf $(addprefix $(FIRMWARE)/firmware., elf bin hex map) \
