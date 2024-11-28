@@ -88,8 +88,15 @@ DSIM_RNDSEED = $(DSIM_SEED)
 endif
 endif
 
-DSIM_RUN_FLAGS         += $(USER_RUN_FLAGS)
-DSIM_RUN_FLAGS         += -sv_seed $(DSIM_RNDSEED)
+DSIM_RUN_FLAGS += $(USER_RUN_FLAGS)
+DSIM_RUN_FLAGS += -sv_seed $(DSIM_RNDSEED)
+
+# Enable profiling (off by default)
+PROFILE ?= 0
+ifneq ($(PROFILE), 0)
+	DSIM_CMP_FLAGS += -gen-profile
+	DSIM_RUN_FLAGS += -profile $(PROFILE)
+endif
 
 # Variables to control wave dumping from command the line
 # Humans _always_ forget the "S", so you can have it both ways...
