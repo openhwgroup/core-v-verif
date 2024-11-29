@@ -33,7 +33,7 @@ typedef struct packed {
    bit [MAX_XLEN-1:0]         trap;
    bit [MAX_XLEN-1:0]         halt;
    bit [MAX_XLEN-1:0]         intr;
-   bit [MAX_XLEN-1:0]         mode;
+   uvma_rvfi_mode             mode;
    bit [MAX_XLEN-1:0]         ixl;
    bit [MAX_XLEN-1:0]         dbg;
    bit [MAX_XLEN-1:0]         dbg_mode;
