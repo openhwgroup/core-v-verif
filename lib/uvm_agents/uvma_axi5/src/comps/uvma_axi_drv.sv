@@ -745,10 +745,16 @@ task uvma_axi_drv_c::drive_R_channel_signals( uvma_axi_transaction_c  r_txn = nu
    if ( ( r_txn == null ) && ( cfg.driver_idle_value_cfg == RANDOM ) ) begin
      r_txn = new();
      r_txn.m_txn_config = cfg.txn_config;
-     if (!r_txn.randomize() with 
-       { m_txn_type    == UVMA_AXI_READ_RSP ;
-       } )
-       `uvm_error(get_type_name(),"Error randomizing the read response metadata");
+     r_txn.m_id    = $urandom();
+     r_txn.m_resp.push_back($urandom_range(3));
+     r_txn.m_data.push_back($urandom());
+     r_txn.m_last.push_back($urandom_range(1));
+     r_txn.m_x_user.push_back($urandom());
+     r_txn.m_datachk = $urandom_range(2**(MAX_DATA_WIDTH/8));
+     r_txn.m_poison  = $urandom_range(2**(MAX_DATA_WIDTH/64));
+     r_txn.m_trace   = $urandom_range(1);
+     r_txn.m_loop    = $urandom_range(2**MAX_LOOP_WIDTH);
+     r_txn.m_idunq   = $urandom_range(1);
    end
 
    if ( r_txn != null ) begin
@@ -756,7 +762,7 @@ task uvma_axi_drv_c::drive_R_channel_signals( uvma_axi_transaction_c  r_txn = nu
      this.slave_mp.slv_axi_cb.r_data    <= r_txn.m_data[0] ;
      this.slave_mp.slv_axi_cb.r_resp    <= uvma_axi_sig_resp_t'(r_txn.m_resp[0]) ;
      this.slave_mp.slv_axi_cb.r_last    <= r_txn.m_last[0] ;
-     this.slave_mp.slv_axi_cb.r_user    <= r_txn.m_user    ;
+     this.slave_mp.slv_axi_cb.r_user    <= r_txn.m_x_user[0] ;
      this.slave_mp.slv_axi_cb.r_datachk <= r_txn.m_datachk ;
      this.slave_mp.slv_axi_cb.r_poison  <= r_txn.m_poison  ;
      this.slave_mp.slv_axi_cb.r_trace   <= r_txn.m_trace   ;
@@ -787,10 +793,13 @@ task uvma_axi_drv_c::drive_B_channel_signals( uvma_axi_transaction_c  b_txn = nu
    if ( ( b_txn == null ) && ( cfg.driver_idle_value_cfg == RANDOM ) ) begin
      b_txn = new();
      b_txn.m_txn_config = cfg.txn_config;
-     if (!b_txn.randomize() with
-       { m_txn_type    == UVMA_AXI_WRITE_RSP ;
-       } )
-       `uvm_error(get_type_name(),"Error randomizing the write response metadata");
+     b_txn.m_id    = $urandom();
+     b_txn.m_resp.push_back($urandom_range(3));
+     b_txn.m_user  = $urandom();
+     b_txn.m_trace = $urandom_range(1);
+     b_txn.m_loop  = $urandom_range(2**MAX_LOOP_WIDTH);
+     b_txn.m_idunq = $urandom_range(1);
+
    end
 
    if ( b_txn != null ) begin

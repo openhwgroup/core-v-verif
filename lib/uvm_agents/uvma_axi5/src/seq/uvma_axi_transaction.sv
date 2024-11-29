@@ -163,7 +163,7 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
    rand uvma_axi_sig_user_t        m_user         ;
    rand uvma_axi_dv_resp_t         m_resp[$]      ;
 
-   rand uvma_axi_sig_user_t        m_w_user       ;
+   rand uvma_axi_sig_user_t        m_x_user[$]    ;
 
    // uvma_axi5 specific fields
    rand uvma_axi_sig_atop_t        m_atop         ;
@@ -243,7 +243,7 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
         `uvm_field_int        (                     m_qos                , UVM_DEFAULT | UVM_HEX)
         `uvm_field_int        (                     m_region             , UVM_DEFAULT | UVM_HEX)
         `uvm_field_int        (                     m_user               , UVM_DEFAULT | UVM_HEX)
-        `uvm_field_int        (                     m_w_user             , UVM_DEFAULT | UVM_HEX)
+        `uvm_field_queue_int  (                     m_x_user             , UVM_DEFAULT | UVM_HEX)
         `uvm_field_int        (                     m_atop               , UVM_DEFAULT | UVM_HEX)
         `uvm_field_int        (                     m_trace              , UVM_DEFAULT | UVM_HEX)
         `uvm_field_int        (                     m_w_trace            , UVM_DEFAULT | UVM_HEX)
@@ -304,6 +304,7 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
     // Channel protocol constraints
     constraint c_size_data_width  { 2**m_size <= m_txn_config.get_data_width()/8 ; }
     constraint c_data_length      { m_data.size()              == m_len + 1 ; }
+    constraint c_user_length      { m_x_user.size()            == m_len + 1 ; }
     constraint c_wstrb_length     { m_wstrb.size()             == m_len + 1 ; }
     constraint c_last_length      { m_last.size()              == m_len + 1 ; }
     constraint c_resp_length      { m_resp.size()              == m_len + 1 ; }
@@ -434,6 +435,7 @@ class uvma_axi_transaction_c extends uvml_trn_seq_item_c;
     constraint c_len_before_last        { solve m_len before m_last              ; }
     constraint c_len_before_wstrb       { solve m_len before m_wstrb             ; }
     constraint c_len_before_resp        { solve m_len before m_resp              ; }
+    constraint c_len_before_user        { solve m_len before m_x_user            ; }
     constraint c_len_before_delay_flits { solve m_len before m_delay_cycle_flits ; }
    // constraint c_len_before_timestamp   { solve m_len before m_timestamp         ; }
 

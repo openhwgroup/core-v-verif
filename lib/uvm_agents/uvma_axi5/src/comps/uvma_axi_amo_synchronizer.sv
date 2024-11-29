@@ -16,6 +16,9 @@
  */
 class uvma_axi_amo_synchronizer_c extends uvma_axi_synchronizer_c;
 
+   local event atomic_read;
+   local longint init_data = -1;
+
    `uvm_component_utils(uvma_axi_amo_synchronizer_c)
 
    /**
@@ -59,7 +62,6 @@ endfunction
 task uvma_axi_amo_synchronizer_c::write_data();
 
    longint data;
-   longint init_data;
    longint new_data;
    longint signed_init_data;
    longint unsigned unsigned_init_data;
@@ -73,9 +75,12 @@ task uvma_axi_amo_synchronizer_c::write_data();
    uvma_axi_transaction_c ex_r_data;
    int last_trs = -1;
    int checkexclusive;
+   bit[7:0] data_mask = 0;
+   int index = 0;
+   uvma_axi_sig_data_t data_write = 0;
+   uvma_axi_sig_data_t data_read  = 0;
 
    ex_r_data = uvma_axi_transaction_c::type_id::create("ex_r_data");
-
    foreach(w_trs_queue[i]) begin
       for(int j = 0; j < w_trs_queue[i].size(); j++) begin
 
@@ -83,20 +88,8 @@ task uvma_axi_amo_synchronizer_c::write_data();
             if(exclusive_addr[w_trs_queue[i][j].m_addr] == 1) exclusive_addr[w_trs_queue[i][j].m_addr] = -1;
 
             if(w_trs_queue[i][j].m_atop!=0)begin   // Atomic transaction
-
-               if(cfg.external_mem) begin
-                  memory_read_access_api(w_trs_queue[i][j], init_data);
-               end else begin
-                  for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
-                     init_data[((k+1)*8-1)-:8]   = cntxt.mem.read(w_trs_queue[i][j].m_addr + k);
-                     //[(j*8)+:7]
-                  end
-               end
-               foreach(r_trs_queue[w_trs_queue[i][j].m_id][k]) begin
-                   if(r_trs_queue[w_trs_queue[i][j].m_id][k].m_trs_status == ADDR_DATA_NOT_COMPLETE) begin
-                      r_trs_queue[w_trs_queue[i][j].m_id][k].m_data[0] = init_data;
-                   end
-               end
+               @atomic_read;
+               if(init_data == -1) return;
 
                for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
                   new_data[((k+1)*8-1)-:8] = w_trs_queue[i][j].m_data[0][((k+1)*8-1)-:8];
@@ -158,6 +151,7 @@ task uvma_axi_amo_synchronizer_c::write_data();
 
                w_trs_queue[i][j].m_data[0] = data;
                checkexclusive = 1;
+               init_data = -1;
             end
             else if(w_trs_queue[i][j].m_lock == 1 && cfg.axi_lock_enabled) begin
                `uvm_info(get_type_name(), $sformatf("EXCLUSIVE ACCESS"), UVM_HIGH)
@@ -231,8 +225,12 @@ task uvma_axi_amo_synchronizer_c::write_data();
                      end
                   end else begin
                      for(int k = w_trs_queue[i][j].lower_byte_lane; k <= w_trs_queue[i][j].upper_byte_lane; k++) begin
-                        if(w_trs_queue[i][j].m_wstrb[0][k]) cntxt.mem.write(w_trs_queue[i][j].m_addr + k, w_trs_queue[i][j].m_data[0][((k+1)*8-1)-:8]);
+                        data_mask[index] = w_trs_queue[i][j].m_wstrb[0][k];
+                        data_write[((index+1)*8-1)-:8] = w_trs_queue[i][j].m_data[0][((k+1)*8-1)-:8];
+                        index++;
                      end
+                     index = 0;
+                     mem_write_transfer_api(w_trs_queue[i][j], w_trs_queue[i][j].m_addr + w_trs_queue[i][j].lower_byte_lane, data_write, w_trs_queue[i][j].upper_byte_lane - w_trs_queue[i][j].lower_byte_lane, data_mask, 0);
                      if(w_trs_queue[i][j].m_last[0] == 1)  w_finished_trs_id.push_back(w_trs_queue[i][j].m_id);
                   end
                end else if(checkexclusive == 0) begin
@@ -252,28 +250,31 @@ endtask : write_data
 
 task uvma_axi_amo_synchronizer_c::read_data(int selected_id);
    int length;
+   uvma_axi_sig_data_t data_read = 0;
+   int index = 0;
 
    foreach(r_trs_queue[selected_id][i]) begin
       if(r_trs_queue[selected_id][i].m_trs_status == ADDR_DATA_NOT_COMPLETE) begin
-         if(r_trs_queue[selected_id][i].m_atop == 0) begin
-            if(check_memory_access(r_trs_queue[selected_id][i]) == 1) begin
-               r_trs_queue[selected_id][i].m_trs_status = WAITING_RESP;
-               if(cfg.external_mem) begin
-                  length = r_trs_queue[selected_id][i].m_len;
-                  r_trs_queue[selected_id][i].m_len = 0;
-                  memory_read_access_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
-                  r_trs_queue[selected_id][i].m_len = length;
-               end else begin
-                  for(int j = r_trs_queue[selected_id][i].lower_byte_lane; j <= r_trs_queue[selected_id][i].upper_byte_lane; j++) begin
-                     r_trs_queue[selected_id][i].m_data[0][((j+1)*8-1)-:8]   = cntxt.mem.read(r_trs_queue[selected_id][i].m_addr + j);
-                     //[(j*8)+:7]
-                  end
-               end
+         if(check_memory_access(r_trs_queue[selected_id][i]) == 1) begin
+            r_trs_queue[selected_id][i].m_trs_status = WAITING_RESP;
+            if(cfg.external_mem) begin
+               length = r_trs_queue[selected_id][i].m_len;
+               r_trs_queue[selected_id][i].m_len = 0;
+               memory_read_access_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_data[0]);
+               r_trs_queue[selected_id][i].m_len = length;
             end else begin
-               `uvm_error(get_full_name(), "YOU CAN NOT WRITE DATA IN THIS ADDRESS LOCATION")
+               mem_read_transfer_api(r_trs_queue[selected_id][i], r_trs_queue[selected_id][i].m_addr + r_trs_queue[selected_id][i].lower_byte_lane, r_trs_queue[selected_id][i].upper_byte_lane - r_trs_queue[selected_id][i].lower_byte_lane, data_read);
+               for(int j = r_trs_queue[selected_id][i].lower_byte_lane; j <= r_trs_queue[selected_id][i].upper_byte_lane; j++) begin
+                  r_trs_queue[selected_id][i].m_data[0][((j+1)*8-1)-:8]   = data_read[((index+1)*8-1)-:8];
+                  index++;
+               end
+            end
+            if(r_trs_queue[selected_id][i].m_atop != 0) begin
+               init_data = r_trs_queue[selected_id][i].m_data[0];
+               ->atomic_read;
             end
          end else begin
-            r_trs_queue[selected_id][i].m_trs_status = WAITING_RESP;
+            `uvm_error(get_full_name(), "YOU CAN NOT WRITE DATA IN THIS ADDRESS LOCATION")
          end
          break;
       end
