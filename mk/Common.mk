@@ -714,7 +714,7 @@ SVLIB_CXX    = gcc
 svlib: $(SVLIB_PKG)
 	@echo "$(BANNER)"
 	@echo "Building $(SVLIB_PKG)"
-	@echo "$(BGANNER)"
+	@echo "$(BANNER)"
 	$(SVLIB_CXX) $(SVLIB_CFLAGS) $(SVLIB_SRC) -I$(DPI_INCLUDE) -o $(SVLIB_LIB)
 
 ###############################################################################
