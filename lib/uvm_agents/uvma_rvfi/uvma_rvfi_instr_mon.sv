@@ -130,6 +130,10 @@ endtask : run_phase
 
 task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
 
+  if (!cfg.ap_write_en) begin
+      `uvm_warning("RVFI INSTR MON", "Writing to Analysis Port has been disabled")
+  end
+
   while(1) begin
       @(cntxt.instr_vif[0].mon_cb)
 
@@ -287,7 +291,9 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
 
               `uvm_info(log_tag, $sformatf("%s", mon_trn.convert2string()), UVM_HIGH);
 
-              ap.write(mon_trn);
+              if (cfg.ap_write_en) begin
+                  ap.write(mon_trn);
+              end
           end
       end
   end
