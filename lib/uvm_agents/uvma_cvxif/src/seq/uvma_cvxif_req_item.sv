@@ -17,13 +17,16 @@
  */
 class uvma_cvxif_req_item_c extends uvm_sequence_item;
 
-   rand x_issue_req issue_req;
-   rand x_commit commit_req;
+   rand x_issue_req_t       issue_req;
+   rand x_compressed_req_t  compressed_req;
+   rand x_register_t        register;
+   rand x_commit_t          commit_req;
 
-   rand logic issue_valid;
-   rand logic issue_ready;
-   rand logic commit_valid;
-   rand logic result_ready;
+   rand logic               issue_valid;
+   rand logic               compressed_valid;
+   rand logic               register_valid;
+   rand logic               commit_valid;
+   rand logic               result_ready;
 
    `uvm_object_utils(uvma_cvxif_req_item_c)
 

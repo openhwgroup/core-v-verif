@@ -12,64 +12,68 @@
 `define __UVMA_CVXIF_TDEFS_SV__
 
 
-   localparam X_DATAWIDTH  = cvxif_pkg::X_DATAWIDTH;
-   localparam X_ID_WIDTH   = cvxif_pkg::X_ID_WIDTH;
-   localparam X_RFW_WIDTH  = cvxif_pkg::X_RFW_WIDTH;
-   localparam X_NUM_RS     = cvxif_pkg::X_NUM_RS;
-   localparam X_RFR_WIDTH  = cvxif_pkg::X_RFR_WIDTH;
+typedef struct packed {
+   logic                               accept;
+   logic  [X_DUALWRITE:0]              writeback;
+   logic  [X_NUM_RS+X_DUALREAD-1:0]    register_read;
+} x_issue_resp_t;
 
 typedef struct packed {
-   logic    accept;
-   logic    writeback;
-   logic    dualwrite;
-   logic    dualread;
-   logic    loadstore;
-   logic    exc;
-} issue_resp_t;
+   logic  [X_HARTID_WIDTH-1:0]                         hartid;
+   logic  [X_ID_WIDTH-1:0]                             id;
+   logic  [X_RFW_WIDTH-1:0]                            data;
+   logic  [4:0]                                        rd;
+   logic  [X_DUALWRITE:0]                              we;
+} x_result_t ;
 
 typedef struct packed {
-   logic  [X_ID_WIDTH-1:0]   id;
-   logic  [X_DATAWIDTH-1:0]  data;
-   logic  [4:0]              rd;
-   logic  [X_RFW_WIDTH/riscv::XLEN-1:0]  we;
-   logic                     exc;
-   logic  [5:0]              exccode;
-} result_t ;
-
-typedef enum logic[1:0] {
-   PRIV_LVL_M = 2'b11,
-   PRIV_LVL_S = 2'b01,
-   PRIV_LVL_U = 2'b00
-  } priv_lvl_t;
+   logic  [X_HARTID_WIDTH-1:0]                         hartid;
+   logic  [X_ID_WIDTH-1:0]                             id;
+   logic  [X_NUM_RS-1:0][X_RFR_WIDTH-1:0]              rs;
+   logic  [X_NUM_RS+X_DUALREAD-1:0]                    rs_valid;
+} x_register_t ;
 
 typedef struct packed {
-   logic  [31:0]                          instr;
-   logic  [X_ID_WIDTH-1:0]                id;
-   priv_lvl_t                             mode;
-   logic  [X_NUM_RS-1:0][X_RFR_WIDTH-1:0] rs;
-   logic  [X_NUM_RS-1:0]                  rs_valid;
-} x_issue_req;
+   logic  [31:0]                        instr;
+   logic  [X_HARTID_WIDTH-1:0]          hartid;
+   logic  [X_ID_WIDTH-1:0]              id;
+} x_issue_req_t;
 
 typedef struct packed {
-   logic  [X_ID_WIDTH-1:0]      id;
-   logic                        commit_kill;
-} x_commit;
+   logic  [15:0]                        instr;
+   logic  [X_HARTID_WIDTH-1:0]          hartid;
+} x_compressed_req_t;
+
+typedef struct packed {
+   logic  [31:0]                        instr;
+   logic                                accept;
+} x_compressed_resp_t;
+
+typedef struct packed {
+   logic  [X_HARTID_WIDTH-1:0]          hartid;
+   logic  [X_ID_WIDTH-1:0]              id;
+   logic                                commit_kill;
+} x_commit_t;
 
 typedef enum {
    UVMA_CVXIF_ISSUE_READY_FIX,
    UVMA_CVXIF_ISSUE_READY_RANDOMIZED
-} uvma_cvxif_ready_mode_enum;
+} uvma_cvxif_issue_ready_mode_enum;
 
-typedef struct packed {
-   logic                     result_valid;
-   logic                     result_ready;
-   logic  [X_ID_WIDTH-1:0]   id;
-   logic  [X_DATAWIDTH-1:0]  data;
-   logic  [4:0]              rd;
-   logic  [X_RFW_WIDTH/riscv::XLEN-1:0]  we;
-   logic                     exc;
-   logic  [5:0]              exccode;
-   int                       rnd_delay;
-  } drv_result;
+typedef enum {
+   UVMA_CVXIF_COMPRESSED_READY_FIX,
+   UVMA_CVXIF_COMPRESSED_READY_RANDOMIZED
+} uvma_cvxif_compressed_ready_mode_enum;
+
+typedef enum {
+   UVMA_CVXIF_RESET_STATE_PRE_RESET,
+   UVMA_CVXIF_RESET_STATE_IN_RESET,
+   UVMA_CVXIF_RESET_STATE_POST_RESET
+} uvma_cvxif_reset_state_enum;
+
+typedef enum {
+   UVMA_CVXIF_ORDERING_MODE_RANDOM,
+   UVMA_CVXIF_ORDERING_MODE_IN_ORDER
+} uvma_cvxif_slv_drv_ordering_mode;
 
 `endif //__UVMA_CVXIF_TDEFS_SV__

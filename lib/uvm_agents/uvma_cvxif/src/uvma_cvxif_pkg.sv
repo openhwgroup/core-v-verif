@@ -15,8 +15,6 @@
 // Interface(s) / Module(s) / Checker(s)
 // Pre-processor macros
 `include "uvm_macros.svh"
-`include "uvma_cvxif_intf.sv"
-`include "uvma_cvxif_assert.sv"
 `include "uvma_cvxif_macros.sv"
 
 /**
@@ -27,6 +25,17 @@
 package uvma_cvxif_pkg;
 
    import uvm_pkg ::*;
+
+   parameter int X_NUM_RS        = 2;
+   parameter int X_ID_WIDTH      = 3;
+   parameter int X_RFR_WIDTH     = 32;
+   parameter int X_RFW_WIDTH     = 32;
+   parameter int X_HARTID_WIDTH  = 32;
+   parameter int X_DUALREAD      = 0;
+   parameter int X_DUALWRITE     = 0;
+
+   parameter int MAX_ELEMENT_TO_DRIVE     = 3;
+   parameter int TIME_TO_WAIT_UNTIL_DRIVE     = 20;
 
    // Constants / Structs / Enums
    `include "uvma_cvxif_constants.sv"
@@ -53,6 +62,8 @@ package uvma_cvxif_pkg;
 
 endpackage : uvma_cvxif_pkg
 
+`include "uvma_cvxif_intf.sv"
+`include "uvma_cvxif_assert.sv"
 
 `endif //__UVMA_CVXIF_PKG_SV__
 
