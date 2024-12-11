@@ -11,13 +11,6 @@
 `ifndef __UVMA_CVXIF_COV_MODEL_SV__
 `define __UVMA_CVXIF_COV_MODEL_SV__
 
-`ifdef UNSUPPORTED_WITH //TODO - Remove ifdef when the issue in VCS simulator is fixed
-  `define WITH iff
-`else
-   `define WITH with
-`endif
-
-
    /*
    * Covergroups
    * Decalred at package-level to enable mutliple instances per monitor class (e.g. read/write)
@@ -25,34 +18,28 @@
    //covergroup instances
 
 covergroup cg_request(
-    string name,
-    bit mode_s_supported,
-    bit mode_u_supported
+    string name
     ) with function sample(uvma_cvxif_req_item_c req_item);
 
     option.per_instance = 1;
     option.name = name;
 
-   cp_valid : coverpoint req_item.issue_valid {
-    bins ISSUE_VALID [] = {[0:$]};
+   cp_compressed_valid : coverpoint req_item.compressed_valid {
+    bins COMPRESSED_VALID = {1};
    }
 
-   cp_ready : coverpoint req_item.issue_ready {
-    bins ISSUE_READY [] = {[0:$]};
+   cp_issue_valid : coverpoint req_item.issue_valid {
+    bins ISSUE_VALID = {1};
    }
 
-   cp_id : coverpoint req_item.issue_req.id {
+   cp_issue_id : coverpoint req_item.issue_req.id {
     bins ID [] = {[0:$]};
    }
 
-   cp_rs_valid : coverpoint req_item.issue_req.rs_valid {
-    bins RS_VALID [] = {3,7};
-   }
-
-   cp_mode : coverpoint req_item.issue_req.mode {
-    ignore_bins IGN_S_MODE = {PRIV_LVL_S} iff (!mode_s_supported);
-    ignore_bins IGN_U_MODE = {PRIV_LVL_U} iff (!mode_u_supported);
-    bins MODE [] = {[0:$]};
+   cp_rs_valid : coverpoint req_item.register.rs_valid {
+    ignore_bins IGN_BINS = {3'b111} with (X_NUM_RS == 2);
+    bins RS_VALID_2  = {2'b11};
+    bins RS_VALID_3  = {3'b111};
    }
 
    cp_commit_id : coverpoint req_item.commit_req.id {
@@ -64,84 +51,46 @@ covergroup cg_request(
    }
 
    cp_commit_valid : coverpoint req_item.commit_valid {
-    bins COMMIT_VALID [] = {[0:$]};
+    bins COMMIT_VALID = {1};
    }
 
-   cross_req : cross cp_id, cp_rs_valid, cp_mode;
-   cross_valid_ready : cross cp_valid, cp_ready;
-   cross_commit : cross cp_commit_valid, cp_commit_kill, cp_commit_id {
-   ignore_bins IGN_BINS = binsof(cp_commit_valid) intersect{0}; //commit signals are valid when commmit_valid is assert
+   cross_issue_req : cross cp_issue_valid, cp_issue_id, cp_rs_valid {
+     ignore_bins IGN_BINS = binsof(cp_issue_valid) intersect{0};
+   }
+
+   cross_commit_req : cross cp_commit_valid, cp_commit_kill, cp_commit_id {
+     ignore_bins IGN_BINS = binsof(cp_commit_valid) intersect{0};
    }
 
 endgroup: cg_request
 
 covergroup cg_response(
-    string name,
-    bit dual_read_write_support,
-    bit load_store_support
+    string name
     ) with function sample(uvma_cvxif_resp_item_c resp_item);
 
     option.per_instance = 1;
     option.name = name;
 
-   cp_accept : coverpoint resp_item.issue_resp.accept {
-    bins ACCEPT [] = {[0:$]};
+   cp_issue_accept : coverpoint resp_item.issue_resp.accept {
+    bins ISSUE_ACCEPT [] = {[0:$]};
    }
 
    cp_writeback : coverpoint resp_item.issue_resp.writeback {
     bins WRITEBACK [] = {[0:$]};
    }
 
-   cp_dualwrite : coverpoint resp_item.issue_resp.dualwrite {
-    ignore_bins IGN_BINS = cp_dualwrite `WITH(!dual_read_write_support);
-    bins DUALWRITE [] = {[0:$]};
+   cp_register_read : coverpoint resp_item.issue_resp.register_read {
+    bins REGISTER_READ [] = {[0:$]};
    }
 
-   cp_dualread : coverpoint resp_item.issue_resp.dualread {
-    ignore_bins IGN_BINS = cp_dualread `WITH(!dual_read_write_support);
-    bins DUALREAD [] = {[0:$]};
+   cp_compressed_accept : coverpoint resp_item.issue_resp.accept {
+    bins COMPRESSED_ACCEPT [] = {[0:$]};
    }
 
-   cp_loadstore : coverpoint resp_item.issue_resp.loadstore {
-    ignore_bins IGN_BINS = cp_loadstore `WITH(!load_store_support);
-    bins LOADSTORE [] = {[0:$]};
-   }
-
-   cp_exc : coverpoint resp_item.issue_resp.exc {
-    bins EXC [] = {[0:$]};
-   }
-
-   cross_resp0 : cross cp_accept, cp_writeback, cp_dualwrite, cp_dualread, cp_loadstore, cp_exc {
-   illegal_bins ILLEGAL_BINS = binsof(cp_accept) intersect{0} &&
-                              (binsof(cp_writeback) intersect{1} ||
-                               binsof(cp_dualwrite) intersect{1} ||
-                               binsof(cp_dualread) intersect{1}  ||
-                               binsof(cp_loadstore) intersect{1} ||
-                               binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp0 `WITH(!dual_read_write_support || !load_store_support);
-   }
-
-   cross_resp1 : cross cp_accept, cp_writeback, cp_dualwrite, cp_dualread, cp_exc {
-   illegal_bins ILLEGAL_BINS = binsof(cp_accept) intersect{0} &&
-                              (binsof(cp_writeback) intersect{1} ||
-                               binsof(cp_dualwrite) intersect{1} ||
-                               binsof(cp_dualread) intersect{1}  ||
-                               binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp1 `WITH(!dual_read_write_support && load_store_support);
-   }
-
-   cross_resp2 : cross cp_accept, cp_writeback, cp_loadstore, cp_exc {
-   illegal_bins ILLEGAL_BINS = binsof(cp_accept) intersect{0} &&
-                              (binsof(cp_writeback) intersect{1} ||
-                               binsof(cp_loadstore) intersect{1} ||
-                               binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp2 `WITH(dual_read_write_support && !load_store_support);
-   }
-
-   cross_resp3 : cross cp_accept, cp_writeback, cp_exc {
-   illegal_bins ILLEGAL_BINS = binsof(cp_accept) intersect{0} &&
-                              (binsof(cp_writeback) intersect{1} || binsof(cp_exc) intersect{1});
-   ignore_bins IGN_CROSS = cross_resp3 `WITH(dual_read_write_support || load_store_support);
+   cross_resp : cross cp_issue_accept, cp_writeback, cp_register_read {
+    ignore_bins IGN_ACCEPT0 = binsof(cp_issue_accept) intersect{0};
+    ignore_bins IGN_WRITEBACK1 = binsof(cp_writeback) intersect{1} && binsof(cp_register_read) intersect{0};
+    ignore_bins IGN_WRITEBACK0 = binsof(cp_writeback) intersect{0} && !binsof(cp_register_read) intersect{0};
    }
 
 endgroup: cg_response
@@ -153,7 +102,11 @@ covergroup cg_result(
     option.per_instance = 1;
     option.name = name;
 
-   cp_id : coverpoint resp_item.result.id {
+   cp_result_valid : coverpoint resp_item.result.id {
+    bins RESULT_VALID = {1};
+   }
+
+   cp_result_id : coverpoint resp_item.result.id {
     bins ID [] = {[0:$]};
    }
 
@@ -167,18 +120,8 @@ covergroup cg_result(
     bins WE [] = {[0:$]};
    }
 
-   cp_exc : coverpoint resp_item.result.exc {
-    bins EXC [] = {[0:$]};
-   }
-
-   cp_exccode : coverpoint resp_item.result.exccode {
-    bins EXCCODE [] = {[0:9],[11:13],15,24}; //Supported Exception code
-   }
-
-   cross_result : cross cp_id, cp_we, cp_exc, cp_exccode {
-   illegal_bins ILLEGAL_BINS = binsof(cp_we) intersect{1} &&
-                               binsof(cp_exc) intersect{1};
-   ignore_bins IGN_BINS = binsof(cp_exc) intersect{0}; //if exc=0 that means no exception
+   cross_result : cross cp_result_valid, cp_result_id, cp_we, cp_rd {
+    ignore_bins IGN_BINS = binsof(cp_result_valid) intersect{0};
    }
 endgroup: cg_result
 
@@ -217,16 +160,6 @@ class uvma_cvxif_cov_model_c extends uvm_component;
    extern virtual task run_phase(uvm_phase phase);
 
    /**
-    * TODO Describe uvma_cvxif_cov_model_c::sample_cfg()
-    */
-   extern function void sample_cfg();
-
-   /**
-    * TODO Describe uvma_cvxif_cov_model_c::sample_cntxt()
-    */
-   extern function void sample_cntxt();
-
-   /**
     * TODO Describe uvma_cvxif_cov_model_c::sample_req_item()
     */
    extern function void sample_req_item(uvma_cvxif_req_item_c req_item);
@@ -259,12 +192,8 @@ function void uvma_cvxif_cov_model_c::build_phase(uvm_phase phase);
       `uvm_fatal("CNTXT", "Context handle is null")
    end
 
-   request_cg  = new("request_cg",
-                     .mode_s_supported(cfg.mode_s_supported),
-                     .mode_u_supported(cfg.mode_u_supported));
-   response_cg = new("response_cg",
-                    .dual_read_write_support(cfg.dual_read_write_support_x),
-                    .load_store_support(cfg.load_store_support_x));
+   request_cg  = new("request_cg");
+   response_cg = new("response_cg");
    result_cg   = new("result_cg");
 
    req_item_fifo   = new("req_item_fifo" , this);
@@ -280,20 +209,8 @@ task uvma_cvxif_cov_model_c::run_phase(uvm_phase phase);
    uvma_cvxif_resp_item_c   resp_item;
 
    super.run_phase(phase);
-   if (cfg.enabled && cfg.cov_model_enabled) begin
+   if (cfg.enabled_cvxif && cfg.cov_model_enabled) begin
       fork
-         // Configuration
-         forever begin
-            cntxt.sample_cfg_e.wait_trigger();
-            sample_cfg();
-         end
-
-         // Context
-         forever begin
-            cntxt.sample_cntxt_e.wait_trigger();
-            sample_cntxt();
-         end
-
          // 'mstr' sequence items
          forever begin
             req_item_fifo.get(req_item);
@@ -309,21 +226,6 @@ task uvma_cvxif_cov_model_c::run_phase(uvm_phase phase);
    end
 
 endtask : run_phase
-
-
-function void uvma_cvxif_cov_model_c::sample_cfg();
-
-   // TODO Implement uvma_cvxif_cov_model_c::sample_cfg();
-
-endfunction : sample_cfg
-
-
-function void uvma_cvxif_cov_model_c::sample_cntxt();
-
-   // TODO Implement uvma_cvxif_cov_model_c::sample_cntxt();
-
-endfunction : sample_cntxt
-
 
 function void uvma_cvxif_cov_model_c::sample_req_item(uvma_cvxif_req_item_c req_item);
 
