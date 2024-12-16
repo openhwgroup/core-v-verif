@@ -197,8 +197,9 @@ interface uvma_rvfi_instr_if_t
 
 
   // -------------------------------------------------------------------
-  // Local variables
+  // Signals
   // -------------------------------------------------------------------
+
   int unsigned                      irq_cnt;         // number of taken interrupts
   int unsigned                      nmi_instr_cnt;   // number of instructions after nmi
   int unsigned                      single_step_cnt; // number of instructions stepped
@@ -275,6 +276,10 @@ interface uvma_rvfi_instr_if_t
 
   asm_t instr_asm;
 
+  wire is_exception_cause_instr_acc_fault = (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT);
+  wire is_exception_cause_integrity_fault = (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_INTEGRITY_FAULT);
+  wire is_exception_cause_bus_fault       = (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_BUS_FAULT);
+
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
@@ -335,7 +340,7 @@ interface uvma_rvfi_instr_if_t
   end
 
   always_comb begin
-    is_mret                          = is_mret_f();
+    is_mret                          = match_instr(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
   end
 
   always_comb begin
@@ -437,7 +442,15 @@ interface uvma_rvfi_instr_if_t
   end
 
   always_comb begin
-    is_instr_bus_valid               = is_instr_bus_valid_f();
+    is_instr_bus_valid = (
+      (
+        !is_exception_cause_bus_fault &&
+        !is_exception_cause_integrity_fault &&
+        !is_exception_cause_instr_acc_fault
+      ) ||
+      rvfi_trap.clicptr
+      //Note: `clicptr` pertains to the fetch of the next instr. See the user manual.
+    );
   end
 
   always_comb begin
@@ -623,6 +636,7 @@ interface uvma_rvfi_instr_if_t
 
   modport passive_mp    (clocking mon_cb);
 
+
   // -------------------------------------------------------------------
   // Functions
   // -------------------------------------------------------------------
@@ -637,9 +651,11 @@ interface uvma_rvfi_instr_if_t
     logic [ XLEN-1:0] instr_ref,
     logic [ XLEN-1:0] instr_mask
   );
-
-  return rvfi_valid && is_instr_bus_valid && ((rvfi_insn & instr_mask) == instr_ref);
-
+    return (
+      rvfi_valid &&
+      is_instr_bus_valid &&
+      ((rvfi_insn & instr_mask) == instr_ref)
+    );
   endfunction : match_instr
 
   // Check if instruction is of a certain type, without verifying the instr word is valid
@@ -841,10 +857,6 @@ function automatic logic is_dret_f();
   return match_instr(INSTR_OPCODE_DRET, INSTR_MASK_FULL);
 endfunction : is_dret_f
 
-function automatic logic is_mret_f();
-  return match_instr(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
-endfunction : is_mret_f
-
 function automatic logic is_uret_f();
   return match_instr(INSTR_OPCODE_URET, INSTR_MASK_FULL);
 endfunction : is_uret_f
@@ -966,13 +978,6 @@ function automatic logic is_pma_fault_f();
           })  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_fault_f
-
-function automatic logic is_instr_bus_valid_f();
-  return !( (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT) ||
-            (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
-            (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_BUS_FAULT)
-    );
-endfunction : is_instr_bus_valid_f
 
 function automatic logic [31:0] rvfi_mem_addr_word0highbyte_f();
   logic [31:0] addr = rvfi_mem_addr[31:0];
