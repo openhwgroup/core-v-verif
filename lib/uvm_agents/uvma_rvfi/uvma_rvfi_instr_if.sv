@@ -449,6 +449,7 @@ interface uvma_rvfi_instr_if_t
         !is_exception_cause_instr_acc_fault
       ) ||
       rvfi_trap.clicptr
+      //Note: `clicptr` pertains to the fetch of the next instr. See the user manual.
     );
   end
 
