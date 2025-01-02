@@ -114,7 +114,7 @@ covergroup cg_result(
     bins RD [] = {[0:31]};
    }
 
-   `CVXIF_CP_BITWISE(cp_data_toggle, resp_item.result.data, 1)
+   `CVXIF_CP_BITWISE_PER_CP_IFF(cp_data_toggle, resp_item.result.data, 1)
 
    cp_we : coverpoint resp_item.result.we {
     bins WE [] = {[0:$]};
