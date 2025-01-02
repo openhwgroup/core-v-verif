@@ -121,7 +121,8 @@ covergroup cg_result(
    }
 
    cross_result : cross cp_result_valid, cp_result_id, cp_we, cp_rd {
-    ignore_bins IGN_BINS = binsof(cp_result_valid) intersect{0};
+    ignore_bins IGN_RESULT_VALID0 = binsof(cp_result_valid) intersect{0};
+    ignore_bins IGN_WE0           = binsof(cp_result_valid) intersect{1} && binsof(cp_we) intersect{0};
    }
 endgroup: cg_result
 
