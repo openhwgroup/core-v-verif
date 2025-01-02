@@ -114,14 +114,15 @@ covergroup cg_result(
     bins RD [] = {[0:31]};
    }
 
-   `CVXIF_CP_BITWISE(cp_data_toggle, resp_item.result.data, 1)
+   `CVXIF_CP_BITWISE_PER_CP_IFF(cp_data_toggle, resp_item.result.data, 1)
 
    cp_we : coverpoint resp_item.result.we {
     bins WE [] = {[0:$]};
    }
 
    cross_result : cross cp_result_valid, cp_result_id, cp_we, cp_rd {
-    ignore_bins IGN_BINS = binsof(cp_result_valid) intersect{0};
+    ignore_bins IGN_RESULT_VALID0 = binsof(cp_result_valid) intersect{0};
+    ignore_bins IGN_WE0           = binsof(cp_result_valid) intersect{1} && binsof(cp_we) intersect{0};
    }
 endgroup: cg_result
 
