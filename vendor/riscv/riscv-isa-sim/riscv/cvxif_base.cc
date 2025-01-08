@@ -14,7 +14,7 @@
 
 // Return true if writeback is required.
 // Be on the safe side, disable writeback.
-bool cvxif_extn_t::do_writeback_p(cvxif_insn_t insn)
+bool cvxif_extn_t::do_writeback_p(insn_t insn)
 {
   return false;
 }
@@ -30,15 +30,13 @@ bool cvxif_extn_t::do_writeback_p(cvxif_insn_t insn)
 static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
   { \
     cvxif_extn_t* cvxif = static_cast<cvxif_extn_t*>(p->get_extension()); \
-    cvxif_insn_t custom_insn; \
-    custom_insn.i = insn; \
-    reg_t xd = cvxif->custom##n(custom_insn); \
-    if (cvxif->do_writeback_p(custom_insn)) \
+    reg_t xd = cvxif->custom##n(insn); \
+    if (cvxif->do_writeback_p(insn)) \
       WRITE_RD(xd); \
     return pc+4; \
   } \
   \
-  reg_t cvxif_extn_t::custom##n(cvxif_insn_t insn) \
+  reg_t cvxif_extn_t::custom##n(insn_t insn) \
   { \
     illegal_instruction(); \
     return -1; \
