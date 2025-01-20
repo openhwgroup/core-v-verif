@@ -1,0 +1,36 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/insns/bclri.h b/vendor/riscv/riscv-isa-sim/riscv/insns/bclri.h
+index 8df6a5f4e..7ab42508a 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/insns/bclri.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/insns/bclri.h
+@@ -1,3 +1,4 @@
+ require_extension(EXT_ZBS);
++require(SHAMT < xlen);
+ int shamt = SHAMT & (xlen-1);
+ WRITE_RD(sext_xlen(RS1 & ~(1LL << shamt)));
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/insns/bexti.h b/vendor/riscv/riscv-isa-sim/riscv/insns/bexti.h
+index 31d231668..bf86ab434 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/insns/bexti.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/insns/bexti.h
+@@ -1,3 +1,4 @@
+ require_extension(EXT_ZBS);
++require(SHAMT < xlen);
+ int shamt = SHAMT & (xlen-1);
+ WRITE_RD(sext_xlen(1 & (RS1 >> shamt)));
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/insns/binvi.h b/vendor/riscv/riscv-isa-sim/riscv/insns/binvi.h
+index 3272d3931..7f6723ce9 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/insns/binvi.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/insns/binvi.h
+@@ -1,3 +1,4 @@
+ require_extension(EXT_ZBS);
++require(SHAMT < xlen);
+ int shamt = SHAMT & (xlen-1);
+ WRITE_RD(sext_xlen(RS1 ^ (1LL << shamt)));
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/insns/bseti.h b/vendor/riscv/riscv-isa-sim/riscv/insns/bseti.h
+index 495237863..8ef4b3776 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/insns/bseti.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/insns/bseti.h
+@@ -1,3 +1,4 @@
+ require_extension(EXT_ZBS);
++require(SHAMT < xlen);
+ int shamt = SHAMT & (xlen-1);
+ WRITE_RD(sext_xlen(RS1 | (1LL << shamt)));
