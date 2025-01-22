@@ -296,8 +296,9 @@ Processor::Processor(
   for (auto ext : registered_extensions_v) {
     if (ext.second) {
       extension_t *extension = find_extension(ext.first.c_str())();
+      extension->set_Proc(this);
+      // 'register_extension' internally calls 'reset()' on the extension.
       this->register_extension(extension);
-      extension->reset();
     }
   }
 

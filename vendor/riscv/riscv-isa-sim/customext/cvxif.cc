@@ -12,6 +12,8 @@
 #include "cvxif.h"
 #include "mmu.h"
 #include <cstring>
+#include "Proc.h"
+#include "Params.h"
 
 // Define custom insns templates.
 // The insn-level wrapper is 'c##n' (default implementation,
@@ -229,7 +231,7 @@ class cvxif_t : public cvxif_extn_t
     return (reg_t) -1;
   };
 
-  // 32-bit insns 
+  // 32-bit insns
   #define CVXIF_CUS_ADD_RS3_ADDSUB_MASK 0x0600707f
   #define CVXIF_CUS_ADD_RS3_MADD_MATCH  0x00000043
   #define CVXIF_CUS_ADD_RS3_MSUB_MATCH  0x00000047
@@ -240,38 +242,38 @@ class cvxif_t : public cvxif_extn_t
   #define CVXIF_CUS_ADD_RS3_RTYPE_MATCH 0x08001043
 
   // Computation semantics of CUS_ADD_RS3_MADD: Custom Add with RS3, opcode == MADD.
-  // Add RS2 and RS3 to RS1.
+  // Add RS2 and RS3 to RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_madd(insn_t insn)
   {
-    return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) RS3);
+    return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
   };
 
   // Computation semantics of CUS_ADD_RS3_MSUB: Custom Add with RS3, opcode == MSUB.
-  // Subtract RS2 and RS3 from RS1.
+  // Subtract RS2 and RS3 from RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_msub(insn_t insn)
   {
-    return (reg_t) ((reg_t) RS1 - (reg_t) RS2 - (reg_t) RS3);
+    return (reg_t) ((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
   };
 
   // Computation semantics of CUS_ADD_RS3_NMADD: Custom Add with RS3, opcode == NMADD.
-  // Add RS2 and RS3 to RS1, then negate result bitwise.
+  // Add RS2 and RS3 to RS1, then negate result bitwise.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_nmadd(insn_t insn)
   {
-    return (reg_t) ~((reg_t) RS1 + (reg_t) RS2 + (reg_t) RS3);
+    return (reg_t) ~((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
   };
 
   // Semantics of CUS_ADD_RS3_NMSUB: Custom Add with RS3, opcode == NMSUB.
-  // Subtract RS2 and RS3 from RS1, then negate result bitwise.
+  // Subtract RS2 and RS3 from RS1, then negate result bitwise.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_nmsub(insn_t insn)
   {
-    return (reg_t) ~((reg_t) RS1 - (reg_t) RS2 - (reg_t) RS3);
+    return (reg_t) ~((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
   };
 
   // Semantics of CUS_ADD_RS3_RTYPE: Custom Add with RS3, opcode == RTYPE (rd is implicitly a0).
-  // Add RS2 and RS3 to RS1.
+  // Add RS2 and RS3 to RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_rtype(insn_t insn)
   {
-    return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) RS3);
+    return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
   };
 
   // Compressed (16-bit) insns
@@ -360,25 +362,61 @@ class cvxif_t : public cvxif_extn_t
   cvxif_insn_32(cus_add_rs3_msub)
   cvxif_insn_32(cus_add_rs3_nmadd)
   cvxif_insn_32(cus_add_rs3_nmsub)
-  cvxif_insn_32_rd_implicit_a0(cus_add_rs3_rtype)                           
+  cvxif_insn_32_rd_implicit_a0(cus_add_rs3_rtype)
 
   // CV-X-IF non-custom 16-bit insns
   cvxif_insn_16(cus_cnop)
   cvxif_insn_16_rd_implicit_a0(cus_cadd)
 
-  // Set instruction handlers for customN opcode patterns.
+  void reset()
+  {
+    std::cerr << "[Extension '" << name() << "'] reset()" << std::endl;
+
+    // Attempt to extract Spike parameter 'cvxif_x_num_rs' which indicates the number
+    // of source register ports supported in the current target.  Legal values are 2 and 3.
+    // Try core-specific setting first; if not present, try global default.
+    // If the parameter is not set (parameter query returns 0) or is not legal, default to 3.
+    x_num_rs = 3;
+
+    if (proc) {  // Proceed only if Processor pointer was explicitly initialized.
+      openhw::Params params = proc->get_params();
+      uint64_t num_rs = 0;
+      bool got_value = true;   // Be optimistic.
+      if (params.exist("/top/core/" + std::to_string(proc->get_id()) + "/", "cvxif_x_num_rs"))
+        // Core-specific setting present
+        num_rs = params["/top/core/" + std::to_string(proc->get_id()) + "/" + "cvxif_x_num_rs"].a_uint64_t;
+      else if (params.exist("/top/cores/", "cvxif_x_num_rs"))
+        // No core-specific setting present, try global default.
+        num_rs = params["/top/cores/cvxif_x_num_rs"].a_uint64_t;
+      else
+        got_value = false;
+
+      if (got_value) {
+        if (num_rs >=2 && num_rs <= 3) {
+          std::cerr << "[SPIKE] Setting X_NUM_RS to value " << num_rs << std::endl;
+          x_num_rs = num_rs;
+        }
+        else
+          std::cerr << "[SPIKE] Invalid X_NUM_RS value!" << std::endl;
+      }
+      else
+        std::cerr << "[SPIKE] No parameter for X_NUM_RS!" << std::endl;
+    }
+  }
+
+  // Set instruction handlers for CV-X-IF opcode patterns.
   // NOTE: This method may need revisiting if multiple custom extensions are to be loaded
   //       simultaneously in the future.
   std::vector<insn_desc_t> get_instructions()
   {
-
-// Factor out tedious, repetitive code as all combinations of RV32/RV64 x RVI/RVE x fast/logged simulation path
-// use the same implementation of functions.  Leave a differentiating 'default' value at the 
+// Factor out tedious, repetitive code as all combinations of RV32/RV64 x RVI/RVE x fast/logged
+// simulation path use the same handler functions.
+// Leave a differentiating 'default' value at the "RV64E logged" entry to help with debugging.
 #define ADD_INSN_TO_DECODER(match,mask,impl, dflt) \
     insns.push_back((insn_desc_t){(match), (mask), &impl, &impl, &impl, &impl, &impl, &impl, &impl, &dflt})
 
     std::vector<insn_desc_t> insns;
-    ADD_INSN_TO_DECODER(0x0b, 0x7f, ::illegal_instruction, c0);    
+    ADD_INSN_TO_DECODER(0x0b, 0x7f, ::illegal_instruction, c0);
     ADD_INSN_TO_DECODER(0x2b, 0x7f, ::illegal_instruction, c1);
     ADD_INSN_TO_DECODER(0x5b, 0x7f, ::illegal_instruction, c2);
     ADD_INSN_TO_DECODER(0x7b, 0x7f, c3,                    c3);
@@ -398,6 +436,7 @@ class cvxif_t : public cvxif_extn_t
 
 private:
   // State variables go here.
+  uint64_t x_num_rs = 0;
 };
 
 REGISTER_EXTENSION(cvxif, []() { return new cvxif_t; })
