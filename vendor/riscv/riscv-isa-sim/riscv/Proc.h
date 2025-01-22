@@ -1,3 +1,7 @@
+// See LICENSE for license details.
+
+#ifndef _RISCV_PROC_H
+#define _RISCV_PROC_H
 
 #include "Types.h"
 #include "processor.h"
@@ -77,3 +81,5 @@ protected:
 };
 
 } // namespace openhw
+
+#endif
