@@ -27,7 +27,7 @@ std::vector<std::string> sanitize_args() {
 
       // remove any two double pluses at the beginning (those are target arguments)
       if (info.argv[i][0] == '+' && info.argv[i][1] == '+' && strlen(info.argv[i]) > 3) {
-          for (int j = 0; j < strlen(info.argv[i]) - 1; j++) {
+          for (size_t j = 0; j < strlen(info.argv[i]) - 1; j++) {
             info.argv[i][j] = info.argv[i][j + 2];
           }
       }
