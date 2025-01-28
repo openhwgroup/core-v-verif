@@ -59,8 +59,6 @@ module uvma_cvxif_assert #(int unsigned X_HARTID_WIDTH = 32, int unsigned X_ID_W
 
    cov_compressed_instr           : cover property(CVXIF_COMPRESSED_INSTR);
 
-   cov_compressed_stable          : cover property(CVXIF_STABLE_COMPRESSED_REQ);
-
    cov_uncompressed_resp          : cover property(CVXIF_UNCOMPRESSED_RESP);
 
    /**
