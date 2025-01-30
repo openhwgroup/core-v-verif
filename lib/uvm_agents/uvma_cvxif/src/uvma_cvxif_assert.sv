@@ -38,12 +38,6 @@ module uvma_cvxif_assert #(int unsigned X_HARTID_WIDTH = 32, int unsigned X_ID_W
       (cvxif_assert.compressed_valid && cvxif_assert.compressed_ready && cvxif_assert.compressed_req.instr[1:0] == 2'b11) |-> !cvxif_assert.compressed_resp.accept;
    endproperty
 
-   // Check that during an compressed request transaction, "instr", "hartid" signal should remain stable
-   property CVXIF_STABLE_COMPRESSED_REQ;
-      @(posedge cvxif_assert.clk) disable iff (!cvxif_assert.reset_n)
-      (cvxif_assert.compressed_valid && !cvxif_assert.compressed_ready) |=> ($stable(cvxif_assert.compressed_req.instr) && $stable(cvxif_assert.compressed_req.hartid));
-   endproperty
-
    // Check that compressed interface respond with an uncompressed instruction
    property CVXIF_UNCOMPRESSED_RESP;
       @(posedge cvxif_assert.clk) disable iff (!cvxif_assert.reset_n)
@@ -58,19 +52,12 @@ module uvma_cvxif_assert #(int unsigned X_HARTID_WIDTH = 32, int unsigned X_ID_W
    compressed_req_rejected        : assert property (CVXIF_REJECT_COMPRESSED_REQ)
                                        else `uvm_error (info_tag , "Violation: UNVALID 16-BIT INSTRUCTION");
 
-   compressed_req_stable          : assert property (CVXIF_STABLE_COMPRESSED_REQ)
-                                       else `uvm_error (info_tag , "Violation: COMPRESSED REQUEST PACKET IS NOT STABLE DURING A COMPRESSED TRANSACTION");
-
    uncompressed_resp              : assert property (CVXIF_UNCOMPRESSED_RESP)
                                        else `uvm_error (info_tag , "Violation: UNVALID 32-BIT INSTRUCTION IN RESPONSE");
 
 /********************************************** Cover Property ******************************************************/
 
    cov_compressed_instr           : cover property(CVXIF_COMPRESSED_INSTR);
-
-   cov_reject_uncompressed        : cover property(CVXIF_REJECT_COMPRESSED_REQ);
-
-   cov_compressed_stable          : cover property(CVXIF_STABLE_COMPRESSED_REQ);
 
    cov_uncompressed_resp          : cover property(CVXIF_UNCOMPRESSED_RESP);
 

@@ -31,10 +31,10 @@ class uvma_cvxif_cfg_c extends uvm_object;
    rand uvma_cvxif_compressed_ready_mode_enum     compressed_ready_mode;
 
    constraint reasonable_values {
-      soft hold_issue_ready          inside {[1:2]};
-      soft hold_issue_not_ready      inside {[1:2]};
-      soft hold_compressed_ready     inside {[1:2]};
-      soft hold_compressed_not_ready inside {[1:2]};
+      soft hold_issue_ready          inside {[1:3]};
+      soft hold_issue_not_ready      inside {[1:3]};
+      soft hold_compressed_ready     inside {[1:3]};
+      soft hold_compressed_not_ready inside {[1:3]};
       if (zero_delay_mode) {
         instr_delayed == 0;
       }
@@ -50,7 +50,7 @@ class uvma_cvxif_cfg_c extends uvm_object;
 
    constraint defaults_val {
       soft issue_ready_mode       == UVMA_CVXIF_ISSUE_READY_RANDOMIZED;
-      soft compressed_ready_mode  == UVMA_CVXIF_COMPRESSED_READY_FIX;
+      soft compressed_ready_mode  == UVMA_CVXIF_COMPRESSED_READY_RANDOMIZED;
       soft ordering_mode          == UVMA_CVXIF_ORDERING_MODE_IN_ORDER;
       soft zero_delay_mode        == 1;
       soft cov_model_enabled      == 1;

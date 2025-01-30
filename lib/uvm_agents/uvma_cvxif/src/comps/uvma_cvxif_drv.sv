@@ -249,8 +249,13 @@ task uvma_cvxif_drv_c::drv_slv_resp(input uvma_cvxif_resp_item_c item);
    fork begin
       if (item.issue_valid) begin
          wait (cntxt.vif.issue_ready);
-         drv_issue_resp(item);
-         `uvm_info(info_tag, $sformatf("drive issue done !"), UVM_NONE);
+         if (cntxt.vif.issue_valid) begin
+            drv_issue_resp(item);
+            `uvm_info(info_tag, $sformatf("drive issue done!"), UVM_NONE);
+         end
+         else begin
+            `uvm_info(info_tag, $sformatf("CPU retracts issue req!"), UVM_NONE);
+         end
          @(posedge cntxt.vif.clk);
          if (item.result_valid) begin
            resp_item_queue.push_back(item);
@@ -262,8 +267,13 @@ task uvma_cvxif_drv_c::drv_slv_resp(input uvma_cvxif_resp_item_c item);
    begin
      if (item.compressed_valid) begin
         wait (cntxt.vif.compressed_ready);
-        drv_compressed_resp(item);
-        `uvm_info(info_tag, $sformatf("drive compressed done !"), UVM_NONE);
+        if (cntxt.vif.compressed_valid) begin
+           drv_compressed_resp(item);
+           `uvm_info(info_tag, $sformatf("drive compressed done!"), UVM_NONE);
+        end
+        else begin
+           `uvm_info(info_tag, $sformatf("CPU retracts compressed req!"), UVM_NONE);
+        end
          @(posedge cntxt.vif.clk);
         deassert_compressed_resp();
      end
