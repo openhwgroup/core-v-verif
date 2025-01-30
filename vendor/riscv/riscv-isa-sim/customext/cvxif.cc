@@ -306,6 +306,9 @@ class cvxif_t : public cvxif_extn_t
   // Semantics of CUS_CNOP: Compressed CV-X-IF NOP.
   reg_t cvxif_cus_cnop(insn_t insn)
   {
+    std::cerr << "### [SPIKE] cvxif_cus_cnop(x" << std::dec << insn.rvc_rs1() << " = 0x" << std::hex << (reg_t) RVC_RS1 <<
+                                          ", x" << std::dec << insn.rvc_rs2() << " = 0x" << std::hex << (reg_t) RVC_RS2 <<
+                                          ") = 0xIGNORE" << std::endl;
     // Value will be ignored by writeback checker.
     return (reg_t) -1;
   };
@@ -313,7 +316,11 @@ class cvxif_t : public cvxif_extn_t
   // Semantics of CUS_CADD: Compressed CV-X-IF ADD.
   reg_t cvxif_cus_cadd(insn_t insn)
   {
-    return (reg_t) ((reg_t) RVC_RS1 + (reg_t) RVC_RS2);
+    reg_t result = (reg_t) ((reg_t) RVC_RS1 + (reg_t) RVC_RS2);
+    std::cerr << "### [SPIKE] cvxif_cus_cadd(x" << std::dec << insn.rvc_rs1() << " = 0x" << std::hex << (reg_t) RVC_RS1 <<
+                                          ", x" << std::dec << insn.rvc_rs2() << " = 0x" << std::hex << (reg_t) RVC_RS2 <<
+                                          ") = 0x" << std::hex << result << " -> x10" << std::endl;
+    return result;
   }
 
   // Extension constructor
