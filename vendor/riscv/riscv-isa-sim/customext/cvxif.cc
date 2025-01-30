@@ -9,6 +9,8 @@
 
 #define DECODE_MACRO_USAGE_LOGGED 1
 #include "decode_macros.h"
+#include "encoding.h"
+#include "insn_macros.h"
 #include "cvxif.h"
 #include "mmu.h"
 #include <cstring>
@@ -26,6 +28,7 @@
 static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
   { \
     cvxif_t* cvxif = static_cast<cvxif_t*>(p->get_extension(EXTENSION_NAME)); \
+    require_extension(EXT_XCVXIF); \
     reg_t xd = cvxif->default_custom##n(insn); \
     if (cvxif->do_writeback_p(insn)) \
       WRITE_RD(xd); \
@@ -44,6 +47,7 @@ static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
 // After executing the instruction the PC is advanced by 4 bytes.
 #define cvxif_insn_32(name) \
   static reg_t cvxif_32_##name(processor_t* p, insn_t insn, reg_t pc) { \
+    require_extension(EXT_XCVXIF); \
     cvxif_t* cvxif = static_cast<cvxif_t*>(p->get_extension(EXTENSION_NAME)); \
     reg_t xd = cvxif->default_cvxif_32_##name(insn); \
     if (cvxif->do_writeback_p(insn)) \
@@ -61,6 +65,7 @@ static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
 #define cvxif_insn_32_rd_implicit_a0(name) \
   static reg_t cvxif_32_##name(processor_t* p, insn_t insn, reg_t pc) { \
     cvxif_t* cvxif = static_cast<cvxif_t*>(p->get_extension(EXTENSION_NAME)); \
+    require_extension(EXT_XCVXIF); \
     reg_t xd = cvxif->default_cvxif_32_##name(insn); \
     if (cvxif->do_writeback_p(insn)) \
       WRITE_REG(10, xd); \
@@ -76,6 +81,7 @@ static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
 #define cvxif_insn_16(name) \
   static reg_t cvxif_16_##name(processor_t* p, insn_t insn, reg_t pc) { \
     cvxif_t* cvxif = static_cast<cvxif_t*>(p->get_extension(EXTENSION_NAME)); \
+    require_extension(EXT_XCVXIF); \
     reg_t xd = cvxif->default_cvxif_16_##name(insn); \
     if (cvxif->do_writeback_p(insn)) \
       WRITE_RD(xd); \
@@ -91,6 +97,7 @@ static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
 #define cvxif_insn_16_rd_implicit_a0(name) \
   static reg_t cvxif_16_##name(processor_t* p, insn_t insn, reg_t pc) { \
     cvxif_t* cvxif = static_cast<cvxif_t*>(p->get_extension(EXTENSION_NAME)); \
+    require_extension(EXT_XCVXIF); \
     reg_t xd = cvxif->default_cvxif_16_##name(insn); \
     if (cvxif->do_writeback_p(insn)) \
       WRITE_REG(10, xd); \
@@ -231,56 +238,70 @@ class cvxif_t : public cvxif_extn_t
     return (reg_t) -1;
   };
 
-  // 32-bit insns
-  #define CVXIF_CUS_ADD_RS3_ADDSUB_MASK 0x0600707f
-  #define CVXIF_CUS_ADD_RS3_MADD_MATCH  0x00000043
-  #define CVXIF_CUS_ADD_RS3_MSUB_MATCH  0x00000047
-  #define CVXIF_CUS_ADD_RS3_NMADD_MATCH 0x0000004f
-  #define CVXIF_CUS_ADD_RS3_NMSUB_MATCH 0x0000004b
-
-  #define CVXIF_CUS_ADD_RS3_RTYPE_MASK  0x0600707f
-  #define CVXIF_CUS_ADD_RS3_RTYPE_MATCH 0x08001043
-
   // Computation semantics of CUS_ADD_RS3_MADD: Custom Add with RS3, opcode == MADD.
   // Add RS2 and RS3 to RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_madd(insn_t insn)
   {
-    return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    std::cerr << "### [SPIKE] cvxif_cus_add_rs3_madd(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
+                                                  ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                  ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                  " /* X_NUM_RS == " << std::dec << x_num_rs <<
+                                                  " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+    return result;
   };
 
   // Computation semantics of CUS_ADD_RS3_MSUB: Custom Add with RS3, opcode == MSUB.
   // Subtract RS2 and RS3 from RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_msub(insn_t insn)
   {
-    return (reg_t) ((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) ((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    std::cerr << "### [SPIKE] cvxif_cus_add_rs3_msub(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
+                                                  ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                  ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                  " /* X_NUM_RS == " << std::dec << x_num_rs <<
+                                                  " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+    return result;
   };
 
   // Computation semantics of CUS_ADD_RS3_NMADD: Custom Add with RS3, opcode == NMADD.
   // Add RS2 and RS3 to RS1, then negate result bitwise.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_nmadd(insn_t insn)
   {
-    return (reg_t) ~((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) ~((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    std::cerr << "### [SPIKE] cvxif_cus_add_rs3_nmadd(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
+                                                    ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                    ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                    " /* X_NUM_RS == " << std::dec << x_num_rs <<
+                                                    " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+    return result;
   };
 
   // Semantics of CUS_ADD_RS3_NMSUB: Custom Add with RS3, opcode == NMSUB.
   // Subtract RS2 and RS3 from RS1, then negate result bitwise.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_nmsub(insn_t insn)
   {
-    return (reg_t) ~((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) ~((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    std::cerr << "### [SPIKE] cvxif_cus_add_rs3_nmsub(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
+                                                    ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                    ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                    " /* X_NUM_RS == " << std::dec << x_num_rs <<
+                                                    " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+    return result;
   };
 
   // Semantics of CUS_ADD_RS3_RTYPE: Custom Add with RS3, opcode == RTYPE (rd is implicitly a0).
   // Add RS2 and RS3 to RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_rtype(insn_t insn)
   {
-    return (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    std::cerr << "### [SPIKE] cvxif_cus_add_rs3_rtype(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
+                                                   ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                   ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                   " /* X_NUM_RS == " << std::dec << x_num_rs <<
+                                                   " */ ) = " << std::hex << result << " -> x10" << std::endl;
+    return result;
   };
-
-  // Compressed (16-bit) insns
-  #define CVXIF_CUS_CNOP_MASK  0xfffff003
-  #define CVXIF_CUS_CNOP_MATCH 0x0000e000
-  #define CVXIF_CUS_CADD_MASK  0xfffff003
-  #define CVXIF_CUS_CADD_MATCH 0xffffe003
 
   // Semantics of CUS_CNOP: Compressed CV-X-IF NOP.
   reg_t cvxif_cus_cnop(insn_t insn)
@@ -292,7 +313,7 @@ class cvxif_t : public cvxif_extn_t
   // Semantics of CUS_CADD: Compressed CV-X-IF ADD.
   reg_t cvxif_cus_cadd(insn_t insn)
   {
-    return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
+    return (reg_t) ((reg_t) RVC_RS1 + (reg_t) RVC_RS2);
   }
 
   // Extension constructor
@@ -422,15 +443,15 @@ class cvxif_t : public cvxif_extn_t
     ADD_INSN_TO_DECODER(0x7b, 0x7f, c3,                    c3);
 
     // Instructions ADD_RS3_*
-    ADD_INSN_TO_DECODER(CVXIF_CUS_ADD_RS3_MADD_MATCH,  CVXIF_CUS_ADD_RS3_ADDSUB_MASK, cvxif_32_cus_add_rs3_madd,  cvxif_32_cus_add_rs3_madd);
-    ADD_INSN_TO_DECODER(CVXIF_CUS_ADD_RS3_MSUB_MATCH,  CVXIF_CUS_ADD_RS3_ADDSUB_MASK, cvxif_32_cus_add_rs3_msub,  cvxif_32_cus_add_rs3_msub);
-    ADD_INSN_TO_DECODER(CVXIF_CUS_ADD_RS3_NMADD_MATCH, CVXIF_CUS_ADD_RS3_ADDSUB_MASK, cvxif_32_cus_add_rs3_nmadd, cvxif_32_cus_add_rs3_nmadd);
-    ADD_INSN_TO_DECODER(CVXIF_CUS_ADD_RS3_NMSUB_MATCH, CVXIF_CUS_ADD_RS3_ADDSUB_MASK, cvxif_32_cus_add_rs3_nmsub, cvxif_32_cus_add_rs3_nmsub);
-    ADD_INSN_TO_DECODER(CVXIF_CUS_ADD_RS3_RTYPE_MATCH, CVXIF_CUS_ADD_RS3_RTYPE_MASK,  cvxif_32_cus_add_rs3_rtype, cvxif_32_cus_add_rs3_rtype);
+    ADD_INSN_TO_DECODER(MATCH_CVXIF_CUS_ADD_RS3_MADD,  MASK_CVXIF_CUS_ADD_RS3_MADD,  cvxif_32_cus_add_rs3_madd,  cvxif_32_cus_add_rs3_madd);
+    ADD_INSN_TO_DECODER(MATCH_CVXIF_CUS_ADD_RS3_MSUB,  MASK_CVXIF_CUS_ADD_RS3_MSUB,  cvxif_32_cus_add_rs3_msub,  cvxif_32_cus_add_rs3_msub);
+    ADD_INSN_TO_DECODER(MATCH_CVXIF_CUS_ADD_RS3_NMADD, MASK_CVXIF_CUS_ADD_RS3_NMADD, cvxif_32_cus_add_rs3_nmadd, cvxif_32_cus_add_rs3_nmadd);
+    ADD_INSN_TO_DECODER(MATCH_CVXIF_CUS_ADD_RS3_NMSUB, MASK_CVXIF_CUS_ADD_RS3_NMSUB, cvxif_32_cus_add_rs3_nmsub, cvxif_32_cus_add_rs3_nmsub);
+    ADD_INSN_TO_DECODER(MATCH_CVXIF_CUS_ADD_RS3_RTYPE, MASK_CVXIF_CUS_ADD_RS3_RTYPE, cvxif_32_cus_add_rs3_rtype, cvxif_32_cus_add_rs3_rtype);
 
     // Compressed insns CNOP/CADD.
-    ADD_INSN_TO_DECODER(CVXIF_CUS_CNOP_MATCH,          CVXIF_CUS_CNOP_MASK,           cvxif_16_cus_cnop,          cvxif_16_cus_cnop);
-    ADD_INSN_TO_DECODER(CVXIF_CUS_CNOP_MATCH,          CVXIF_CUS_CNOP_MASK,           cvxif_16_cus_cadd,          cvxif_16_cus_cadd);
+    ADD_INSN_TO_DECODER(MATCH_CVXIF_CUS_CNOP,          MASK_CVXIF_CUS_CNOP,           cvxif_16_cus_cnop,          cvxif_16_cus_cnop);
+    ADD_INSN_TO_DECODER(MATCH_CVXIF_CUS_CADD,          MASK_CVXIF_CUS_CADD,           cvxif_16_cus_cadd,          cvxif_16_cus_cadd);
     return insns;
   }
 

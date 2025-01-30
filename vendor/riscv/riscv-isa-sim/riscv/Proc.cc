@@ -254,8 +254,21 @@ Processor::Processor(
 
   this->disassembler = new disassembler_t(this->isa);
 
+  // Extensions specified in the ISA string.
   for (auto e : this->isa->get_extensions()) {
-    register_extension(e.second);
+    if (e.second && e.second->name()) {
+      e.second->set_Proc(this);
+      // Xsomething custom ISA extensions have already been registered as 'something'.
+      // However, they may need a reset in Processor context to access the Yaml parameters.
+      if (e.second->name() != string("cvxif")) {
+        std::cerr << "### [SPIKE] Processor::Processor(): registering extension '" << e.second->name() << "' in Processor context..." << std::endl;
+        register_extension(e.second);
+      }
+      else {
+        std::cerr << "### [SPIKE] Processor::Processor(): explicitly resetting extension '" << e.second->name() << "' in Processor context..." << std::endl;
+        e.second->reset();
+      }
+    }
   }
 
   this->taken_trap = false;
@@ -268,6 +281,8 @@ Processor::Processor(
 
   this->csr_counters_injection =
       (this->params[base + "csr_counters_injection"]).a_bool;
+
+  // Initialize extensions specified in Yaml 'extensions:' entry.
   string extensions_str =
       (this->params[base + "extensions"]).a_string;
 
@@ -295,13 +310,15 @@ Processor::Processor(
 
   for (auto ext : registered_extensions_v) {
     if (ext.second) {
+      // Register the extension and reset it.
       extension_t *extension = find_extension(ext.first.c_str())();
+      std::cerr << "### [SPIKE] Registering Yaml-specified extension '" << extension->name() << "'..." << std::endl;
       extension->set_Proc(this);
-      // 'register_extension' internally calls 'reset()' on the extension.
-      this->register_extension(extension);
+      register_extension(extension);
     }
   }
 
+  std::cerr << "### [SPIKE] Calling Processor::reset() on hart " << std::dec << this->get_id() << "..." << std::endl;
   this->reset();
 }
 

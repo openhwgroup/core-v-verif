@@ -269,6 +269,12 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
            fprintf(stderr, "extensions must have unique names (got two named \"%s\"!)\n", x->name());
            abort();
          }
+         if (ext_str == "xcvxif") {
+          if (extension_table['F'] || extension_table['D']) {
+            bad_isa_string(str, "'Xcvxif' conflicts with 'F/D' extensions");
+          }
+          extension_table[EXT_XCVXIF] = true;
+         }
       }
     } else {
       bad_isa_string(str, ("unsupported extension: " + ext_str).c_str());
@@ -300,7 +306,7 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
   }
 
   if ((extension_table[EXT_ZCMP] || extension_table[EXT_ZCMT]) && extension_table[EXT_ZCD]) {
-    bad_isa_string(str, "Zcmp' and 'Zcmt' exensions are incompatible with 'Zcd' extension");
+    bad_isa_string(str, "Zcmp' and 'Zcmt' extensions are incompatible with 'Zcd' extension");
   }
 
   if ((extension_table[EXT_ZCF] || extension_table[EXT_ZCD] || extension_table[EXT_ZCB] ||

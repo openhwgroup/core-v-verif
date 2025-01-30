@@ -975,6 +975,16 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
     DEFINE_SFENCE_TYPE(hinval_gvma);
   }
 
+  if (isa->extension_enabled(EXT_XCVXIF)) {
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_madd);
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_msub);
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_nmadd);
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_nmsub);
+    // DEFINE_R3TYPE(cvxif_32_cus_add_rs3_rtype);
+    DISASM_INSN("cvxif_16_cus_cnop", cvxif_16_cus_cnop, 0, {&xrd, &rvc_rs2});
+    DISASM_INSN("cvxif_16_cus_cadd", cvxif_16_cus_cadd, 0, {&xrd, &rvc_rs2});
+  }
+
   if (isa->extension_enabled('F')) {
     DEFINE_FLOAD(flw)
     DEFINE_FSTORE(fsw)
