@@ -1857,7 +1857,8 @@ covergroup cg_sequential(string name,
                          bit ext_zbc_supported,
                          bit ext_zbs_supported,
                          bit ext_a_supported,
-                         bit ext_zcb_supported) with function sample (uvma_isacov_instr_c instr,
+                         bit ext_zcb_supported,
+                         bit ext_zifencei_supported) with function sample (uvma_isacov_instr_c instr,
                                                                  uvma_isacov_instr_c instr_prev,
                                                                  uvma_isacov_instr_c instr_prev2,
                                                                  uvma_isacov_instr_c instr_prev3,
@@ -2930,7 +2931,8 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                       .ext_zbc_supported(cfg.core_cfg.ext_zbc_supported),
                       .ext_zbs_supported(cfg.core_cfg.ext_zbs_supported),
                       .ext_a_supported(cfg.core_cfg.ext_a_supported),
-                      .ext_zcb_supported(cfg.core_cfg.ext_zcb_supported)
+                      .ext_zcb_supported(cfg.core_cfg.ext_zcb_supported),
+                      .ext_zifencei_supported(cfg.core_cfg.ext_zifencei_supported)
                       );
   end
 

@@ -40,7 +40,8 @@
                            BINV,BINVI,BEXT,BEXTI} with (!ext_zbs_supported); \
     ignore_bins IGN_ZCB = {C_LBU,C_LHU,C_LH,C_SB,C_SH, \
                            C_ZEXT_B,C_ZEXT_H,C_SEXT_B,C_SEXT_H, \
-                           C_NOT,C_MUL} with (!ext_zcb_supported);
+                           C_NOT,C_MUL} with (!ext_zcb_supported); \
+    ignore_bins IGN_FENCEI = {FENCE_I} with (!ext_zifencei_supported);
 
 
 `define ISACOV_CP_BITWISE(name, field, iff_exp) \
