@@ -258,16 +258,9 @@ Processor::Processor(
   for (auto e : this->isa->get_extensions()) {
     if (e.second && e.second->name()) {
       e.second->set_Proc(this);
-      // Xsomething custom ISA extensions have already been registered as 'something'.
-      // However, they may need a reset in Processor context to access the Yaml parameters.
-      if (e.second->name() != string("cvxif")) {
-        std::cerr << "### [SPIKE] Processor::Processor(): registering extension '" << e.second->name() << "' in Processor context..." << std::endl;
-        register_extension(e.second);
-      }
-      else {
-        std::cerr << "### [SPIKE] Processor::Processor(): explicitly resetting extension '" << e.second->name() << "' in Processor context..." << std::endl;
-        e.second->reset();
-      }
+      std::cerr << "### [SPIKE] Processor::Processor(): registering and resetting extension '" << e.second->name() << "' in Processor context..." << std::endl;
+      egister_extension(e.second);
+      e.second->reset();
     }
   }
 
