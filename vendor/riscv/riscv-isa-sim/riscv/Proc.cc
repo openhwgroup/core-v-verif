@@ -259,7 +259,7 @@ Processor::Processor(
     if (e.second && e.second->name()) {
       e.second->set_Proc(this);
       std::cerr << "### [SPIKE] Processor::Processor(): registering and resetting extension '" << e.second->name() << "' in Processor context..." << std::endl;
-      egister_extension(e.second);
+      register_extension(e.second);
       e.second->reset();
     }
   }
