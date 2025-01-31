@@ -57,8 +57,11 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
 
   disassembler = new disassembler_t(isa);
 
+  // Registration of ISA extensions happens in the subclass.
+#if 0
   for (auto e : isa->get_extensions())
     register_extension(e.second);
+#endif
 
   // Assume G=1, i.e., PMP granularity 8.
   set_pmp_granularity(1 << (1 + PMP_SHIFT));

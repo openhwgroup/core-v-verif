@@ -467,4 +467,4 @@ private:
   uint64_t x_num_rs = 0;
 };
 
-REGISTER_EXTENSION(cvxif, []() { return new cvxif_t; })
+REGISTER_EXTENSION(cvxif, []() { std::cerr << "### [SPIKE] registering extension 'cvxif' ==> create new instance!" << std::endl; return new cvxif_t; })

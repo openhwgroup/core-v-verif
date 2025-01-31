@@ -29,6 +29,7 @@ static void bad_priv_string(const char* priv)
 
 isa_parser_t::isa_parser_t(const char* str, const char *priv)
 {
+  std::cerr << "### [SPIKE] isa_parser_t::isa_parser_t BEGIN" << std::endl;
   isa_string = strtolower(str);
   const char* all_subsets = "mafdqchpv";
 
@@ -264,6 +265,7 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
       } else if (ext_str.size() == 1) {
         bad_isa_string(str, "single 'X' is not a proper name");
       } else if (ext_str != "xdummy") {
+         std::cerr << "### [SPIKE] isa_parser_t::isa_parser_t(): searching for extension '" << ext_str.substr(1) << "'..." << std::endl;
          extension_t* x = find_extension(ext_str.substr(1).c_str())();
          if (!extensions.insert(std::make_pair(x->name(), x)).second) {
            fprintf(stderr, "extensions must have unique names (got two named \"%s\"!)\n", x->name());
@@ -275,6 +277,7 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
           }
           extension_table[EXT_XCVXIF] = true;
          }
+         std::cerr << "### [SPIKE] isa_parser_t::isa_parser_t():    ... done!" << std::endl;
       }
     } else {
       bad_isa_string(str, ("unsupported extension: " + ext_str).c_str());
@@ -342,4 +345,5 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
     if (extension_table[ch])
       max_isa |= 1UL << (ch - 'A');
   }
+  std::cerr << "### [SPIKE] isa_parser_t::isa_parser_t END" << std::endl;
 }
