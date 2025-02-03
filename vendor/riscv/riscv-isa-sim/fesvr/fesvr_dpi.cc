@@ -44,7 +44,7 @@ public:
         uint64_t datum;
         uint8_t* buf = (uint8_t*) src;
         std::vector<uint8_t> mem;
-        for (int i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
             mem.push_back(buf[i]);
         }
         mems.insert(std::make_pair(taddr, mem));
@@ -63,7 +63,7 @@ private:
 // 0 if there are no more sections
 // 1 if there are more sections to load
 extern "C" char get_section (long long* address, long long* len) {
-    if (section_index < sections.size()) {
+    if (section_index < (int) sections.size()) {
       auto it = sections.begin();
       for( int i = 0; i < section_index; i++ , it++);
       *address = it->first;

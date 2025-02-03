@@ -254,8 +254,14 @@ Processor::Processor(
 
   this->disassembler = new disassembler_t(this->isa);
 
+  // Extensions specified in the ISA string.
   for (auto e : this->isa->get_extensions()) {
-    register_extension(e.second);
+    if (e.second && e.second->name()) {
+      e.second->set_Proc(this);
+      std::cerr << "### [SPIKE] Processor::Processor(): registering and resetting extension '" << e.second->name() << "' in Processor context..." << std::endl;
+      register_extension(e.second);
+      e.second->reset();
+    }
   }
 
   this->taken_trap = false;
@@ -268,6 +274,8 @@ Processor::Processor(
 
   this->csr_counters_injection =
       (this->params[base + "csr_counters_injection"]).a_bool;
+
+  // Initialize extensions specified in Yaml 'extensions:' entry.
   string extensions_str =
       (this->params[base + "extensions"]).a_string;
 
@@ -295,12 +303,15 @@ Processor::Processor(
 
   for (auto ext : registered_extensions_v) {
     if (ext.second) {
+      // Register the extension and reset it.
       extension_t *extension = find_extension(ext.first.c_str())();
-      this->register_extension(extension);
-      extension->reset();
+      std::cerr << "### [SPIKE] Registering Yaml-specified extension '" << extension->name() << "'..." << std::endl;
+      extension->set_Proc(this);
+      register_extension(extension);
     }
   }
 
+  std::cerr << "### [SPIKE] Calling Processor::reset() on hart " << std::dec << this->get_id() << "..." << std::endl;
   this->reset();
 }
 
@@ -569,7 +580,7 @@ void Processor::reset()
     uint64_t pmpregions_writable = this->params[base + "pmpregions_writable"].a_uint64_t;
     uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
 
-    for (int i = pmpregions_writable; i < pmpregions_max; i++) {
+    for (uint64_t i = pmpregions_writable; i < pmpregions_max; i++) {
         uint64_t csr_pmpaddr = CSR_PMPADDR0 + i;
         uint64_t csr_pmpcfg = CSR_PMPCFG0 + (i/4);
 

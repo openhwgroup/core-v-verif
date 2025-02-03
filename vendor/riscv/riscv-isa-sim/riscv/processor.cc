@@ -37,7 +37,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
   log_file(log_file), sout_(sout_.rdbuf()), halt_on_reset(halt_on_reset),
   in_wfi(false), check_triggers_icount(false),
   impl_table(256, false), extension_enable_table(isa->get_extension_table()),
-  last_pc(1), executions(1), TM(cfg->trigger_count), disassembler(nullptr)
+  last_pc(1), executions(1), disassembler(nullptr), TM(cfg->trigger_count)
 {
 
   VU.p = this;
@@ -57,8 +57,11 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
 
   disassembler = new disassembler_t(isa);
 
+  // Registration of ISA extensions happens in the subclass.
+#if 0
   for (auto e : isa->get_extensions())
     register_extension(e.second);
+#endif
 
   // Assume G=1, i.e., PMP granularity 8.
   set_pmp_granularity(1 << (1 + PMP_SHIFT));
@@ -566,9 +569,10 @@ void processor_t::reset()
     put_csr(CSR_PMPCFG0, PMP_R | PMP_W | PMP_X | PMP_NAPOT);
   }
 
+#if 0
   for (auto e : custom_extensions) // reset any extensions
     e.second->reset();
-
+#endif
   if (sim)
     sim->proc_reset(id);
 }

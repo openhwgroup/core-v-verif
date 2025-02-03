@@ -707,6 +707,7 @@ typedef struct packed {
    bit                          ext_zifencei_supported;
    bit                          ext_zicsr_supported;
    bit                          ext_zicntr_supported;
+   bit                          ext_xcvxif_supported;
 
    bit                          ext_cv32a60x_supported;
 

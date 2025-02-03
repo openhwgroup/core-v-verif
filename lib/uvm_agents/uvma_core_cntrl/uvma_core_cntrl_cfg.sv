@@ -67,6 +67,7 @@
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
    rand bit                      ext_zicntr_supported;
+   rand bit                      ext_xcvxif_supported;
 
    // Core specific extensions
    rand bit                      ext_cv32a60x_supported;
@@ -174,6 +175,7 @@
       `uvm_field_int(                          ext_zifencei_supported         , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zicsr_supported            , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zicntr_supported           , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_xcvxif_supported           , UVM_DEFAULT          )
       `uvm_field_int(                          ext_cv32a60x_supported         , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
@@ -792,6 +794,7 @@ function st_core_cntrl_cfg uvma_core_cntrl_cfg_c::to_struct();
     st.ext_zifencei_supported = ext_zifencei_supported;
     st.ext_zicsr_supported = ext_zicsr_supported;
     st.ext_zicntr_supported = ext_zicntr_supported;
+    st.ext_xcvxif_supported = ext_xcvxif_supported;
     st.ext_cv32a60x_supported = ext_cv32a60x_supported;
 
     st.mode_s_supported = mode_s_supported;
@@ -897,6 +900,7 @@ function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
     ext_zifencei_supported = st.ext_zifencei_supported;
     ext_zicsr_supported = st.ext_zicsr_supported;
     ext_zicntr_supported = st.ext_zicntr_supported;
+    ext_xcvxif_supported = st.ext_xcvxif_supported;
     ext_cv32a60x_supported = st.ext_cv32a60x_supported;
 
     mode_s_supported = st.mode_s_supported;

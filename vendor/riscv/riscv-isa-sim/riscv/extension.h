@@ -19,8 +19,11 @@ class extension_t
   virtual ~extension_t();
 
   void set_processor(processor_t* _p) { p = _p; }
+  void set_Proc(openhw::Processor* _proc) { proc = _proc; }
+  unsigned long long int get_Proc() { return (unsigned long long int) proc; }
  protected:
   processor_t* p;
+  openhw::Processor* proc = 0;  // Require explicit initialization.
 
   void illegal_instruction();
   void raise_interrupt();
