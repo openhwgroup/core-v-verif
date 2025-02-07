@@ -101,7 +101,7 @@ task uvma_obi_memory_vp_sig_writer_seq_c::vp_body(uvma_obi_memory_mon_trn_c mon_
 
          2: begin
             for (int unsigned ii=signature_start_address; ii<signature_end_address; ii += 4) begin
-               `uvm_info("VP_SIG_WRITER", "Dumping signature", UVM_HIGH/*NONE*/)
+               `uvm_info("VP_SIG_WRITER", "Dumping signature", UVM_HIGH)
                if (use_sig_file) begin
                   $fdisplay(sig_fd, "%x%x%x%x", cntxt.mem.read(ii+3),
                                                 cntxt.mem.read(ii+2),
@@ -112,7 +112,7 @@ task uvma_obi_memory_vp_sig_writer_seq_c::vp_body(uvma_obi_memory_mon_trn_c mon_
                   `uvm_info("VP_VSEQ", $sformatf("%x%x%x%x", cntxt.mem.read(ii+3),
                                                             cntxt.mem.read(ii+2),
                                                             cntxt.mem.read(ii+1),
-                                                            cntxt.mem.read(ii+0)), UVM_HIGH/*NONE*/)
+                                                            cntxt.mem.read(ii+0)), UVM_HIGH)
                end
             end
 
