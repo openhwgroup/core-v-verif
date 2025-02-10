@@ -39,7 +39,7 @@ module tb_top_verilator
             if($test$plusargs("verbose"))
                 $display("[TESTBENCH] %t: loading firmware %0s ...",
                          $time, firmware);
-            $readmemh(firmware, cv32e40p_tb_wrapper_i.ram_i.dp_ram_i.mem);
+            $readmemh(firmware, cv32e40p_core_tb_wrapper_i.ram_i.dp_ram_i.mem);
 
         end else begin
             $display("No firmware specified");
@@ -85,7 +85,7 @@ module tb_top_verilator
     end
 
     // wrapper for cv32e40p, the memory system and stdout peripheral
-    cv32e40p_tb_wrapper
+    cv32e40p_core_tb_wrapper
         #(.INSTR_RDATA_WIDTH (INSTR_RDATA_WIDTH),
           .RAM_ADDR_WIDTH    (RAM_ADDR_WIDTH),
           .BOOT_ADDR         (BOOT_ADDR),
@@ -94,7 +94,7 @@ module tb_top_verilator
           .ZFINX             (0),
           .DM_HALTADDRESS    (32'h1A110800)
          )
-    cv32e40p_tb_wrapper_i
+    cv32e40p_core_tb_wrapper_i
         (.clk_i          ( clk_i          ),
          .rst_ni         ( rst_ni         ),
          .fetch_enable_i ( fetch_enable_i ),

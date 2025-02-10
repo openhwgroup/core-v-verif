@@ -134,7 +134,8 @@ SIMV                    = ./simv
 # dsim is the Metrics Technologies SystemVerilog simulator  (https://metrics.ca/)
 DSIM                    = dsim
 DSIM_HOME               = /tools/Metrics/dsim
-DSIM_CMP_FLAGS          = +define+CORE_TB -timescale 1ns/1ps $(SV_CMP_FLAGS) -suppress MultiBlockWrite +define+CV32E40P_APU_TRACE
+DSIM_CMP_FLAGS          = +define+CORE_TB +define+CV32E40P_APU_TRACE +acc+b -timescale 1ns/1ps $(SV_CMP_FLAGS)
+DSIM_SUPPRESS           = -suppress MultiBlockWrite -suppress IneffectiveDynamicCast
 DSIM_RUN_FLAGS          =
 DSIM_UVM_ARGS           = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 DSIM_RESULTS           ?= $(PWD)/dsim_results
@@ -142,7 +143,6 @@ DSIM_WORK              ?= $(DSIM_RESULTS)/dsim_work
 DSIM_IMAGE              = dsim.out
 
 ifneq (${WAVES}, 0)
-  DSIM_CMP_FLAGS += +acc
   DSIM_DMP_FILE  ?= dsim.fst
   DSIM_RUN_FLAGS += -waves $(DSIM_DMP_FILE)
 endif
@@ -155,7 +155,8 @@ XRUN_DIR          = xcelium.d
 # verilator configuration
 VERILATOR           = verilator
 VERI_FLAGS         +=
-VERI_COMPILE_FLAGS += -Wno-BLKANDNBLK $(SV_CMP_FLAGS) # hope this doesn't hurt us in the long run
+VERI_COMPILE_FLAGS += $(SV_CMP_FLAGS)
+VERI_WARN_WAIVERS  ?= --Wno-lint --Wno-UNOPTFLAT --Wno-MODDUP --Wno-MULTIDRIVEN --Wno-COMBDLY --Wno-BLKANDNBLK
 VERI_TRACE         ?=
 VERI_OBJ_DIR       ?= cobj_dir
 #VERI_LOG_DIR       ?= cobj_dir/logs
@@ -276,9 +277,13 @@ mk_results:
 
 # Metrics dsim compile targets
 dsim-comp: mk_results CV_CORE_pkg tbsrc_pkg tbsrc
+	@echo "$(BANNER)"
+	@echo "* Compiling with Metrics DSIM"
+	@echo "$(BANNER)"
 		cd $(DSIM_RESULTS) && \
 		$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
+		$(DSIM_SUPPRESS) \
 		$(DSIM_UVM_ARGS) \
 		-f $(CV_CORE_MANIFEST) \
 		$(TBSRC_PKG) \
@@ -287,8 +292,12 @@ dsim-comp: mk_results CV_CORE_pkg tbsrc_pkg tbsrc
 		-genimage $(DSIM_IMAGE)
 
 dsim-comp-rtl-only: mk_results $(CV_CORE_PKG)
+	@echo "$(BANNER)"
+	@echo "* Compiling (only) with Metrics DSIM"
+	@echo "$(BANNER)"
 	$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
+		$(DSIM_SUPPRESS) \
 		-f $(CV_CORE_MANIFEST) \
 		-work $(DSIM_WORK) \
 		-genimage $(DSIM_IMAGE)
@@ -313,7 +322,7 @@ dsim-test: dsim-comp $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 		-work $(DSIM_WORK) \
 		$(DSIM_RUN_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
-		+firmware=$(VERI_CUSTOM)/$(TEST)/$(TEST).hex
+		+firmware=../../$(TEST_PROGRAM_RELPATH)/$(TEST)/$(TEST).hex
 
 # Metrics dsim cleanup
 .PHONY: dsim-clean
@@ -490,13 +499,13 @@ testbench_verilator: CV_CORE_pkg $(TBSRC_VERI) $(TBSRC_PKG)
 	@echo "$(BANNER)"
 	$(VERILATOR) --cc --sv --exe \
 		$(VERI_TRACE) \
-		--Wno-lint --Wno-UNOPTFLAT \
-		--Wno-MODDUP --top-module \
+		$(VERI_WARN_WAIVERS) \
+		--top-module \
 		tb_top_verilator $(TBSRC_VERI) \
 		-f $(CV_CORE_MANIFEST) \
 		$(CV_CORE_PKG)/bhv/$(CV_CORE_LC)_core_log.sv \
 		$(TBSRC_CORE)/tb_top_verilator.cpp --Mdir $(VERI_OBJ_DIR) \
-		-CFLAGS "-std=gnu++11 $(VERI_CFLAGS)" \
+		-CFLAGS "$(VERI_CFLAGS)" \
 		$(VERI_COMPILE_FLAGS)
 	$(MAKE) -C $(VERI_OBJ_DIR) -f Vtb_top_verilator.mk
 	mkdir -p $(SIM_RESULTS)
