@@ -108,7 +108,7 @@ task uvma_obi_memory_slv_seq_c::do_response(ref uvma_obi_memory_mon_trn_c mon_re
    bit  err_req;
    bit  err_siz;
 
-   `uvm_info("SLV_SEQ", $sformatf("mon_req.address before data_addr_dec remap: x%h", mon_req.address), UVM_HIGH/*NONE*/)
+   `uvm_info("SLV_SEQ", $sformatf("mon_req.address before data_addr_dec remap: x%h", mon_req.address), UVM_HIGH)
 
    // Check the virtual peripheral address hash table to see if transaction should be sent to a virtual peripheral
    if (vp_seq_table.exists(mon_req.address)) begin
@@ -119,9 +119,9 @@ task uvma_obi_memory_slv_seq_c::do_response(ref uvma_obi_memory_mon_trn_c mon_re
    // If we fell through, then handle the transaction locally
    `uvm_info("SLV_SEQ", $sformatf("VP not handled: x%h", mon_req.address), UVM_HIGH)
    err_req  = mon_req.err;
-   if (err_req) `uvm_info("SLV_SEQ", $sformatf("ERROR1: mon_req.err=%0b", mon_req.err), UVM_HIGH/*NONE*/)
+   if (err_req) `uvm_info("SLV_SEQ", $sformatf("ERROR1: mon_req.err=%0b", mon_req.err), UVM_HIGH)
    err_siz = 0;
-   if (err_siz) `uvm_info("SLV_SEQ", $sformatf("ERROR2: mon_req.address=%0h", mon_req.address), UVM_HIGH/*NONE*/)
+   if (err_siz) `uvm_info("SLV_SEQ", $sformatf("ERROR2: mon_req.address=%0h", mon_req.address), UVM_HIGH)
 
    if (!(err_req | err_siz)) begin
       do_mem_operation(mon_req);
