@@ -115,8 +115,7 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
       // Spike necessarily has Zicsr, because
       // Zicsr is implied by the privileged architecture
     } else if (ext_str == "zifencei") {
-      // For compatibility with version 2.0 of the base ISAs, we
-      // unconditionally include FENCE.I, so Zifencei adds nothing more.
+      extension_table[EXT_ZIFENCEI] = true;
     } else if (ext_str == "zihintpause") {
       // HINTs encoded in base-ISA instructions are always present.
     } else if (ext_str == "zihintntl") {
