@@ -186,7 +186,7 @@ TBSRC_TOP   := $(TBSRC_HOME)/core/tb_top.sv
 TBSRC_CORE  := $(TBSRC_HOME)/core
 TBSRC_PKG   := $(TBSRC_CORE)/tb_riscv/include/perturbation_defines.sv
 TBSRC       := $(TBSRC_CORE)/tb_top.sv \
-               $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
+               $(TBSRC_CORE)/cv32e40p_core_tb_wrapper.sv \
                $(TBSRC_CORE)/mm_ram.sv \
                $(TBSRC_CORE)/dp_ram.sv \
                $(TBSRC_CORE)/tb_riscv/riscv_random_stall.sv \
@@ -200,7 +200,7 @@ RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
 TBSRC_VERI  := $(TBSRC_CORE)/tb_top_verilator.sv \
-               $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
+               $(TBSRC_CORE)/cv32e40p_core_tb_wrapper.sv \
                $(TBSRC_CORE)/tb_riscv/riscv_rvalid_stall.sv \
                $(TBSRC_CORE)/tb_riscv/riscv_gnt_stall.sv \
                $(TBSRC_CORE)/mm_ram.sv \

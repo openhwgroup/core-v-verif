@@ -179,4 +179,4 @@ module cv32e40p_core_tb_wrapper
          .exit_valid_o   ( exit_valid_o                              ),
          .exit_value_o   ( exit_value_o                              ));
 
-endmodule // cv32e40p_tb_wrapper
+endmodule // cv32e40p_core_tb_wrapper
