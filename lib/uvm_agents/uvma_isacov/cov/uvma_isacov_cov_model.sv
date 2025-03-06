@@ -544,12 +544,7 @@ covergroup cg_div_special_results(
   }
 
   cp_div_arithmetic_overflow : coverpoint instr.rs1_value {
-    `ifdef UNSUPPORTED_WITH
-     ignore_bins IGN_OVERFLOW = cp_div_arithmetic_overflow iff (!check_overflow);
-     bins OFLOW = {32'h8000_0000} iff (instr.rs2_value == 32'hffff_ffff); //TODO
-    `else
      bins OFLOW = {32'h8000_0000} with (check_overflow) iff (instr.rs2_value == 32'hffff_ffff);
-    `endif
   }
 
 endgroup : cg_div_special_results
