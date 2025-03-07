@@ -308,6 +308,7 @@ Processor::Processor(
       std::cerr << "### [SPIKE] Registering Yaml-specified extension '" << extension->name() << "'..." << std::endl;
       extension->set_Proc(this);
       register_extension(extension);
+      extension->reset();
     }
   }
 
