@@ -1,0 +1,31 @@
+## ----------------------------------------------------------------------------
+##Copyright 2023 CEA*
+##*Commissariat a l'Energie Atomique et aux Energies Alternatives (CEA)
+##
+##Licensed under the Apache License, Version 2.0 (the "License");
+##you may not use this file except in compliance with the License.
+##You may obtain a copy of the License at
+##
+##    http://www.apache.org/licenses/LICENSE-2.0
+##
+##Unless required by applicable law or agreed to in writing, software
+##distributed under the License is distributed on an "AS IS" BASIS,
+##WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##See the License for the specific language governing permissions and
+##limitations under the License.
+##[END OF HEADER]
+## ----------------------------------------------------------------------------
+
+- tool: vcs
+  compile:
+    svlog_option: "-timescale=1ns/100ps -full64 -ntb_opts uvm-1.2 +incdir+$PROJECT_DIR/sv +incdir+$PROJECT_DIR/test +incdir+$PROJECT_DIR/rtl +incdir+$PROJECT_DIR/top +incdir+$PROJECT_DIR/test" 
+    svlog_source: "$DV_UVMA_AXI_PATH/src/uvma_axi_intf.sv $PROJECT_DIR/sv/dut_env_pkg.sv 
+                   $PROJECT_DIR/test/test_pkg.sv $PROJECT_DIR/top/top.sv"
+    svlog_flist : "$CORE_V_VERIF/lib/cv_dv_utils/uvm/Files.f 
+                   $CORE_V_VERIF/lib/uvm_libs/uvml_mem/uvml_mem_pkg.flist 
+                   $CORE_V_VERIF/lib/uvm_libs/uvml_trn/uvml_trn_pkg.flist 
+                   $CORE_V_VERIF/lib/uvm_libs/uvml_logs/uvml_logs_pkg.flist 
+                   $CORE_V_VERIF/lib/uvm_agents/uvma_axi5/src/uvma_axi_pkg.flist"
+    top_entity  :  "top"
+  sim:
+    sim_option  : "-full64 +ntb_random_seed_automatic +ntb_stop_on_constraint_solver_error=0" 
