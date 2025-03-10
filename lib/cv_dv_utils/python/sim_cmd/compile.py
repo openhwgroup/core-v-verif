@@ -20,7 +20,7 @@
 import argparse
 import os
 import yaml
-
+import re
 #import compile_cmd as cmp
 
 parser = argparse.ArgumentParser(description='compile options')
@@ -101,23 +101,34 @@ def get_cmd(yaml_file, outdir, opt, vopt_option, work):
         yaml_list = comp["yaml_lists"]
         yamls     = yaml_list.split()
         for y in yamls:
+            var   = y.split('{', 1)[1].split('}')[0]
+            path  = os.environ[var];
+            y = re.sub('\${.*}', path, y)
+            print(y)
             get_cmd(y, outdir, opt, vopt_option, work_lib)
   
 
   file_cmd = ""
   for f in files:
     file_cmd += " -f " + f
+  src_cmd = ""
+  for s in srcs:
+    src_cmd += " -sv " + s
 
   if tool == "questa":
-    compile_cmd = "{} {} {} {} -work {} -l {}/{}.log".format(cmd, opt, file_cmd, src_list, work_lib, outdir, yaml_file)
+    compile_cmd = "{} {} {} {} -work {} -l {}/{}.log".format(cmd, opt, file_cmd, src_cmd, work_lib, outdir, "log")
     vopt_cmd    = "{} {} -work {} {} -o opt".format(vopt_cmd, vopt_option, work_lib, top_entity)
   elif tool == "vcs":
     compile_cmd = "{} {} {} {} -l {}/{}.log".format(cmd, opt, file_cmd, src_list, outdir, yaml_file)
     vopt_cmd = ""
 
-  print(compile_cmd)
-  os.system(compile_cmd)
-  return vopt_cmd
+  print(yaml_file)
+  if src_list == "" and file_cmd == "":
+   return vopt_cmd
+  else:
+   print(compile_cmd)
+   os.system(compile_cmd)
+   return vopt_cmd
 ## get_cmd 
 
 if args.outdir==None:

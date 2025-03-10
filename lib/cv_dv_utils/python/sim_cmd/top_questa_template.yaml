@@ -20,7 +20,7 @@
 - tool: questa
   compile:
     work_lib    : "<name>"
-    svlog_option: "<vlog options to propgate>" 
+    svlog_option: "<vlog options to propgate from top to bottom>" 
     svlog_source: "list of sv sources (ex module.sv top.sv)" 
     yaml_lists  :  "list of yaml of other modules (ex module1_template.yaml, module2_template.yaml"
     vopt_option :  "<vopt options>"
