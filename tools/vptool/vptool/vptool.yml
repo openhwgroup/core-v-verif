@@ -128,11 +128,5 @@ cores:
       label: CV32E40X
       value: 4
     -
-      label: CV32A6_v0.1.0
+      label: CV32A60X
       value: 8
-    -
-      label: CV32A6-step2
-      value: 16
-    -
-      label: CV64A6-step3
-      value: 32
