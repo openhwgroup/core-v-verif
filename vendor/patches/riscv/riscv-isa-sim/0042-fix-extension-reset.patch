@@ -1,0 +1,12 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 5118e2887..ac3842e64 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -308,6 +308,7 @@ Processor::Processor(
+       std::cerr << "### [SPIKE] Registering Yaml-specified extension '" << extension->name() << "'..." << std::endl;
+       extension->set_Proc(this);
+       register_extension(extension);
++      extension->reset();
+     }
+   }
+ 
