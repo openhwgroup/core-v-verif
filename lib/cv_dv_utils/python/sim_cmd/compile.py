@@ -73,6 +73,7 @@ def get_cmd(yaml_file, outdir, opt, vopt_option, work):
         srcs      = src_list.split()
       else: 
         src_list  = ""
+        srcs      = ""
       ########################
       ## get file list ##
       ########################
@@ -108,9 +109,15 @@ def get_cmd(yaml_file, outdir, opt, vopt_option, work):
             get_cmd(y, outdir, opt, vopt_option, work_lib)
   
 
+  #####################################
+  ## extract file from file list   ####
+  #####################################
   file_cmd = ""
   for f in files:
     file_cmd += " -f " + f
+  #####################################
+  ## extract src from src list   ####
+  #####################################
   src_cmd = ""
   for s in srcs:
     src_cmd += " -sv " + s
@@ -123,7 +130,7 @@ def get_cmd(yaml_file, outdir, opt, vopt_option, work):
     vopt_cmd = ""
 
   print(yaml_file)
-  if src_list == "" and file_cmd == "":
+  if src_list == "" and file_cmd == "" and src_cmd == "":
    return vopt_cmd
   else:
    print(compile_cmd)
