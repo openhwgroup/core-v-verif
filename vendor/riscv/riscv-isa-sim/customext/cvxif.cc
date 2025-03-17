@@ -85,7 +85,7 @@ static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
     reg_t xd = cvxif->default_cvxif_16_##name(insn); \
     if (cvxif->do_writeback_p(insn)) \
       WRITE_RD(xd); \
-    return pc+2 ; \
+    return pc+2; \
   } \
   \
   reg_t default_cvxif_16_##name(insn_t insn) { \
@@ -101,7 +101,7 @@ static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
     reg_t xd = cvxif->default_cvxif_16_##name(insn); \
     if (cvxif->do_writeback_p(insn)) \
       WRITE_REG(10, xd); \
-    return pc+2 ; \
+    return pc+2; \
   } \
   \
   reg_t default_cvxif_16_##name(insn_t insn) { \
@@ -220,13 +220,13 @@ class cvxif_t : public cvxif_extn_t
       case FUNC3_1:
         switch(r_insn.funct7) {
           case Func7::CUS_ADD:
-            return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
+            return (reg_t) sext_xlen((sreg_t) RS1 + (sreg_t) RS2);
           case Func7::CUS_DOUBLE_RS1:
-            return (reg_t) ((reg_t) RS1 + (reg_t) RS1);
+            return (reg_t) sext_xlen((sreg_t) RS1 + (sreg_t) RS1);
           case Func7::CUS_DOUBLE_RS2:
-            return (reg_t) ((reg_t) RS2 + (reg_t) RS2);
+            return (reg_t) sext_xlen((sreg_t) RS2 + (sreg_t) RS2);
           case Func7::CUS_ADD_MULTI:
-            return (reg_t) ((reg_t) RS1 + (reg_t) RS2);
+            return (reg_t) sext_xlen((sreg_t) RS1 + (sreg_t) RS2);
           default:
             illegal_instruction();
         }
@@ -242,7 +242,7 @@ class cvxif_t : public cvxif_extn_t
   // Add RS2 and RS3 to RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_madd(insn_t insn)
   {
-    reg_t result = (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) sext_xlen((sreg_t) RS1 + (sreg_t) RS2 + (sreg_t) (x_num_rs == 3 ? RS3 : 0));
     std::cerr << "### [SPIKE] cvxif_cus_add_rs3_madd(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
                                                   ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
                                                   ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
@@ -255,7 +255,7 @@ class cvxif_t : public cvxif_extn_t
   // Subtract RS2 and RS3 from RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_msub(insn_t insn)
   {
-    reg_t result = (reg_t) ((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) sext_xlen((sreg_t) RS1 - (sreg_t) RS2 - (sreg_t) (x_num_rs == 3 ? RS3 : 0));
     std::cerr << "### [SPIKE] cvxif_cus_add_rs3_msub(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
                                                   ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
                                                   ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
@@ -268,7 +268,7 @@ class cvxif_t : public cvxif_extn_t
   // Add RS2 and RS3 to RS1, then negate result bitwise.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_nmadd(insn_t insn)
   {
-    reg_t result = (reg_t) ~((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) sext_xlen(~((sreg_t) RS1 + (sreg_t) RS2 + (sreg_t) (x_num_rs == 3 ? RS3 : 0)));
     std::cerr << "### [SPIKE] cvxif_cus_add_rs3_nmadd(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
                                                     ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
                                                     ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
@@ -281,7 +281,7 @@ class cvxif_t : public cvxif_extn_t
   // Subtract RS2 and RS3 from RS1, then negate result bitwise.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_nmsub(insn_t insn)
   {
-    reg_t result = (reg_t) ~((reg_t) RS1 - (reg_t) RS2 - (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) sext_xlen(~((sreg_t) RS1 - (sreg_t) RS2 - (sreg_t) (x_num_rs == 3 ? RS3 : 0)));
     std::cerr << "### [SPIKE] cvxif_cus_add_rs3_nmsub(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
                                                     ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
                                                     ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
@@ -294,7 +294,7 @@ class cvxif_t : public cvxif_extn_t
   // Add RS2 and RS3 to RS1.  Ignore RS3 if x_num_rs is not 3.
   reg_t cvxif_cus_add_rs3_rtype(insn_t insn)
   {
-    reg_t result = (reg_t) ((reg_t) RS1 + (reg_t) RS2 + (reg_t) (x_num_rs == 3 ? RS3 : 0));
+    reg_t result = (reg_t) sext_xlen((sreg_t) RS1 + (sreg_t) RS2 + (sreg_t) (x_num_rs == 3 ? RS3 : 0));
     std::cerr << "### [SPIKE] cvxif_cus_add_rs3_rtype(x" << std::dec << insn.rs1() << " = 0x" << std::hex << (reg_t) RS1 <<
                                                    ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
                                                    ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
@@ -316,7 +316,7 @@ class cvxif_t : public cvxif_extn_t
   // Semantics of CUS_CADD: Compressed CV-X-IF ADD.
   reg_t cvxif_cus_cadd(insn_t insn)
   {
-    reg_t result = (reg_t) ((reg_t) RVC_RS1 + (reg_t) RVC_RS2);
+    reg_t result = (reg_t) sext_xlen((sreg_t) RVC_RS1 + (sreg_t) RVC_RS2);
     std::cerr << "### [SPIKE] cvxif_cus_cadd(x" << std::dec << insn.rvc_rs1() << " = 0x" << std::hex << (reg_t) RVC_RS1 <<
                                           ", x" << std::dec << insn.rvc_rs2() << " = 0x" << std::hex << (reg_t) RVC_RS2 <<
                                           ") = 0x" << std::hex << result << " -> x10" << std::endl;
@@ -400,6 +400,9 @@ class cvxif_t : public cvxif_extn_t
   {
     std::cerr << "[Extension '" << name() << "'] reset()" << std::endl;
 
+    // Obtain the XLEN of the resetting processor.
+    xlen = p->get_xlen();
+
     // Attempt to extract Spike parameter 'cvxif_x_num_rs' which indicates the number
     // of source register ports supported in the current target.  Legal values are 2 and 3.
     // Try core-specific setting first; if not present, try global default.
@@ -465,6 +468,7 @@ class cvxif_t : public cvxif_extn_t
 private:
   // State variables go here.
   uint64_t x_num_rs = 0;
+  int xlen = 0;
 };
 
 REGISTER_EXTENSION(cvxif, []() { std::cerr << "### [SPIKE] registering extension 'cvxif' ==> create new instance!" << std::endl; return new cvxif_t; })
