@@ -156,6 +156,14 @@ covergroup cg_zb_rstype_ext(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} with (rs1_is_signed);
   }
 
+  cp_rs2_value: coverpoint instr.rs2_value_type {
+    ignore_bins POS_OFF = {POSITIVE} with (!rs2_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} with (!rs2_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} with (rs2_is_signed);
+  }
+
+  cross_rs1_rs2_value: cross cp_rs1_value, cp_rs2_value;
+
   cp_index: coverpoint instr.rs2[4:0] {
     bins INDEX[] = {[0:31]};
   }
@@ -165,6 +173,7 @@ covergroup cg_zb_rstype_ext(
     bins ONE  = {1};
   }
 
+  `ISACOV_CP_BITWISE(cp_rd_toggle,   instr.rd_value, 1)
   `ISACOV_CP_BITWISE(cp_rs1_toggle,  instr.rs1_value, 1)
   `ISACOV_CP_BITWISE(cp_rs2_toggle,  instr.rs2_value, 1)
 
@@ -209,6 +218,7 @@ covergroup cg_zb_itype_ext(
     bins ONE  = {1};
   }
 
+  `ISACOV_CP_BITWISE(cp_rd_toggle,  instr.rd_value, 1)
   `ISACOV_CP_BITWISE(cp_rs_toggle,  instr.rs1_value, 1)
 
 endgroup : cg_zb_itype_ext
@@ -970,6 +980,11 @@ covergroup cg_utype(string name) with function sample (uvma_isacov_instr_c instr
 
   cp_rd: coverpoint instr.rd;
 
+  cp_rd_value: coverpoint instr.rd_value_type {
+    ignore_bins POS_OFF = {POSITIVE};
+    ignore_bins NEG_OFF = {NEGATIVE};
+  }
+
   cp_immu_value: coverpoint instr.immu_value_type {
     ignore_bins POS_OFF = {POSITIVE};
     ignore_bins NEG_OFF = {NEGATIVE};
@@ -1387,6 +1402,12 @@ covergroup cg_cs(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} with (rs2_is_signed);
   }
 
+  cp_imm_value: coverpoint instr.c_imm_value_type {
+    ignore_bins POS_OFF = {POSITIVE} with (!imm_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} with (!imm_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} with (imm_is_signed);
+  }
+
   cp_c_rs1: coverpoint instr.c_rs1;
   cp_c_rs2: coverpoint instr.c_rs2;
 
@@ -1489,6 +1510,11 @@ covergroup cg_cb_andi(
     ignore_bins POS_OFF = {POSITIVE} with (!imm_is_signed);
     ignore_bins NEG_OFF = {NEGATIVE} with (!imm_is_signed);
     ignore_bins NON_ZERO_OFF = {NON_ZERO} with (imm_is_signed);
+  }
+
+  cp_shamt: coverpoint instr.get_field_imm() {
+    bins SHAMT[] = {[0:63]};
+    illegal_bins ILLEGAL_SHAMT[] = {[32:63]};                                  // MSB of the immediate value should be always zero
   }
 
   cp_c_rdrs1: coverpoint instr.c_rs1;
@@ -1612,6 +1638,12 @@ covergroup cg_zcb_sb(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} with (rs2_is_signed);
   }
 
+  cp_imm_value: coverpoint instr.c_imm_value_type {
+    ignore_bins POS_OFF = {POSITIVE} with (!imm_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} with (!imm_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} with (imm_is_signed);
+  }
+
   cp_c_rs1: coverpoint instr.c_rs1;
   cp_c_rs2: coverpoint instr.c_rs2;
 
@@ -1733,6 +1765,12 @@ covergroup cg_zcb_sh(
     ignore_bins POS_OFF = {POSITIVE} with (!rs2_is_signed);
     ignore_bins NEG_OFF = {NEGATIVE} with (!rs2_is_signed);
     ignore_bins NON_ZERO_OFF = {NON_ZERO} with (rs2_is_signed);
+  }
+
+  cp_imm_value: coverpoint instr.c_imm_value_type {
+    ignore_bins POS_OFF = {POSITIVE} with (!imm_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} with (!imm_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} with (imm_is_signed);
   }
 
   cp_c_rs1: coverpoint instr.c_rs1;
@@ -1912,6 +1950,11 @@ covergroup cg_sequential(string name,
   cp_csr_hazard: coverpoint(csr_hazard) {
     bins NO_CSR_HAZARD  = {0};
     bins CSR_HAZARD     = {1};
+  }
+
+  cp_is_csr_write: coverpoint(instr.is_csr_write) {
+    bins NOT_CSR_WRITE  = {0};
+    bins IS_CSR_WRITE   = {1};
   }
 
   cp_csr: coverpoint(instr_prev.csr) iff (instr_prev != null) {
