@@ -83,6 +83,12 @@ module uvma_cvxif_assert #(int unsigned X_HARTID_WIDTH = 32, int unsigned X_ID_W
       (cvxif_assert.issue_valid && !cvxif_assert.issue_ready) |=> !($fell(cvxif_assert.register.rs_valid[i]));
    endproperty
 
+   // Check that rs signals are stable when register_valid==1 and the corresponding bit in rs_valid is 1
+   property CVXIF_RS(i);
+      @(posedge cvxif_assert.clk) disable iff (!cvxif_assert.reset_n)
+      (cvxif_assert.issue_valid && !cvxif_assert.issue_ready && cvxif_assert.register.rs_valid[i]) |=> ($stable(cvxif_assert.register.rs[i]));
+   endproperty
+
 /********************************************** Assert Property ******************************************************/
 
    reject_issue_req                 : assert property (CVXIF_REJECT_ISSUE_REQ)
@@ -95,7 +101,10 @@ module uvma_cvxif_assert #(int unsigned X_HARTID_WIDTH = 32, int unsigned X_ID_W
        for (int i = 0; i < X_NUM_RS ; i++)  begin
           rs_valid           : assert property (CVXIF_RS_VALID(i))
                                   else `uvm_error (info_tag ,$sformatf("Violation: RS_VALID[%1d] IS NOT ALLOWED TO BACK TO 0 DURING A TRANSACTION", i));
-          cov_rs_valid       : cover property (CVXIF_RS_VALID(i)); 
+          cov_rs_valid       : cover property (CVXIF_RS_VALID(i));
+          rs                 : assert property (CVXIF_RS(i))
+                                  else `uvm_error (info_tag ,$sformatf("Violation: RS[%1d] ISN'T STABLE", i));
+          cov_rs             : cover property (CVXIF_RS(i));
        end
    end
 
