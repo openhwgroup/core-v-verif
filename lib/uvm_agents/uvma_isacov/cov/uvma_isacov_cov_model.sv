@@ -1916,6 +1916,7 @@ covergroup cg_sequential(string name,
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} with (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} with (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} with (!unaligned_access_supported);
+    illegal_bins ILL_FENCE_I = {FENCE_I_GROUP} with (!ext_zifencei_supported);
   }
 
   cp_group_pipe_x2:  coverpoint (instr_prev.group) iff (instr_prev != null) {
@@ -1924,6 +1925,7 @@ covergroup cg_sequential(string name,
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} with (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} with (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} with (!unaligned_access_supported);
+    illegal_bins ILL_FENCE_I = {FENCE_I_GROUP} with (!ext_zifencei_supported);
   }
 
   cp_group_pipe_x3: coverpoint (instr_prev2.group) iff (instr_prev2 != null) {
@@ -1932,6 +1934,7 @@ covergroup cg_sequential(string name,
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} with (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} with (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} with (!unaligned_access_supported);
+    illegal_bins ILL_FENCE_I = {FENCE_I_GROUP} with (!ext_zifencei_supported);
   }
 
   cp_group_pipe_x4: coverpoint (instr_prev3.group) iff (instr_prev3 != null) {
@@ -1940,6 +1943,7 @@ covergroup cg_sequential(string name,
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} with (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} with (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} with (!unaligned_access_supported);
+    illegal_bins ILL_FENCE_I = {FENCE_I_GROUP} with (!ext_zifencei_supported);
   }
 
   cp_gpr_raw_hazard: coverpoint(raw_hazard) {
