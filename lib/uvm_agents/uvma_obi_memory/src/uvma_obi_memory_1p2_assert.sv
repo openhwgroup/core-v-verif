@@ -126,30 +126,37 @@ module uvma_obi_memory_1p2_assert
   a_auser_stable: assert property(p_addr_signal_stable(auser))
   else
     `uvm_error(info_tag, "auser signal not stable in address phase")
+  c_auser_stable: cover property(p_addr_signal_stable(auser));
 
   a_wuser_stable: assert property(p_addr_signal_stable(wuser))
   else
     `uvm_error(info_tag, "wuser signal not stable in address phase")
+  c_wuser_stable: cover property(p_addr_signal_stable(wuser));
 
   a_aid_stable: assert property(p_addr_signal_stable(aid))
   else
     `uvm_error(info_tag, "aid signal not stable in address phase")
+  c_aid_stable: cover property(p_addr_signal_stable(aid));
 
   a_atop_stable: assert property(p_addr_signal_stable(atop))
   else
     `uvm_error(info_tag, "atop signal not stable in address phase")
+  c_atop_stable: cover property(p_addr_signal_stable(atop));
 
   a_memtype_stable: assert property(p_addr_signal_stable(memtype))
   else
     `uvm_error(info_tag, "memtype signal not stable in address phase")
+  c_memtype_stable: cover property(p_addr_signal_stable(memtype));
 
   a_prot_stable: assert property(p_addr_signal_stable(prot))
   else
     `uvm_error(info_tag, "prot signal not stable in address phase")
+  c_prot_stable: cover property(p_addr_signal_stable(prot));
 
   a_achk_stable: assert property(p_addr_signal_stable(achk))
   else
     `uvm_error(info_tag, "achk signal not stable in address phase")
+  c_achk_stable: cover property(p_addr_signal_stable(achk));
 
   // R-3.1.2 : Req may not deassewrt until the gnt is asserted
   property p_req_until_gnt;
@@ -158,6 +165,7 @@ module uvma_obi_memory_1p2_assert
   a_req_until_gnt : assert property(p_req_until_gnt)
   else
     `uvm_error(info_tag, "req may not deassert until gnt asserted")
+  c_req_until_gnt: cover property(p_req_until_gnt);
 
   // R-4.1.1 : R phase signals stable during respnose phase
   property p_r_signal_stable(sig);
@@ -167,26 +175,32 @@ module uvma_obi_memory_1p2_assert
   a_rdata_stable: assert property(p_r_signal_stable(rdata))
   else
     `uvm_error(info_tag, "rdata signal not stable in response phase")
+  c_rdata_stable: cover property(p_r_signal_stable(rdata));
 
   a_err_stable: assert property(p_r_signal_stable(err))
   else
     `uvm_error(info_tag, "err signal not stable in response phase")
+  c_err_stable: cover property(p_r_signal_stable(err));
 
   a_ruser_stable: assert property(p_r_signal_stable(ruser))
   else
     `uvm_error(info_tag, "ruser signal not stable in response phase")
+  c_ruser_stable: cover property(p_r_signal_stable(ruser));
 
   a_rid_stable: assert property(p_r_signal_stable(rid))
   else
     `uvm_error(info_tag, "rid signal not stable in response phase")
+  c_rid_stable: cover property(p_r_signal_stable(rid));
 
   a_exokay_stable: assert property(p_r_signal_stable(exokay))
   else
     `uvm_error(info_tag, "exokay signal not stable in response phase")
+  c_exokay_stable: cover property(p_r_signal_stable(exokay));
 
   a_rchk_stable: assert property(p_r_signal_stable(rchk))
   else
     `uvm_error(info_tag, "rchk signal not stable in response phase")
+  c_rchk_stable: cover property(p_r_signal_stable(rchk));
 
   // R-4.1.2 : Req may not deassewrt until the gnt is asserted
   property p_rvalid_until_rready;
@@ -237,6 +251,7 @@ module uvma_obi_memory_1p2_assert
   a_rid_follows_aid: assert property(p_rid_follows_aid)
   else
     `uvm_error(info_tag, $sformatf("rid of 0x%0x does not follow expected aid of 0x%0x", rid, aid_q[aid_rptr].aid))
+  c_rid_follows_aid : cover property(p_rid_follows_aid);
 
   // R-10.4 An atomic transaction must use a naturally aligned address
   property p_atomic_addr_aligned;
@@ -245,6 +260,7 @@ module uvma_obi_memory_1p2_assert
   a_atomic_addr_aligned : assert property(p_atomic_addr_aligned)
   else
     `uvm_error(info_tag, $sformatf("Atomic transaction does not use aligned address: 0x%08x", addr))
+  c_atomic_addr_aligned : cover property(p_atomic_addr_aligned);
 
   // R-11 If an exclusive transaction is executing another may not be emitted
   property p_one_atomic_trn;
@@ -253,6 +269,7 @@ module uvma_obi_memory_1p2_assert
   a_one_atomic_trn: assert property(p_one_atomic_trn)
   else
     `uvm_error(info_tag, "Detected multiple atomic transactions active at same time");
+  c_one_atomic_trn : cover property(p_one_atomic_trn);
 
   // R-12.3 EXOKAY may only be asserted in response to transactions that are LR or SC
   property p_exokay_lr_sc;
@@ -261,5 +278,6 @@ module uvma_obi_memory_1p2_assert
   a_exokay_lr_sc: assert property(p_exokay_lr_sc)
   else
     `uvm_error(info_tag, "EXOKAY may only asserted in response to an LR or SC transaction (signaled via atop)")
+  c_exokay_lr_sc : cover property(p_exokay_lr_sc);
 
 endmodule : uvma_obi_memory_1p2_assert
