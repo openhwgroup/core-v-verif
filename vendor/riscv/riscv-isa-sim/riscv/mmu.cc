@@ -6,7 +6,7 @@
 #include "simif.h"
 #include "processor.h"
 
-mmu_t::mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc)
+mmu_t::mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc, bool allow_unmapped)
  : sim(sim), proc(proc),
 #ifdef RISCV_ENABLE_DUAL_ENDIAN
   target_big_endian(endianness == endianness_big),
@@ -14,7 +14,8 @@ mmu_t::mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc)
   check_triggers_fetch(false),
   check_triggers_load(false),
   check_triggers_store(false),
-  matched_trigger(NULL)
+  matched_trigger(NULL),
+  allow_unmapped(allow_unmapped)
 {
 #ifndef RISCV_ENABLE_DUAL_ENDIAN
   assert(endianness == endianness_little);
@@ -89,8 +90,12 @@ tlb_entry_t mmu_t::fetch_slow_path(reg_t vaddr)
     if (auto host_addr = sim->addr_to_mem(paddr)) {
       result = refill_tlb(vaddr, paddr, host_addr, FETCH);
     } else {
-      if (!mmio_fetch(paddr, sizeof fetch_temp, (uint8_t*)&fetch_temp))
-        throw trap_instruction_access_fault(proc->state.v, vaddr, 0, 0);
+      if (!mmio_fetch(paddr, sizeof fetch_temp, (uint8_t*)&fetch_temp)) {
+        if (allow_unmapped)
+          memset((uint8_t*)&fetch_temp, 0, sizeof(fetch_temp));
+        else
+          throw trap_instruction_access_fault(proc->state.v, vaddr, 0, 0);
+      }
       result = {(char*)&fetch_temp - vaddr, paddr - vaddr};
     }
   } else {
@@ -221,7 +226,11 @@ void mmu_t::load_slow_path_intrapage(reg_t addr, reg_t len, uint8_t* bytes, uint
       refill_tlb(addr, paddr, host_addr, LOAD);
 
   } else if (!mmio_load(paddr, len, bytes)) {
-    throw trap_load_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
+    if (allow_unmapped)
+      // Read zeroes.
+      memset(bytes, len, 0);
+    else
+      throw trap_load_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
   }
 
   if (xlate_flags & RISCV_XLATE_LR) {
@@ -273,7 +282,8 @@ void mmu_t::store_slow_path_intrapage(reg_t addr, reg_t len, const uint8_t* byte
       else if (xlate_flags == 0)
         refill_tlb(addr, paddr, host_addr, STORE);
     } else if (!mmio_store(paddr, len, bytes)) {
-      throw trap_store_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
+      if (!allow_unmapped)
+        throw trap_store_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
     }
   }
 }

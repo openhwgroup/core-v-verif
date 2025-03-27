@@ -97,7 +97,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
   }
 #endif
 
-  debug_mmu = new mmu_t(this, cfg->endianness, NULL);
+  debug_mmu = new mmu_t(this, cfg->endianness, NULL, false); // false == Do not allow accesses to unmapped mem
 
   openhw::Param a_num_procs = params["/top/num_procs"];
   uint64_t num_procs = a_num_procs.a_uint64_t ? (a_num_procs).a_uint64_t : cfg->nprocs();

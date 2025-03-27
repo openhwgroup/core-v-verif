@@ -1,0 +1,136 @@
+diff --git a/vendor/patches/riscv/riscv-isa-sim/0043-allow-unmapped-mem-access.patch b/vendor/patches/riscv/riscv-isa-sim/0043-allow-unmapped-mem-access.patch
+new file mode 100644
+index 000000000..e69de29bb
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index ac3842e64..9f721fec8 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -1,4 +1,5 @@
+ #include "Proc.h"
++#include "mmu.h"
+ #include "disasm.h"
+ #include "extension.h"
+ #include "arith.h"
+@@ -272,6 +273,12 @@ Processor::Processor(
+   ((cfg_t *)cfg)->misaligned =
+       (this->params[base + "misaligned"]).a_bool;
+ 
++  // Allow/disallow memory accesses to unmapped addresses (single common flag
++  // for FETCH, LOAD, and STORE).
++  // If the param is missing in the Yaml file or there is no Yaml file at all,
++  // the value will be 'false' (default for missing Boolean param).
++  this->mmu->set_unmapped((this->params[base + "allow_unmapped_mem_access"]).a_bool);
++
+   this->csr_counters_injection =
+       (this->params[base + "csr_counters_injection"]).a_bool;
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/mmu.cc b/vendor/riscv/riscv-isa-sim/riscv/mmu.cc
+index be24f40f0..7132cf08c 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/mmu.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/mmu.cc
+@@ -6,7 +6,7 @@
+ #include "simif.h"
+ #include "processor.h"
+ 
+-mmu_t::mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc)
++mmu_t::mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc, bool allow_unmapped)
+  : sim(sim), proc(proc),
+ #ifdef RISCV_ENABLE_DUAL_ENDIAN
+   target_big_endian(endianness == endianness_big),
+@@ -14,7 +14,8 @@ mmu_t::mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc)
+   check_triggers_fetch(false),
+   check_triggers_load(false),
+   check_triggers_store(false),
+-  matched_trigger(NULL)
++  matched_trigger(NULL),
++  allow_unmapped(allow_unmapped)
+ {
+ #ifndef RISCV_ENABLE_DUAL_ENDIAN
+   assert(endianness == endianness_little);
+@@ -89,8 +90,12 @@ tlb_entry_t mmu_t::fetch_slow_path(reg_t vaddr)
+     if (auto host_addr = sim->addr_to_mem(paddr)) {
+       result = refill_tlb(vaddr, paddr, host_addr, FETCH);
+     } else {
+-      if (!mmio_fetch(paddr, sizeof fetch_temp, (uint8_t*)&fetch_temp))
+-        throw trap_instruction_access_fault(proc->state.v, vaddr, 0, 0);
++      if (!mmio_fetch(paddr, sizeof fetch_temp, (uint8_t*)&fetch_temp)) {
++        if (allow_unmapped)
++          memset((uint8_t*)&fetch_temp, 0, sizeof(fetch_temp));
++        else
++          throw trap_instruction_access_fault(proc->state.v, vaddr, 0, 0);
++      }
+       result = {(char*)&fetch_temp - vaddr, paddr - vaddr};
+     }
+   } else {
+@@ -221,7 +226,11 @@ void mmu_t::load_slow_path_intrapage(reg_t addr, reg_t len, uint8_t* bytes, uint
+       refill_tlb(addr, paddr, host_addr, LOAD);
+ 
+   } else if (!mmio_load(paddr, len, bytes)) {
+-    throw trap_load_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
++    if (allow_unmapped)
++      // Read zeroes.
++      memset(bytes, len, 0);
++    else
++      throw trap_load_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
+   }
+ 
+   if (xlate_flags & RISCV_XLATE_LR) {
+@@ -273,7 +282,8 @@ void mmu_t::store_slow_path_intrapage(reg_t addr, reg_t len, const uint8_t* byte
+       else if (xlate_flags == 0)
+         refill_tlb(addr, paddr, host_addr, STORE);
+     } else if (!mmio_store(paddr, len, bytes)) {
+-      throw trap_store_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
++      if (!allow_unmapped)
++        throw trap_store_access_fault((proc) ? proc->state.v : false, addr, 0, 0);
+     }
+   }
+ }
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/mmu.h b/vendor/riscv/riscv-isa-sim/riscv/mmu.h
+index ef054cf59..acf55a1b9 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/mmu.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/mmu.h
+@@ -47,14 +47,17 @@ class mmu_t
+ private:
+   std::map<reg_t, reg_t> alloc_cache;
+   std::vector<std::pair<reg_t, reg_t >> addr_tbl;
++  bool allow_unmapped;
+ public:
+-  mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc);
++  mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc, bool allow_unmapped);
+   ~mmu_t();
+ 
+ #define RISCV_XLATE_VIRT      (1U << 0)
+ #define RISCV_XLATE_VIRT_HLVX (1U << 1)
+ #define RISCV_XLATE_LR        (1U << 2)
+ 
++  void set_unmapped(bool allow) { allow_unmapped = allow; }
++
+   template<typename T>
+   T ALWAYS_INLINE load(reg_t addr, uint32_t xlate_flags = 0) {
+     target_endian<T> res;
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.cc b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+index 7d2919e85..ec5d822cc 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.cc
+@@ -53,7 +53,7 @@ processor_t::processor_t(const isa_parser_t *isa, const cfg_t *cfg,
+   parse_varch_string(cfg->varch());
+ 
+   register_base_instructions();
+-  mmu = new mmu_t(sim, cfg->endianness, this);
++  mmu = new mmu_t(sim, cfg->endianness, this, false);
+ 
+   disassembler = new disassembler_t(isa);
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.cc b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+index e9a9f244c..a3107ed7f 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+@@ -97,7 +97,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+   }
+ #endif
+ 
+-  debug_mmu = new mmu_t(this, cfg->endianness, NULL);
++  debug_mmu = new mmu_t(this, cfg->endianness, NULL, false); // false == Do not allow accesses to unmapped mem
+ 
+   openhw::Param a_num_procs = params["/top/num_procs"];
+   uint64_t num_procs = a_num_procs.a_uint64_t ? (a_num_procs).a_uint64_t : cfg->nprocs();

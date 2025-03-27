@@ -1,4 +1,5 @@
 #include "Proc.h"
+#include "mmu.h"
 #include "disasm.h"
 #include "extension.h"
 #include "arith.h"
@@ -271,6 +272,12 @@ Processor::Processor(
 
   ((cfg_t *)cfg)->misaligned =
       (this->params[base + "misaligned"]).a_bool;
+
+  // Allow/disallow memory accesses to unmapped addresses (single common flag
+  // for FETCH, LOAD, and STORE).
+  // If the param is missing in the Yaml file or there is no Yaml file at all,
+  // the value will be 'false' (default for missing Boolean param).
+  this->mmu->set_unmapped((this->params[base + "allow_unmapped_mem_access"]).a_bool);
 
   this->csr_counters_injection =
       (this->params[base + "csr_counters_injection"]).a_bool;
