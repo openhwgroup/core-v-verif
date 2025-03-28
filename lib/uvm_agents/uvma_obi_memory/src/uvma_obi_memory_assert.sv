@@ -118,18 +118,22 @@ module uvma_obi_memory_assert
   a_addr_stable: assert property(p_addr_signal_stable(addr))
   else
     `uvm_error(info_tag, "addr signal not stable in address phase")
+  c_addr_stable : cover property(p_addr_signal_stable(addr));
 
   a_we_stable: assert property(p_addr_signal_stable(we))
   else
     `uvm_error(info_tag, "we signal not stable in address phase")
+  c_we_stable : cover property(p_addr_signal_stable(we));
 
   a_wdata_stable: assert property(p_addr_signal_stable(wdata))
   else
     `uvm_error(info_tag, "wdata signal not stable in address phase")
+  c_wdata_stable : cover property(p_addr_signal_stable(wdata));
 
   a_be_stable: assert property(p_addr_signal_stable(be))
   else
     `uvm_error(info_tag, "be signal not stable in address phase")
+  c_be_stable : cover property(p_addr_signal_stable(be));
 
   // R-3.1.2 : Req may not deassewrt until the gnt is asserted
   property p_req_until_gnt;
@@ -138,6 +142,7 @@ module uvma_obi_memory_assert
   a_req_until_gnt : assert property(p_req_until_gnt)
   else
     `uvm_error(info_tag, "req may not deassert until gnt asserted")
+  c_req_until_gnt : cover property(p_req_until_gnt);
 
   // These next 2 are not strictly a functional requirement, but the testbench should simulate this
   // Therefore these are coded as a set of cover properties
@@ -175,6 +180,7 @@ module uvma_obi_memory_assert
   a_r_after_a : assert property(p_r_after_a)
   else
     `uvm_error(info_tag, "response phase started before address phase")
+  c_r_after_a : cover property (p_r_after_a);
 
   // R-7 At least one byte enable must be set
   property p_be_not_zero;
@@ -183,6 +189,7 @@ module uvma_obi_memory_assert
   a_be_not_zero : assert property(p_be_not_zero)
   else
     `uvm_error(info_tag, "be was zero during an address cycle")
+  c_be_not_zero : cover property (p_be_not_zero);
 
   // R-7 All ones must be contiguous in writes
   reg[3:0] contiguous_be[] = {
@@ -207,6 +214,7 @@ module uvma_obi_memory_assert
   a_be_contiguous : assert property(p_be_contiguous)
   else
     `uvm_error(info_tag, $sformatf("be of 0x%0x was not contiguous", $sampled(be)));
+  c_be_contiguous : cover property (p_be_contiguous);
 
   // R-8 Data address LSBs must be consistent with byte enables on writes
   function bit [1:0] get_addr_lsb(bit[3:0] be);
@@ -225,6 +233,7 @@ module uvma_obi_memory_assert
   a_addr_be_consistent: assert property(p_addr_be_consistent)
   else
     `uvm_error(info_tag, $sformatf("be of 0x%01x not consistent with addr 0x%08x", $sampled(be), $sampled(addr)));
+  c_addr_be_consistent : cover property (p_addr_be_consistent);
 
 
 endmodule : uvma_obi_memory_assert
