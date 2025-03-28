@@ -131,10 +131,27 @@ class memory_partitions_cfg #(int addr_width=32) extends uvm_component;
    // Get the random address within a provided region
    function [addr_width-1:0] get_addr_in_mem_region(int region);
        bit [addr_width-1:0] addr;
+       bit mismatch;
        if(region > m_num_partitions -1) begin
            `uvm_fatal("RWI_MEM_PARTITIONS", $sformatf("Regions %0d(d) is out of range", region ));
        end
-       addr                   = $urandom_range(m_high_addr[region], m_low_addr[region]);
+
+       mismatch = 1'b0;
+       for(int i = 0; i < addr_width; i++) begin
+         if(mismatch == 1'b1) begin
+           addr[addr_width - 1 -i] = $urandom_range(1, 0) ? 1'b1: 1'b0; 
+           if(addr >  m_high_addr[region]) addr[addr_width - 1 -i] = 1'b0;
+         end else begin
+           if(m_high_addr[region][addr_width - 1 -i] == m_low_addr[region][addr_width - 1 -i]) begin
+             addr[addr_width - 1 -i] = m_high_addr[region][addr_width - 1 -i];
+           end else begin
+             mismatch = 1'b1;
+             addr[addr_width - 1 -i] = $urandom_range(1, 0) ? 1'b1: 1'b0; 
+             if(addr >  m_high_addr[region]) addr[addr_width - 1 -i] = 1'b0;
+           end
+         end
+       end
+       `uvm_info("MEMORY PARTITION ADDR", $sformatf( "low %0x(x) high %0x(x) Addr %0x(x)", m_low_addr[region], m_high_addr[region], addr), UVM_LOW);
 
        get_addr_in_mem_region = addr;
    endfunction
@@ -186,6 +203,10 @@ class memory_partitions_cfg #(int addr_width=32) extends uvm_component;
         end else begin
             get_rd_wr = 1; // write
         end
+    endfunction
+
+    function bit[addr_width -1:0] get_random_addr();
+
     endfunction
 endclass : memory_partitions_cfg 
 

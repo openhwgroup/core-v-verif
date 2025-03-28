@@ -82,7 +82,7 @@ def run_test(test_name, seed, debug, batch, dump, coverage, stdout, outdir, vsim
    if batch == 1:
      batchstr = "-c"
    else:
-     batchstr = ""
+     batchstr = "-visualizer"
    
    if dump == 1:
      wlfstr  = "-wlf {}/{}_{}.wlf".format(outdir, test_name, seed)

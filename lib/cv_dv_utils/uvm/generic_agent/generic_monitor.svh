@@ -136,7 +136,7 @@ class generic_monitor #(type req_t, type rsp_t)extends uvm_monitor;
   // -------------------------------------------------------------------------
   // Collect responses
   // -------------------------------------------------------------------------
-  task collect_resps(uvm_phase phase);
+  virtual task collect_resps(uvm_phase phase);
     rsp_t    rsp;
 
     forever begin
