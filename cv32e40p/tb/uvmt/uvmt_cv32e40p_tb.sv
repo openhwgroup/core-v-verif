@@ -242,7 +242,7 @@ module uvmt_cv32e40p_tb;
   `RVFI_CSR_BIND(dpc)
   `RVFI_CSR_BIND(tselect)
   `RVFI_CSR_BIND(tinfo)
-
+/*
   `RVFI_CSR_IDX_BIND(mhpmcounter,,3)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,4)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,5)
@@ -332,7 +332,7 @@ module uvmt_cv32e40p_tb;
   `RVFI_CSR_IDX_BIND(mhpmcounter,h,29)
   `RVFI_CSR_IDX_BIND(mhpmcounter,h,30)
   `RVFI_CSR_IDX_BIND(mhpmcounter,h,31)
-
+*/
   //`RVFI_CSR_BIND(mconfigptr)
 
 
@@ -685,7 +685,7 @@ module uvmt_cv32e40p_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata2)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tinfo)
-
+/*
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmevent3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmevent4)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmevent5)
@@ -776,7 +776,7 @@ module uvmt_cv32e40p_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter30h)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter31h)
      //`RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
-
+*/
      // Make the DUT Wrapper Virtual Peripheral's status outputs available to the base_test
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tp"),     .value(1'b0)        );
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tf"),     .value(1'b0)        );

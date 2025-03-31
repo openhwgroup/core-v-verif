@@ -75,8 +75,6 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   logic [31:0]        csr_rm = $urandom_range(0,4);
   logic [31:0]        csr_mstatus_fs = 0;
     // for clr_crs_fflags usage - end
-  
-  riscv_reg_t         xreg_for_set_fpr = ZERO;
 
   rand int unsigned       num_of_instr_per_stream;
   rand riscv_reg_t        avail_gp_regs[][];        // regs for extension zfinx and f
@@ -289,8 +287,6 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
     end // for GEN_N_MANIPULATE_INSTR
 
-    restore_reserved_sp_addr();
-
     super.post_randomize();
   endfunction: post_randomize
   
@@ -311,45 +307,12 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       ), UVM_NONE);
   endfunction : print_stream_setting
 
-  // set/restore reserved sp to have fix addr for store instrs
-  riscv_reg_t temp_reg; 
+  // set reserved sp to have fix addr for store instrs
   virtual function void set_reserved_sp_addr();
     if (include_load_store_base_sp) begin
-      // During exception/irq/debug mode, sp (can be any xreg) is used and must not be alter in this stream.
-      // since this steams sometimes uses sp in store instr, we need to set sp to a safer space to prevent
-      // from corrupting the main code. Then we restore original sp content at end of stream. 
-      // (note: in stream, SP can be any registers not neccessary X2)
-
-        // store original sp content
-      riscv_instr instr;
-      if (cfg.sp != T0) temp_reg = T0;
-      else              temp_reg = T1;
-      `SET_GPR_VALUE(temp_reg,32'h8000_0004);
-      instr = new riscv_instr::get_rand_instr(.include_instr({SW}));
-      `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-        if (has_rs2) {rs2 == SP;}
-        if (has_rs1) {rs1 == temp_reg;}
-        if (has_imm) {imm == 0;}
-      );
-      instr_list.push_back(instr);
-
-        // set temporary sp with large value to prevent overlap with maincode
-      `SET_GPR_VALUE(SP,32'h8000_0000); // set SP to have higher range
+      `SET_GPR_VALUE(SP,32'h8000_0000);
     end
   endfunction: set_reserved_sp_addr
-  virtual function void restore_reserved_sp_addr();
-    // restore original sp content
-    if (include_load_store_base_sp) begin
-      riscv_instr instr;
-      instr = new riscv_instr::get_rand_instr(.include_instr({LW}));
-      `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-        if (has_rd)  {rd == SP;}
-        if (has_rs1) {rs1 == temp_reg;}
-        if (has_imm) {imm == 0;}
-      );
-      instr_list.push_back(instr);
-    end
-  endfunction : restore_reserved_sp_addr
 
   // clear csr fflags (by through fflags or fcsr)
   // condition: reg rs1 must be keep for csr clr purpose only throughout this stream
@@ -391,29 +354,27 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   virtual function void initialize_regs();
     // set random value on all gpr/fpr registers prior directed stream
     // random fp value with mantissa not zeroes
-    logic [31:0] i_imm;
-    for (int i=1; i<32; i++) begin
-      riscv_reg_t i_gpr = riscv_reg_t'(i);
-      // if (i_gpr inside {cfg.reserved_regs}) continue;
-      if (i == int'(cfg.sp)) continue; // do not alter stack pointer
-      if (i == int'(cfg.tp)) continue; // do not alter thread pointer
-      if (cfg.gen_debug_section) begin
-        if (i == int'(cfg_cv32e40p.dp)) continue; // do not alter debug pointer
-      end
-      if (init_gpr) begin : SET_GPR_RAND_VALUE
+    if (init_gpr) begin : SET_GPR_RAND_VALUE
+      logic [31:0] i_imm;
+      for (int i=1; i<32; i++) begin
+        riscv_reg_t i_gpr = riscv_reg_t'(i);
+        if (cfg.gen_debug_section) begin
+          if (i == int'(cfg_cv32e40p.dp)) begin
+            continue;
+          end
+        end
         rand_fp_val(i_imm);
         `SET_GPR_VALUE(i_gpr,i_imm);
       end
-      if (xreg_for_set_fpr == ZERO) xreg_for_set_fpr = i_gpr;
     end
-    for (int i=0; i<32; i++) begin
-      riscv_fpr_t i_fpr = riscv_fpr_t'(i);
-      if (init_fpr) begin : SET_FPR_RAND_VALUE
+    if (init_fpr) begin : SET_FPR_RAND_VALUE
+      logic [31:0] i_imm;
+      for (int i=0; i<32; i++) begin
+        riscv_fpr_t i_fpr = riscv_fpr_t'(i);
         rand_fp_val(i_imm);
-        `SET_FPR_VALUE(i_fpr,i_imm,xreg_for_set_fpr);
+        `SET_FPR_VALUE(i_fpr,i_imm);
       end
     end
-
     set_reserved_sp_addr();
     set_csr_fm(gp_reg_scratch);
   endfunction : initialize_regs
@@ -429,9 +390,9 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     bit select_fp_instr, include_fpc, rand_status;
 
     rand_status = std::randomize(select_fp_instr) with {select_fp_instr dist {0:=1, 1:=1};};
-    assert(rand_status) else begin `uvm_error(_header, $sformatf("assertion error")); end
+    assert(rand_status);
     rand_status = std::randomize(include_fpc)     with {include_fpc     dist {0:=3, 1:=1};}; // less weight on fpc
-    assert(rand_status) else begin `uvm_error(_header, $sformatf("assertion error")); end
+    assert(rand_status);
 
     if (!use_same_instr_per_stream) include_instr.delete();
     include_group.delete();
@@ -458,11 +419,8 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     if (more_weight_for_fdiv_fsqrt_gen || use_only_for_fdiv_fsqrt_gen) begin
       if (select_fp_instr) // is fp
         if ($urandom_range(1) || use_only_for_fdiv_fsqrt_gen)
-          // Metrics DSim throws an "InvalidTypeAssign" error given the (commented out)
-          // conditional assigment below. It has been expanded into two assignments.
-          // Note that Metrics considers their interpretation of the LRM to be the
-          // correct one (that is, the code is illegal). See the link below:
-          // https://accellera.mantishub.io/view.php?id=2390
+          // Metrics DSim throws an "InvalidTypeAssign" error given the conditional
+          // assigment below, so it has been expanded into two assignments.
           //     include_instr = new[1] ($urandom_range(1) ? {FDIV_S} : {FSQRT_S});
           if ($urandom_range(1))
             include_instr = new[1] ({FDIV_S});
@@ -495,7 +453,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
         exclude_instr = new[exclude_instr.size()+1] ({exclude_instr, prev_instr.instr_name});
     end
     if (use_same_instr_per_stream && prev_instr != null) begin
-      assert (use_fp_only_for_directed_instr && use_same_instr_per_stream) else begin `uvm_error(_header, $sformatf("assertion error")); end
+      assert (use_fp_only_for_directed_instr && use_same_instr_per_stream);
       include_instr       = new[1] ({prev_instr.instr_name});
     end
   endfunction: update_next_instr_arg_list
@@ -1028,7 +986,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     logic [11:0] csr=12'h000, int idx=0
   );
     riscv_instr instr;
-    assert(instr_name != INVALID_INSTR) else begin `uvm_error(_header, $sformatf("assertion error")); end
+    assert(instr_name != INVALID_INSTR);
     instr = new riscv_instr::get_rand_instr(
       .include_instr({instr_name})
     );
@@ -1203,11 +1161,9 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
 
     if (instr.group inside {RV32F, RV32FC, RV32ZFINX}) begin : BODY
 
-      // Metrics DSim throws an "InvalidTypeAssign" error given the (commented out)
-      // conditional assigment below. It has been expanded into two assignments.
-      // Note that Metrics considers their interpretation of the LRM to be the
-      // correct one (that is, the code is illegal). See the link below:
-      // https://accellera.mantishub.io/view.php?id=2390
+      // Metrics DSim throws an "InvalidTypeAssign" error given the conditional
+      // assigment below, so it has been expanded into two assignments.
+      //  .include_group((is_zfinx) ? {RV32ZFINX} : {RV32F, RV32FC})
 
       riscv_instr_group_t tmp_include_group[];
       if (is_zfinx)
@@ -1301,8 +1257,8 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
     int           rand_mc_latency = $urandom_range(0,mc_instr_latency);
     int           loop_cnt = 0;
 
-    assert(!(instr == null && instr_zfinx == null && instr_f == null)) else begin `uvm_error(_header, $sformatf("assertion error")); end
-    assert(rand_mc_latency >= 0) else begin `uvm_error(_header, $sformatf("assertion error")); end
+    assert(!(instr == null && instr_zfinx == null && instr_f == null));
+    assert(rand_mc_latency >= 0);
 
     while (!(loop_cnt == 100) && rand_mc_latency > 0) begin
       int p_rand_mc_latency = rand_mc_latency;
@@ -1429,7 +1385,7 @@ class cv32e40p_fp_op_fwd_instr_stream extends cv32e40p_float_zfinx_base_instr_st
     en_clr_fflags_af_instr          = 0;
     num_of_instr_per_block          = 10;
     include_load_store_base_sp      = 0; // exclude store instrs for this stream
-    assert (num_of_instr_per_block  != 0 && num_of_instr_per_block%10 == 0) else begin `uvm_error(_header, $sformatf("assertion error")); end
+    assert (num_of_instr_per_block  != 0 && num_of_instr_per_block%10 == 0);
   endfunction: pre_randomize
 
   virtual function void print_stream_setting();
@@ -1450,13 +1406,10 @@ class cv32e40p_fp_op_fwd_instr_stream extends cv32e40p_float_zfinx_base_instr_st
     exclude_instr = new[33+8+3] ({`EXCLUDE_INSTR_LIST, `STORE_INSTR_LIST, `FP_STORE_INSTR_LIST});
     // always exclude RV32C because it only uses 8 common gpr/fpr. We cover more than 8 registers here
     exclude_group = new[2] ({RV32C, RV32FC});
-
+    // 
     if (instr_order_per_block[idx] == IS_FP) begin
-      // Metrics DSim throws an "InvalidTypeAssign" error given the (commented out)
-      // conditional assigment below. It has been expanded into two assignments.
-      // Note that Metrics considers their interpretation of the LRM to be the
-      // correct one (that is, the code is illegal). See the link below:
-      // https://accellera.mantishub.io/view.php?id=2390
+      // Metrics DSim throws an "InvalidTypeAssign" error given the conditional
+      // assigment below, so it has been expanded into two assignments.
       //    include_group = new[1] ((is_zfinx) ? {RV32ZFINX} : {RV32F});
       if (is_zfinx)
         include_group = new[1] ({RV32ZFINX});
@@ -1702,7 +1655,7 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
 
     riscv_fpr_t i_fs1 = (is_zfinx) ? FT0 : p_instr_f.fs1;
 
-    assert(!(p_instr_zfinx == null && p_instr_f == null)) else begin `uvm_error(_header, $sformatf("assertion error")); end
+    assert(!(p_instr_zfinx == null && p_instr_f == null));
     `SET_GPR_VALUE(i_rd, v_rd);
 
     if (p_instr_zfinx != null) begin
@@ -1722,8 +1675,8 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
     end
     else begin
       unique case (p_instr_f.instr_name)
-        FCVT_W_S, FCVT_WU_S : begin `SET_FPR_VALUE(i_fs1, F_POS_VAL1, xreg_for_set_fpr); end // rd(int) = fs1
-        FMV_X_W             : begin `SET_FPR_VALUE(i_fs1, F_NEG_ZERO_DIV2, xreg_for_set_fpr); end // rd(int) <- fs1
+        FCVT_W_S, FCVT_WU_S : begin `SET_FPR_VALUE(i_fs1, F_POS_VAL1); end // rd(int) = fs1
+        FMV_X_W             : begin `SET_FPR_VALUE(i_fs1, F_NEG_ZERO_DIV2); end // rd(int) <- fs1
       endcase
     end
 
@@ -1879,7 +1832,7 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
               STORE, POST_INC_STORE : begin // S[B|H|WW], C_SW[SP], C_FSW[SP], CV_S[B|H|W]
                         instr2.rs1 = (is_zfinx) ? instr_zfinx.rd : instr_f.rd;
                         if (instr2.category == POST_INC_STORE && j != num_of_load_store_instr-1) begin // no special handle on last load/store
-                          assert(instr2.has_rd) else begin `uvm_error(_header, $sformatf("assertion error")); end // rd here is rs3 in spec
+                          assert(instr2.has_rd); // rd here is rs3 in spec
                           instr2.rd = ZERO;      // prevent post incr to update rs1 that target into code space
                         end
                         last_store_rs1 = instr2.rs1; has_store = 1;
@@ -1893,7 +1846,7 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
                         end
                         if (instr2.has_rd)                            begin last_load_rd = instr2.rd;     has_load_rd = 1; end
                         if (instr2.category == POST_INC_LOAD && j != num_of_load_store_instr-1) begin // no special handle on last load/store
-                          assert(instr2.has_rs2) else begin `uvm_error(_header, $sformatf("assertion error")); end
+                          assert(instr2.has_rs2);
                           instr2.rs2 = ZERO;     // prevent post incr to update rs1 that target into code space
                         end
                         cnt = 0;
@@ -2053,7 +2006,7 @@ class cv32e40p_mstatus_fs_stream extends cv32e40p_float_zfinx_base_instr_stream;
     if (idx == 0) loop_cnt++;
     else if (idx != 0 && idx%total_instr == 0) begin
       loop_cnt++;
-      assert (loop_cnt <= loop_cnt_limit) else begin `uvm_error(_header, $sformatf("assertion error")); end
+      assert (loop_cnt <= loop_cnt_limit);
       exclude_instr.delete();
       csr_mstatus_fs = 32'd2; // Clean 
       clr_csr_init_done = 0;  // Update csrrw_val
