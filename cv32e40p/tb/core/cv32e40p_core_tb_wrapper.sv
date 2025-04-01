@@ -15,7 +15,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-0.51
 
-module cv32e40p_tb_wrapper
+module cv32e40p_core_tb_wrapper
     #(parameter // Parameters used by TB
                 INSTR_RDATA_WIDTH = 32,
                 RAM_ADDR_WIDTH    = 20,
@@ -179,4 +179,4 @@ module cv32e40p_tb_wrapper
          .exit_valid_o   ( exit_valid_o                              ),
          .exit_value_o   ( exit_value_o                              ));
 
-endmodule // cv32e40p_tb_wrapper
+endmodule // cv32e40p_core_tb_wrapper
