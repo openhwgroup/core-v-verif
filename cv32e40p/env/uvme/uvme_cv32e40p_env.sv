@@ -317,7 +317,7 @@ endtask : run_phase
 function void uvme_cv32e40p_env_c::end_of_elaboration_phase(uvm_phase phase);
    super.end_of_elaboration_phase(phase);
 
-   `uvm_info("UVME_CV32E40P_ENV", $sformatf("Top-level environment configuration:\n%s", cfg.sprint()), UVM_LOW)
+   `uvm_info("UVME_CV32E40P_ENV", $sformatf("Top-level environment configuration:\n%s", cfg.sprint()), UVM_DEBUG)
 
 endfunction : end_of_elaboration_phase
 

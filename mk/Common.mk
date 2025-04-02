@@ -532,7 +532,6 @@ else
 		-nostartfiles \
 		$(TEST_FILES) \
 		-T $(LD_FILE) \
-		-Xlinker -Map=$*.map \
 		$(LD_LIBRARY) \
 		-lcv-verif
 endif
@@ -556,7 +555,6 @@ bsp:
 		RISCV_MARCH=$(RISCV_MARCH) \
 		RISCV_CC=$(RISCV_CC) \
 		RISCV_CFLAGS="$(RISCV_CFLAGS)" \
-		CFG_CFLAGS="$(CFG_CFLAGS)" \
 		all
 
 vars_bsp:

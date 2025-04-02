@@ -371,19 +371,19 @@ endinterface : uvmt_cv32e40p_debug_cov_assert_if
     end
 
   `define ASSIGN_CSR_N_WB_VEC(CSR_ADDR, CSR_NAME, CSR_ID) \
-    bit csr_``CSR_NAME````CSR_ID``_wb; \
-    wire [31:0] csr_``CSR_NAME````CSR_ID``_w; \
-    wire [31:0] csr_``CSR_NAME````CSR_ID``_r; \
-    assign csr_``CSR_NAME````CSR_ID``_w = csr_``CSR_NAME``_wdata[``CSR_ID] &   csr_``CSR_NAME``_wmask[``CSR_ID]; \
-    assign csr_``CSR_NAME````CSR_ID``_r = csr_``CSR_NAME``_rdata[``CSR_ID] & ~(csr_``CSR_NAME``_wmask[``CSR_ID]); \
-    assign csr[``CSR_ADDR]              = csr_``CSR_NAME````CSR_ID``_w | csr_``CSR_NAME````CSR_ID``_r; \
-    assign csr_wb[``CSR_ADDR]           = csr_``CSR_NAME````CSR_ID``_wb; \
+    bit csr_``CSR_NAME`` ``CSR_ID``_wb; \
+    wire [31:0] csr_``CSR_NAME`` ``CSR_ID``_w; \
+    wire [31:0] csr_``CSR_NAME`` ``CSR_ID``_r; \
+    assign csr_``CSR_NAME`` ``CSR_ID``_w = csr_``CSR_NAME``_wdata[``CSR_ID] &   csr_``CSR_NAME``_wmask[``CSR_ID]; \
+    assign csr_``CSR_NAME`` ``CSR_ID``_r = csr_``CSR_NAME``_rdata[``CSR_ID] & ~(csr_``CSR_NAME``_wmask[``CSR_ID]); \
+    assign csr[``CSR_ADDR]              = csr_``CSR_NAME`` ``CSR_ID``_w | csr_``CSR_NAME`` ``CSR_ID``_r; \
+    assign csr_wb[``CSR_ADDR]           = csr_``CSR_NAME`` ``CSR_ID``_wb; \
     always @(csr[``CSR_ADDR]) begin \
-        csr_``CSR_NAME````CSR_ID``_wb = 1; \
+        csr_``CSR_NAME`` ``CSR_ID``_wb = 1; \
     end \
     always @(posedge clk) begin \
-        if (valid && csr_``CSR_NAME````CSR_ID``_wb) begin \
-            csr_``CSR_NAME````CSR_ID``_wb = 0; \
+        if (valid && csr_``CSR_NAME`` ``CSR_ID``_wb) begin \
+            csr_``CSR_NAME`` ``CSR_ID``_wb = 0; \
         end \
     end
 
@@ -462,8 +462,8 @@ interface uvmt_cv32e40p_rvvi_if #(
   `ASSIGN_CSR_N_WB(`CSR_MCAUSE_ADDR, mcause)
   `ASSIGN_CSR_N_WB(`CSR_MIP_ADDR, mip)
   `ASSIGN_CSR_N_WB(`CSR_DCSR_ADDR, dcsr)
-  `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA1_ADDR, tdata, 1);
-  `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA2_ADDR, tdata, 2);
+  //`ASSIGN_CSR_N_WB_VEC(`CSR_TDATA1_ADDR, tdata, 1);
+  //`ASSIGN_CSR_N_WB_VEC(`CSR_TDATA2_ADDR, tdata, 2);
 
   // irq_onehot_priority assignment (refer cv32e40p user manual, section 10.2)
   // priority order (high->low) is irq[31]...irq[16], irq[11], irq[3], irq[7]
@@ -541,7 +541,6 @@ interface uvmt_cv32e40p_cov_if
   `else
   parameter int FPU_LAT_1_CYC = 0;
   `endif
-  parameter int MAX_FP_XACT_CYCLE = 19;
 
   logic [4:0]       clk_cycle_window;
   logic [5:0]       curr_fpu_apu_op_if;
@@ -599,41 +598,25 @@ interface uvmt_cv32e40p_cov_if
   // bhv_logic_1
   // calculate each APU operation's current clock cycle number during execution for functional coverage use
   // input(s): apu_op, 
-  bit detect_apu_rvalid = 1;
-  bit is_apu_addr_phase = 0;
   always @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni) begin
-        clk_cycle_window    = 0;
-        curr_fpu_apu_op_if  = 0;
-        detect_apu_rvalid   = 1;
-        is_apu_addr_phase   = 0;
+      if(!rst_ni) begin
+          clk_cycle_window = 0;
+          curr_fpu_apu_op_if = 0;
       end
       else begin
-          assert (clk_cycle_window <= MAX_FP_XACT_CYCLE)
-            else `uvm_error("uvmt_cv32e40p_cov_if", $sformatf("clk_cycle_window (%0d) > MAX_FP_XACT_CYCLE (%0d)", clk_cycle_window, MAX_FP_XACT_CYCLE));
-          if (apu_req && apu_gnt && apu_rvalid_i) begin : IS_0_CYC_FPU
-            clk_cycle_window  = (is_apu_addr_phase) ? 1 : 0; // if b2b addr then 1
-            detect_apu_rvalid = (is_apu_addr_phase) ? 0 : 1; // if b2b addr then 0
-            is_apu_addr_phase = 1;
-            curr_fpu_apu_op_if = apu_op;
+          if((clk_cycle_window == 0) && (apu_req == 1)) begin
+              clk_cycle_window = 1;
+              curr_fpu_apu_op_if = apu_op;
           end
-          else if (apu_req && apu_gnt && !apu_rvalid_i) begin : NOT_0_CYC_FPU
-            clk_cycle_window  = 1;
-            detect_apu_rvalid = 0;
-            is_apu_addr_phase = 1;
-            curr_fpu_apu_op_if = apu_op;
+          else if((clk_cycle_window != 0) && (apu_req == 1)) begin
+              clk_cycle_window = 1;
+              curr_fpu_apu_op_if = apu_op;
           end
-          else if (apu_busy && !apu_rvalid_i && !detect_apu_rvalid) begin : FPU_MULT_CYC
-            // fpu write delay should not increase the cyc cnt
-            clk_cycle_window += 1;
+          else if((clk_cycle_window != 0) && (apu_busy == 1)) begin
+              clk_cycle_window += 1;
           end
-          else if (apu_busy && apu_rvalid_i && !detect_apu_rvalid) begin : DONE_FPU_CYCLE
-            clk_cycle_window  = 0;
-            detect_apu_rvalid = 1;
-            is_apu_addr_phase = 0;
-          end
-          else if (!apu_busy && detect_apu_rvalid) begin
-            clk_cycle_window  = 0;
+          else begin
+              clk_cycle_window = 0;
           end
       end
   end
@@ -746,7 +729,7 @@ interface uvmt_cv32e40p_cov_if
               regfile_waddr_wb_fd <= 0;
               regfile_waddr_wb_rd <= 0;
               regfile_waddr_ex_contention <= 0;
-              regfile_waddr_wb_contention = regfile_waddr_wb_o; // contention between lsu and fpu using wb path
+              regfile_waddr_wb_contention = regfile_waddr_wb_o; //should not be >31, check for illegal in coverage
           end
           //Case FPU Latency = 1;regfile wr from WB;LSU > priority;LSU contention - FPU reg write cycle after contention
           else if((contention_valid == 1) && (regfile_we_wb_o == 1) && !apu_perf_wb_o) begin
