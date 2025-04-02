@@ -184,14 +184,14 @@ module uvma_obi_memory_assert
 
   // R-7 At least one byte enable must be set
   property p_be_not_zero;
-    req ##0 we |-> be != 0;
+    req |-> be != 0;
   endproperty : p_be_not_zero
   a_be_not_zero : assert property(p_be_not_zero)
   else
     `uvm_error(info_tag, "be was zero during an address cycle")
   c_be_not_zero : cover property (p_be_not_zero);
 
-  // R-7 All ones must be contiguous in writes
+  // R-7 All ones must be contiguous during the address phase
   reg[3:0] contiguous_be[] = {
     4'b0001,
     4'b0011,
@@ -209,7 +209,7 @@ module uvma_obi_memory_assert
     be_inside_contiguous_be = be inside {contiguous_be};
   end
   property p_be_contiguous;
-    req ##0 we |-> be_inside_contiguous_be;
+    req |-> be_inside_contiguous_be;
   endproperty : p_be_contiguous
   a_be_contiguous : assert property(p_be_contiguous)
   else
