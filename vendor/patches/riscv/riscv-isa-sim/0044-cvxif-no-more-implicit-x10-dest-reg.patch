@@ -1,0 +1,80 @@
+diff --git a/vendor/riscv/riscv-isa-sim/customext/cvxif.cc b/vendor/riscv/riscv-isa-sim/customext/cvxif.cc
+index 07df48546..4095cbfe1 100644
+--- a/vendor/riscv/riscv-isa-sim/customext/cvxif.cc
++++ b/vendor/riscv/riscv-isa-sim/customext/cvxif.cc
+@@ -247,7 +247,7 @@ class cvxif_t : public cvxif_extn_t
+                                                   ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                   ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                   " /* X_NUM_RS == " << std::dec << x_num_rs <<
+-                                                  " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
++                                                  " */ ) = 0x" << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+     return result;
+   };
+ 
+@@ -260,7 +260,7 @@ class cvxif_t : public cvxif_extn_t
+                                                   ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                   ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                   " /* X_NUM_RS == " << std::dec << x_num_rs <<
+-                                                  " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
++                                                  " */ ) = 0x" << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+     return result;
+   };
+ 
+@@ -273,7 +273,7 @@ class cvxif_t : public cvxif_extn_t
+                                                     ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                     ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                     " /* X_NUM_RS == " << std::dec << x_num_rs <<
+-                                                    " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
++                                                    " */ ) = 0x" << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+     return result;
+   };
+ 
+@@ -286,11 +286,11 @@ class cvxif_t : public cvxif_extn_t
+                                                     ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                     ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                     " /* X_NUM_RS == " << std::dec << x_num_rs <<
+-                                                    " */ ) = " << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
++                                                    " */ ) = 0x" << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+     return result;
+   };
+ 
+-  // Semantics of CUS_ADD_RS3_RTYPE: Custom Add with RS3, opcode == RTYPE (rd is implicitly a0).
++  // Semantics of CUS_ADD_RS3_RTYPE: Custom Add with RS3, opcode == RTYPE.
+   // Add RS2 and RS3 to RS1.  Ignore RS3 if x_num_rs is not 3.
+   reg_t cvxif_cus_add_rs3_rtype(insn_t insn)
+   {
+@@ -299,7 +299,7 @@ class cvxif_t : public cvxif_extn_t
+                                                    ", x" << std::dec << insn.rs2() << " = 0x" << std::hex << (reg_t) RS2 <<
+                                                    ", x" << std::dec << insn.rs3() << " = 0x" << std::hex << (reg_t) RS3 <<
+                                                    " /* X_NUM_RS == " << std::dec << x_num_rs <<
+-                                                   " */ ) = " << std::hex << result << " -> x10" << std::endl;
++                                                   " */ ) = 0x" << std::hex << result << " -> x" << std::dec << insn.rd() << std::endl;
+     return result;
+   };
+ 
+@@ -319,7 +319,7 @@ class cvxif_t : public cvxif_extn_t
+     reg_t result = (reg_t) sext_xlen((sreg_t) RVC_RS1 + (sreg_t) RVC_RS2);
+     std::cerr << "### [SPIKE] cvxif_cus_cadd(x" << std::dec << insn.rvc_rs1() << " = 0x" << std::hex << (reg_t) RVC_RS1 <<
+                                           ", x" << std::dec << insn.rvc_rs2() << " = 0x" << std::hex << (reg_t) RVC_RS2 <<
+-                                          ") = 0x" << std::hex << result << " -> x10" << std::endl;
++                                          ") = 0x" << std::hex << result << " -> x" << std::dec << insn.rvc_rd() << std::endl;
+     return result;
+   }
+ 
+@@ -390,11 +390,14 @@ class cvxif_t : public cvxif_extn_t
+   cvxif_insn_32(cus_add_rs3_msub)
+   cvxif_insn_32(cus_add_rs3_nmadd)
+   cvxif_insn_32(cus_add_rs3_nmsub)
+-  cvxif_insn_32_rd_implicit_a0(cus_add_rs3_rtype)
++  // FIXME FORNOW Consider CUS_ADD_RS3_RTYPE is an R-type insn.
++  // This may change if/when CVA6 supports selectable
++  // R-type/R4-type three-source-reg insns.
++  cvxif_insn_32(cus_add_rs3_rtype)
+ 
+   // CV-X-IF non-custom 16-bit insns
+   cvxif_insn_16(cus_cnop)
+-  cvxif_insn_16_rd_implicit_a0(cus_cadd)
++  cvxif_insn_16(cus_cadd)
+ 
+   void reset()
+   {
