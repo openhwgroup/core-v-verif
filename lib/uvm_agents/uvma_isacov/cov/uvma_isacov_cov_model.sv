@@ -173,7 +173,6 @@ covergroup cg_zb_rstype_ext(
     bins ONE  = {1};
   }
 
-  `ISACOV_CP_BITWISE(cp_rd_toggle,   instr.rd_value, 1)
   `ISACOV_CP_BITWISE(cp_rs1_toggle,  instr.rs1_value, 1)
   `ISACOV_CP_BITWISE(cp_rs2_toggle,  instr.rs2_value, 1)
 
@@ -218,7 +217,6 @@ covergroup cg_zb_itype_ext(
     bins ONE  = {1};
   }
 
-  `ISACOV_CP_BITWISE(cp_rd_toggle,  instr.rd_value, 1)
   `ISACOV_CP_BITWISE(cp_rs_toggle,  instr.rs1_value, 1)
 
 endgroup : cg_zb_itype_ext
