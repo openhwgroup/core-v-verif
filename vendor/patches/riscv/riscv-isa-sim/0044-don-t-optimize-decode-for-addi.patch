@@ -1,0 +1,112 @@
+From e3405ff0aa398dc7d2fb20e51aebef5d7bb88828 Mon Sep 17 00:00:00 2001
+From: Ayoub Jalali <ayoub.jalali@external.thalesgroup.com>
+Date: Sat, 5 Apr 2025 20:01:54 +0200
+Subject: [PATCH] SPIKE DISAM : Don't optimize decode for addi
+
+---
+ .../0044-don-t-optimize-decode-for-addi.patch | 65 +++++++++++++++++++
+ vendor/riscv/riscv-isa-sim/disasm/disasm.cc   |  5 --
+ 2 files changed, 65 insertions(+), 5 deletions(-)
+ create mode 100644 vendor/patches/riscv/riscv-isa-sim/0044-don-t-optimize-decode-for-addi.patch
+
+diff --git a/vendor/patches/riscv/riscv-isa-sim/0044-don-t-optimize-decode-for-addi.patch b/vendor/patches/riscv/riscv-isa-sim/0044-don-t-optimize-decode-for-addi.patch
+new file mode 100644
+index 000000000..38a4a3b6d
+--- /dev/null
++++ b/vendor/patches/riscv/riscv-isa-sim/0044-don-t-optimize-decode-for-addi.patch
+@@ -0,0 +1,65 @@
++From 0901b9eb20b98c8fca6c68a638c4ebf2d476935f Mon Sep 17 00:00:00 2001
++From: Ayoub Jalali <ayoub.jalali@external.thalesgroup.com>
++Date: Sat, 5 Apr 2025 20:01:54 +0200
++Subject: [PATCH] SPIKE DISAM : Don't optimize decode for addi
++
++---
++ .../0001-don-t-optimize-decode-for-addi.patch | 26 +++++++++++++++++++
++ vendor/riscv/riscv-isa-sim/disasm/disasm.cc   |  4 ---
++ 2 files changed, 26 insertions(+), 4 deletions(-)
++ create mode 100644 vendor/patches/riscv/riscv-isa-sim/0001-don-t-optimize-decode-for-addi.patch
++
++diff --git a/vendor/patches/riscv/riscv-isa-sim/0001-don-t-optimize-decode-for-addi.patch b/vendor/patches/riscv/riscv-isa-sim/0001-don-t-optimize-decode-for-addi.patch
++new file mode 100644
++index 000000000..9a03ec2d0
++--- /dev/null
+++++ b/vendor/patches/riscv/riscv-isa-sim/0001-don-t-optimize-decode-for-addi.patch
++@@ -0,0 +1,26 @@
+++From 01e618a887d260472e58aba69103f60acdf51cc8 Mon Sep 17 00:00:00 2001
+++From: Ayoub Jalali <ayoub.jalali@external.thalesgroup.com>
+++Date: Sat, 5 Apr 2025 20:01:54 +0200
+++Subject: [PATCH] SPIKE DISAM : Don't optimize decode for addi
+++
+++---
+++ vendor/riscv/riscv-isa-sim/disasm/disasm.cc | 3 ---
+++ 1 file changed, 3 deletions(-)
+++
+++diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+++index f0cdc7e08..a7a297205 100644
+++--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+++@@ -822,9 +822,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+++   add_insn(new disasm_insn_t("jalr", match_jalr | match_rd_ra, mask_jalr | mask_rd | mask_imm, {&xrs1}));
+++   DEFINE_ITYPE(jalr);
+++ 
+++-  add_noarg_insn(this, "nop", match_addi, mask_addi | mask_rd | mask_rs1 | mask_imm);
+++-  DEFINE_I0TYPE("li", addi);
+++-  DEFINE_I1TYPE("mv", addi);
+++   DEFINE_ITYPE(addi);
+++   DEFINE_ITYPE(slti);
+++   add_insn(new disasm_insn_t("seqz", match_sltiu | (1 << imm_shift), mask_sltiu | mask_imm, {&xrd, &xrs1}));
+++-- 
+++2.43.5
+++
++diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++index f0cdc7e08..41fa7317a 100644
++--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++@@ -817,14 +817,10 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
++   DEFINE_LTYPE(lui);
++   DEFINE_LTYPE(auipc);
++ 
++-  add_insn(new disasm_insn_t("ret", match_jalr | match_rs1_ra, mask_jalr | mask_rd | mask_rs1 | mask_imm, {}));
++   DEFINE_I2TYPE("jr", jalr);
++   add_insn(new disasm_insn_t("jalr", match_jalr | match_rd_ra, mask_jalr | mask_rd | mask_imm, {&xrs1}));
++   DEFINE_ITYPE(jalr);
++ 
++-  add_noarg_insn(this, "nop", match_addi, mask_addi | mask_rd | mask_rs1 | mask_imm);
++-  DEFINE_I0TYPE("li", addi);
++-  DEFINE_I1TYPE("mv", addi);
++   DEFINE_ITYPE(addi);
++   DEFINE_ITYPE(slti);
++   add_insn(new disasm_insn_t("seqz", match_sltiu | (1 << imm_shift), mask_sltiu | mask_imm, {&xrd, &xrs1}));
++-- 
++2.43.5
++
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+index f0cdc7e08..8ab0d6663 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+@@ -817,14 +817,10 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+   DEFINE_LTYPE(lui);
+   DEFINE_LTYPE(auipc);
+ 
+-  add_insn(new disasm_insn_t("ret", match_jalr | match_rs1_ra, mask_jalr | mask_rd | mask_rs1 | mask_imm, {}));
+   DEFINE_I2TYPE("jr", jalr);
+   add_insn(new disasm_insn_t("jalr", match_jalr | match_rd_ra, mask_jalr | mask_rd | mask_imm, {&xrs1}));
+   DEFINE_ITYPE(jalr);
+ 
+-  add_noarg_insn(this, "nop", match_addi, mask_addi | mask_rd | mask_rs1 | mask_imm);
+-  DEFINE_I0TYPE("li", addi);
+-  DEFINE_I1TYPE("mv", addi);
+   DEFINE_ITYPE(addi);
+   DEFINE_ITYPE(slti);
+   add_insn(new disasm_insn_t("seqz", match_sltiu | (1 << imm_shift), mask_sltiu | mask_imm, {&xrd, &xrs1}));
+@@ -1262,7 +1258,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+   // ext-c
+   if (isa->extension_enabled(EXT_ZCA)) {
+     DISASM_INSN("c.ebreak", c_add, mask_rd | mask_rvc_rs2, {});
+-    add_insn(new disasm_insn_t("ret", match_c_jr | match_rd_ra, mask_c_jr | mask_rd | mask_rvc_imm, {}));
+     DISASM_INSN("c.jr", c_jr, mask_rvc_imm, {&rvc_rs1});
+     DISASM_INSN("c.jalr", c_jalr, mask_rvc_imm, {&rvc_rs1});
+     DISASM_INSN("c.nop", c_addi, mask_rd | mask_rvc_imm, {});
+-- 
+2.43.5
+
