@@ -803,7 +803,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
     DEFINE_XAMO(sc_d)
   }
 
-  add_insn(new disasm_insn_t("j", match_jal, mask_jal | mask_rd, {&jump_target}));
   add_insn(new disasm_insn_t("jal", match_jal | match_rd_ra, mask_jal | mask_rd, {&jump_target}));
   add_insn(new disasm_insn_t("jal", match_jal, mask_jal, {&xrd, &jump_target}));
 
@@ -817,7 +816,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
   DEFINE_LTYPE(lui);
   DEFINE_LTYPE(auipc);
 
-  DEFINE_I2TYPE("jr", jalr);
   add_insn(new disasm_insn_t("jalr", match_jalr | match_rd_ra, mask_jalr | mask_rd | mask_imm, {&xrs1}));
   DEFINE_ITYPE(jalr);
 
