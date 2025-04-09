@@ -1022,7 +1022,8 @@ covergroup cg_csrtype(
     string name,
     bit[CSR_MASK_WL-1:0] cfg_illegal_csr,
     bit reg_crosses_enabled,
-    bit reg_hazards_enabled
+    bit reg_hazards_enabled,
+    bit is_csr_write
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1033,6 +1034,7 @@ covergroup cg_csrtype(
   cp_rd: coverpoint instr.rd;
   cp_csr: coverpoint instr.csr {
     bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
+    ignore_bins ONLY_READ_CSR[] = {[USTATUS:MCONFIGPTR]} with ((cfg_illegal_csr[item] == 0) && (item[11:10] == 2'b11)) iff (is_csr_write);
   }
 
   cp_rd_rs1_hazard: coverpoint instr.rd {
@@ -1048,7 +1050,8 @@ endgroup : cg_csrtype
 covergroup cg_csritype(
     string name,
     bit[CSR_MASK_WL-1:0] cfg_illegal_csr,
-    bit reg_crosses_enabled
+    bit reg_crosses_enabled,
+    bit is_csr_write
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1058,6 +1061,7 @@ covergroup cg_csritype(
   cp_rd: coverpoint instr.rd;
   cp_csr: coverpoint instr.csr {
     bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
+    ignore_bins ONLY_READ_CSR[] = {[USTATUS:MCONFIGPTR]} with ((cfg_illegal_csr[item] == 0) && (item[11:10] == 2'b11)) iff (is_csr_write);
   }
   `ISACOV_CP_BITWISE_4_0(cp_uimm_toggle, instr.rs1, 1)
 endgroup : cg_csritype
@@ -2625,19 +2629,25 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
     if (cfg.core_cfg.ext_zicsr_supported) begin
       rv32zicsr_csrrw_cg  = new("rv32zicsr_csrrw_cg", cfg.core_cfg.unsupported_csr_mask,
                                 .reg_crosses_enabled(cfg.reg_crosses_enabled),
-                                .reg_hazards_enabled(cfg.reg_hazards_enabled));
+                                .reg_hazards_enabled(cfg.reg_hazards_enabled),
+                                .is_csr_write(1));
       rv32zicsr_csrrs_cg  = new("rv32zicsr_csrrs_cg", cfg.core_cfg.unsupported_csr_mask,
                                 .reg_crosses_enabled(cfg.reg_crosses_enabled),
-                                .reg_hazards_enabled(cfg.reg_hazards_enabled));
+                                .reg_hazards_enabled(cfg.reg_hazards_enabled),
+                                .is_csr_write(0));
       rv32zicsr_csrrc_cg  = new("rv32zicsr_csrrc_cg", cfg.core_cfg.unsupported_csr_mask,
                                 .reg_crosses_enabled(cfg.reg_crosses_enabled),
-                                .reg_hazards_enabled(cfg.reg_hazards_enabled));
+                                .reg_hazards_enabled(cfg.reg_hazards_enabled),
+                                .is_csr_write(0));
       rv32zicsr_csrrwi_cg = new("rv32zicsr_csrrwi_cg", cfg.core_cfg.unsupported_csr_mask,
-                                .reg_crosses_enabled(cfg.reg_crosses_enabled));
+                                .reg_crosses_enabled(cfg.reg_crosses_enabled),
+                                .is_csr_write(1));
       rv32zicsr_csrrsi_cg = new("rv32zicsr_csrrsi_cg", cfg.core_cfg.unsupported_csr_mask,
-                                .reg_crosses_enabled(cfg.reg_crosses_enabled));
+                                .reg_crosses_enabled(cfg.reg_crosses_enabled),
+                                .is_csr_write(0));
       rv32zicsr_csrrci_cg = new("rv32zicsr_csrrci_cg", cfg.core_cfg.unsupported_csr_mask,
-                                .reg_crosses_enabled(cfg.reg_crosses_enabled));
+                                .reg_crosses_enabled(cfg.reg_crosses_enabled),
+                                .is_csr_write(0));
     end
 
     // ----------------------------------------------------------------------------------------
