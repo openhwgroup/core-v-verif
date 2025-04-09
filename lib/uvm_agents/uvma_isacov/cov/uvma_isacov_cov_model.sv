@@ -38,7 +38,10 @@ covergroup cg_zb_rstype(
     bit reg_crosses_enabled,
     bit reg_hazards_enabled,
     bit rs_is_signed,
-    bit rd_is_signed
+    bit rd_is_signed,
+    bit enable_toggle_zexth,
+    bit enable_toggle_count,
+    bit enable_toggle
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -70,7 +73,9 @@ covergroup cg_zb_rstype(
   }
 
   `ISACOV_CP_BITWISE(cp_rs_toggle, instr.rs1_value, 1)
-  `ISACOV_CP_BITWISE(cp_rd_toggle,  instr.rd_value,  1)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF(cp_rd_toggle,      instr.rd_value,  enable_toggle)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF_5_0(cp_rd_toggle_count,  instr.rd_value,  enable_toggle_count)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF_15_0(cp_rd_toggle_zexth,  instr.rd_value,  enable_toggle_zexth)
 
 endgroup : cg_zb_rstype
 
@@ -1017,7 +1022,8 @@ covergroup cg_csrtype(
     string name,
     bit[CSR_MASK_WL-1:0] cfg_illegal_csr,
     bit reg_crosses_enabled,
-    bit reg_hazards_enabled
+    bit reg_hazards_enabled,
+    bit is_csr_write
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1028,6 +1034,7 @@ covergroup cg_csrtype(
   cp_rd: coverpoint instr.rd;
   cp_csr: coverpoint instr.csr {
     bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
+    ignore_bins ONLY_READ_CSR[] = {[USTATUS:MCONFIGPTR]} with ((cfg_illegal_csr[item] == 0) && (item[11:10] == 2'b11)) iff (is_csr_write);
   }
 
   cp_rd_rs1_hazard: coverpoint instr.rd {
@@ -1043,7 +1050,8 @@ endgroup : cg_csrtype
 covergroup cg_csritype(
     string name,
     bit[CSR_MASK_WL-1:0] cfg_illegal_csr,
-    bit reg_crosses_enabled
+    bit reg_crosses_enabled,
+    bit is_csr_write
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1053,6 +1061,7 @@ covergroup cg_csritype(
   cp_rd: coverpoint instr.rd;
   cp_csr: coverpoint instr.csr {
     bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
+    ignore_bins ONLY_READ_CSR[] = {[USTATUS:MCONFIGPTR]} with ((cfg_illegal_csr[item] == 0) && (item[11:10] == 2'b11)) iff (is_csr_write);
   }
   `ISACOV_CP_BITWISE_4_0(cp_uimm_toggle, instr.rs1, 1)
 endgroup : cg_csritype
@@ -1344,7 +1353,8 @@ covergroup cg_cl(
     bit reg_crosses_enabled,
     bit reg_hazards_enabled,
     bit rs1_is_signed,
-    bit imm_is_signed
+    bit imm_is_signed,
+    bit unaligned_access_supported
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1371,7 +1381,8 @@ covergroup cg_cl(
     bins RD[] = {[0:7]} iff (instr.c_rd == instr.c_rs1);
   }
 
-  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF(cp_rs1_toggle_aligned, instr.rs1_value, unaligned_access_supported)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF_31_2(cp_rs1_toggle_unaligned, instr.rs1_value, !unaligned_access_supported)
   `ISACOV_CP_BITWISE_4_0(cp_imm_toggle, instr.get_field_imm(), 1)
 
 endgroup : cg_cl
@@ -1381,7 +1392,8 @@ covergroup cg_cs(
     bit reg_crosses_enabled,
     bit rs1_is_signed,
     bit rs2_is_signed,
-    bit imm_is_signed
+    bit imm_is_signed,
+    bit unaligned_access_supported
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1410,7 +1422,8 @@ covergroup cg_cs(
   cp_c_rs2: coverpoint instr.c_rs2;
 
   `ISACOV_CP_BITWISE(cp_rs2_toggle, instr.rs2_value, 1)
-  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF(cp_rs1_toggle_aligned, instr.rs1_value, unaligned_access_supported)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF_31_2(cp_rs1_toggle_unaligned, instr.rs1_value, !unaligned_access_supported)
   `ISACOV_CP_BITWISE_4_0(cp_imm_toggle, instr.get_field_imm(), 1)
 
 endgroup : cg_cs
@@ -1657,7 +1670,8 @@ covergroup cg_zcb_lhu(
     bit reg_hazards_enabled,
     bit rs1_is_signed,
     bit rd_is_signed,
-    bit imm_is_signed
+    bit imm_is_signed,
+    bit unaligned_access_supported
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1690,7 +1704,8 @@ covergroup cg_zcb_lhu(
     bins RD[] = {[0:7]} iff (instr.c_rd == instr.c_rs1);
   }
 
-  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF(cp_rs1_toggle_aligned, instr.rs1_value, unaligned_access_supported)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF_31_1(cp_rs1_toggle_unaligned, instr.rs1_value, !unaligned_access_supported)
   `ISACOV_CP_BITWISE_LHU(cp_rd_toggle, instr.rd_value, 1)
   `ISACOV_CP_BITWISE_0_0(cp_imm_toggle, instr.get_field_imm(), 1)
 
@@ -1702,7 +1717,8 @@ covergroup cg_zcb_lh(
     bit reg_hazards_enabled,
     bit rs1_is_signed,
     bit rd_is_signed,
-    bit imm_is_signed
+    bit imm_is_signed,
+    bit unaligned_access_supported
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1735,7 +1751,8 @@ covergroup cg_zcb_lh(
     bins RD[] = {[0:7]} iff (instr.c_rd == instr.c_rs1);
   }
 
-  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF(cp_rs1_toggle_aligned, instr.rs1_value, unaligned_access_supported)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF_31_1(cp_rs1_toggle_unaligned, instr.rs1_value, !unaligned_access_supported)
   `ISACOV_CP_BITWISE(cp_rd_toggle, instr.rd_value, 1)
   `ISACOV_CP_BITWISE_0_0(cp_imm_toggle, instr.get_field_imm(), 1)
 
@@ -1746,7 +1763,8 @@ covergroup cg_zcb_sh(
     bit reg_crosses_enabled,
     bit rs1_is_signed,
     bit rs2_is_signed,
-    bit imm_is_signed
+    bit imm_is_signed,
+    bit unaligned_access_supported
 ) with function sample (
     uvma_isacov_instr_c instr
 );
@@ -1775,7 +1793,8 @@ covergroup cg_zcb_sh(
   cp_c_rs2: coverpoint instr.c_rs2;
 
   `ISACOV_CP_BITWISE(cp_rs2_toggle, instr.rs2_value, 1)
-  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF(cp_rs1_toggle_aligned, instr.rs1_value, unaligned_access_supported)
+  `ISACOV_CP_BITWISE_PER_BIN_IFF_31_1(cp_rs1_toggle_unaligned, instr.rs1_value, !unaligned_access_supported)
   `ISACOV_CP_BITWISE_0_0(cp_imm_toggle, instr.get_field_imm(), 1)
 
 endgroup : cg_zcb_sh
@@ -2546,13 +2565,15 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
                               .reg_hazards_enabled(cfg.reg_hazards_enabled),
                               .rs1_is_signed(rs1_is_signed[C_LW]),
-                              .imm_is_signed(c_imm_is_signed[C_LW]));
+                              .imm_is_signed(c_imm_is_signed[C_LW]),
+                              .unaligned_access_supported(cfg.core_cfg.unaligned_access_supported));
 
       rv32c_sw_cg       = new("rv32c_sw_cg",
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
                               .rs1_is_signed(rs1_is_signed[C_SW]),
                               .rs2_is_signed(rs2_is_signed[C_SW]),
-                              .imm_is_signed(c_imm_is_signed[C_SW]));
+                              .imm_is_signed(c_imm_is_signed[C_SW]),
+                              .unaligned_access_supported(cfg.core_cfg.unaligned_access_supported));
 
       rv32c_and_cg      = new("rv32c_and_cg",
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
@@ -2608,19 +2629,25 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
     if (cfg.core_cfg.ext_zicsr_supported) begin
       rv32zicsr_csrrw_cg  = new("rv32zicsr_csrrw_cg", cfg.core_cfg.unsupported_csr_mask,
                                 .reg_crosses_enabled(cfg.reg_crosses_enabled),
-                                .reg_hazards_enabled(cfg.reg_hazards_enabled));
+                                .reg_hazards_enabled(cfg.reg_hazards_enabled),
+                                .is_csr_write(1));
       rv32zicsr_csrrs_cg  = new("rv32zicsr_csrrs_cg", cfg.core_cfg.unsupported_csr_mask,
                                 .reg_crosses_enabled(cfg.reg_crosses_enabled),
-                                .reg_hazards_enabled(cfg.reg_hazards_enabled));
+                                .reg_hazards_enabled(cfg.reg_hazards_enabled),
+                                .is_csr_write(0));
       rv32zicsr_csrrc_cg  = new("rv32zicsr_csrrc_cg", cfg.core_cfg.unsupported_csr_mask,
                                 .reg_crosses_enabled(cfg.reg_crosses_enabled),
-                                .reg_hazards_enabled(cfg.reg_hazards_enabled));
+                                .reg_hazards_enabled(cfg.reg_hazards_enabled),
+                                .is_csr_write(0));
       rv32zicsr_csrrwi_cg = new("rv32zicsr_csrrwi_cg", cfg.core_cfg.unsupported_csr_mask,
-                                .reg_crosses_enabled(cfg.reg_crosses_enabled));
+                                .reg_crosses_enabled(cfg.reg_crosses_enabled),
+                                .is_csr_write(1));
       rv32zicsr_csrrsi_cg = new("rv32zicsr_csrrsi_cg", cfg.core_cfg.unsupported_csr_mask,
-                                .reg_crosses_enabled(cfg.reg_crosses_enabled));
+                                .reg_crosses_enabled(cfg.reg_crosses_enabled),
+                                .is_csr_write(0));
       rv32zicsr_csrrci_cg = new("rv32zicsr_csrrci_cg", cfg.core_cfg.unsupported_csr_mask,
-                                .reg_crosses_enabled(cfg.reg_crosses_enabled));
+                                .reg_crosses_enabled(cfg.reg_crosses_enabled),
+                                .is_csr_write(0));
     end
 
     // ----------------------------------------------------------------------------------------
@@ -2733,17 +2760,26 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                            .reg_crosses_enabled(cfg.reg_crosses_enabled),
                            .reg_hazards_enabled(cfg.reg_hazards_enabled),
                            .rs_is_signed(rs1_is_signed[CLZ]),
-                           .rd_is_signed(rd_is_signed[CLZ]));
+                           .rd_is_signed(rd_is_signed[CLZ]),
+                            .enable_toggle_zexth(0),
+                            .enable_toggle_count(1),
+                            .enable_toggle(0));
       rv32zbb_ctz_cg = new("rv32zbb_ctz_cg",
                            .reg_crosses_enabled(cfg.reg_crosses_enabled),
                            .reg_hazards_enabled(cfg.reg_hazards_enabled),
                            .rs_is_signed(rs1_is_signed[CTZ]),
-                           .rd_is_signed(rd_is_signed[CTZ]));
+                           .rd_is_signed(rd_is_signed[CTZ]),
+                            .enable_toggle_zexth(0),
+                            .enable_toggle_count(1),
+                            .enable_toggle(0));
       rv32zbb_cpop_cg = new("rv32zbb_cpop_cg",
                             .reg_crosses_enabled(cfg.reg_crosses_enabled),
                             .reg_hazards_enabled(cfg.reg_hazards_enabled),
                             .rs_is_signed(rs1_is_signed[CPOP]),
-                            .rd_is_signed(rd_is_signed[CPOP]));
+                            .rd_is_signed(rd_is_signed[CPOP]),
+                            .enable_toggle_zexth(0),
+                            .enable_toggle_count(1),
+                            .enable_toggle(0));
       rv32zbb_min_cg = new("rv32zbb_min_cg",
                            .reg_crosses_enabled(cfg.reg_crosses_enabled),
                            .reg_hazards_enabled(cfg.reg_hazards_enabled),
@@ -2772,17 +2808,26 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
                               .reg_hazards_enabled(cfg.reg_hazards_enabled),
                               .rs_is_signed(rs1_is_signed[SEXT_B]),
-                              .rd_is_signed(rd_is_signed[SEXT_B]));
+                              .rd_is_signed(rd_is_signed[SEXT_B]),
+                              .enable_toggle_zexth(0),
+                              .enable_toggle_count(0),
+                              .enable_toggle(1));
       rv32zbb_sext_h_cg = new("rv32zbb_sext_h_cg",
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
                               .reg_hazards_enabled(cfg.reg_hazards_enabled),
                               .rs_is_signed(rs1_is_signed[SEXT_H]),
-                              .rd_is_signed(rd_is_signed[SEXT_H]));
+                              .rd_is_signed(rd_is_signed[SEXT_H]),
+                              .enable_toggle_zexth(0),
+                              .enable_toggle_count(0),
+                              .enable_toggle(1));
       rv32zbb_zext_h_cg = new("rv32zbb_zext_h_cg",
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
                               .reg_hazards_enabled(cfg.reg_hazards_enabled),
                               .rs_is_signed(rs1_is_signed[ZEXT_H]),
-                              .rd_is_signed(rd_is_signed[ZEXT_H]));
+                              .rd_is_signed(rd_is_signed[ZEXT_H]),
+                              .enable_toggle_zexth(1),
+                              .enable_toggle_count(0),
+                              .enable_toggle(0));
       rv32zbb_andn_cg = new("rv32zbb_andn_cg",
                             .reg_crosses_enabled(cfg.reg_crosses_enabled),
                             .reg_hazards_enabled(cfg.reg_hazards_enabled),
@@ -2822,12 +2867,18 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                             .reg_crosses_enabled(cfg.reg_crosses_enabled),
                             .reg_hazards_enabled(cfg.reg_hazards_enabled),
                             .rs_is_signed(rs1_is_signed[REV8]),
-                            .rd_is_signed(rd_is_signed[REV8]));
+                            .rd_is_signed(rd_is_signed[REV8]),
+                            .enable_toggle_zexth(0),
+                            .enable_toggle_count(0),
+                            .enable_toggle(1));
       rv32zbb_orc_b_cg = new("rv32zbb_orc_b_cg",
                              .reg_crosses_enabled(cfg.reg_crosses_enabled),
                              .reg_hazards_enabled(cfg.reg_hazards_enabled),
                              .rs_is_signed(rs1_is_signed[ORC_B]),
-                             .rd_is_signed(rd_is_signed[ORC_B]));
+                             .rd_is_signed(rd_is_signed[ORC_B]),
+                             .enable_toggle_zexth(0),
+                             .enable_toggle_count(0),
+                             .enable_toggle(1));
     end
 
     // ----------------------------------------------------------------------------------------
@@ -2919,13 +2970,15 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                              .reg_hazards_enabled(cfg.reg_hazards_enabled),
                              .rs1_is_signed(rs1_is_signed[C_LHU]),
                              .rd_is_signed(rd_is_signed[C_LHU]),
-                             .imm_is_signed(c_imm_is_signed[C_LHU]));
+                             .imm_is_signed(c_imm_is_signed[C_LHU]),
+                             .unaligned_access_supported(cfg.core_cfg.unaligned_access_supported));
       rv32zcb_lh_cg = new("rv32zcb_lh_cg",
                             .reg_crosses_enabled(cfg.reg_crosses_enabled),
                             .reg_hazards_enabled(cfg.reg_hazards_enabled),
                             .rs1_is_signed(rs1_is_signed[C_LH]),
                             .rd_is_signed(rd_is_signed[C_LH]),
-                            .imm_is_signed(c_imm_is_signed[C_LH]));
+                            .imm_is_signed(c_imm_is_signed[C_LH]),
+                            .unaligned_access_supported(cfg.core_cfg.unaligned_access_supported));
       rv32zcb_sb_cg = new("rv32zcb_sb_cg",
                              .reg_crosses_enabled(cfg.reg_crosses_enabled),
                              .rs1_is_signed(rs1_is_signed[C_SB]),
@@ -2935,7 +2988,8 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                              .reg_crosses_enabled(cfg.reg_crosses_enabled),
                              .rs1_is_signed(rs1_is_signed[C_SH]),
                              .rs2_is_signed(rs2_is_signed[C_SH]),
-                             .imm_is_signed(c_imm_is_signed[C_SH]));
+                             .imm_is_signed(c_imm_is_signed[C_SH]),
+                             .unaligned_access_supported(cfg.core_cfg.unaligned_access_supported));
       rv32zcb_zext_b_cg = new("rv32zcb_zext_b_cg",
                              .rs_is_signed(rs1_is_signed[C_ZEXT_B]));
       rv32zcb_sext_b_cg = new("rv32zcb_sext_b_cg",
