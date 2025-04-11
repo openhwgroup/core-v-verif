@@ -21,7 +21,7 @@ import argparse
 import os
 import yaml
 import re
-#import compile_cmd as cmp
+import get_cmd as cmp
 
 parser = argparse.ArgumentParser(description='compile options')
 parser.add_argument('--yaml'     ,dest='yaml_file', type=str, help='Top YAML with compile and simulation options')
@@ -29,114 +29,6 @@ parser.add_argument('--outdir'   ,dest='outdir', type=str, help='Logs are direct
 args = parser.parse_args()
 
    
-def get_cmd(yaml_file, outdir, opt, vopt_option, work):
-  with open(yaml_file, 'r') as yaml_top:
-     sim_yaml = yaml.safe_load(yaml_top)
-  
-  
-  for entry in sim_yaml: 
-      if entry['tool'] == "questa":
-          cmd       = "vlog -sv"
-          vopt_cmd  = "vopt"
-          tool      = "questa"
-      elif entry['tool'] == "vcs":
-          cmd       = "vcs -sverilog"
-          vopt_cmd  = ""
-          tool      = "vcs"
-      if 'compile' in entry:
-        comp      = entry['compile']
-      else: 
-        comp = ""
-      ########################
-      ## get compile options ##
-      ########################
-      if 'work_lib' in comp:
-        work_lib  = comp['work_lib']
-      elif work != '':
-        work_lib = work
-      else:
-        work_lib = "work"
-      ########################
-      ## get SV log options ##
-      ########################
-      if 'svlog_option' in comp:
-        opt       += " "
-        opt       += comp["svlog_option"]
-      else: 
-        opt += " "
-      ########################
-      ## get SV log sources ##
-      ## *.sv               ##
-      ########################
-      if 'svlog_source' in comp:
-        src_list  = comp["svlog_source"]
-        srcs      = src_list.split()
-      else: 
-        src_list  = ""
-        srcs      = ""
-      ########################
-      ## get file list ##
-      ########################
-      if 'svlog_flist' in comp:
-        file_list = comp["svlog_flist"]
-        files     = file_list.split()
-      else: 
-        file_list = ""
-        files     = ""
-      ########################
-      ## get vopt options ##
-      ########################
-      if 'top_entity' in entry:
-        top_entity  = comp['top_entity']
-      else: 
-        top_entity = "top"
-      if 'vopt_option' in comp:
-        vopt_option  += " "
-        vopt_option  += comp['vopt_option']
-      else: 
-        vopt_option += " "
-      ########################
-      ## run other YAML   ####
-      ########################
-      if 'yaml_lists' in comp:
-        yaml_list = comp["yaml_lists"]
-        yamls     = yaml_list.split()
-        for y in yamls:
-            var   = y.split('{', 1)[1].split('}')[0]
-            path  = os.environ[var];
-            y = re.sub('\${.*}', path, y)
-            print(y)
-            get_cmd(y, outdir, opt, vopt_option, work_lib)
-  
-
-  #####################################
-  ## extract file from file list   ####
-  #####################################
-  file_cmd = ""
-  for f in files:
-    file_cmd += " -f " + f
-  #####################################
-  ## extract src from src list   ####
-  #####################################
-  src_cmd = ""
-  for s in srcs:
-    src_cmd += " -sv " + s
-
-  if tool == "questa":
-    compile_cmd = "{} {} {} {} -work {} -l {}/{}.log".format(cmd, opt, file_cmd, src_cmd, work_lib, outdir, "log")
-    vopt_cmd    = "{} {} -work {} {} -o opt".format(vopt_cmd, vopt_option, work_lib, top_entity)
-  elif tool == "vcs":
-    compile_cmd = "{} {} {} {} -l {}/{}.log".format(cmd, opt, file_cmd, src_list, outdir, yaml_file)
-    vopt_cmd = ""
-
-  print(yaml_file)
-  if src_list == "" and file_cmd == "" and src_cmd == "":
-   return vopt_cmd
-  else:
-   print(compile_cmd)
-   os.system(compile_cmd)
-   return vopt_cmd
-## get_cmd 
 
 if args.outdir==None:
     outdir = "output"
@@ -149,6 +41,6 @@ if args.yaml_file == None:
 else:
    if os.path.isdir("{}".format(outdir)) == False:
      os.system("mkdir {}".format(outdir))
-   vopt_cmd = get_cmd(args.yaml_file, outdir, '', '', '')
+   vopt_cmd = cmp.cmp_cmd(args.yaml_file, outdir, '', '', '')
    if vopt_cmd != "":
      os.system(vopt_cmd)
