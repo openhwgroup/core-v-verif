@@ -2037,7 +2037,8 @@ covergroup cg_sequential(string name,
                          bit ext_zbs_supported,
                          bit ext_a_supported,
                          bit ext_zcb_supported,
-                         bit ext_zifencei_supported) with function sample (uvma_isacov_instr_c instr,
+                         bit ext_zifencei_supported,
+                         bit is_csr_write) with function sample (uvma_isacov_instr_c instr,
                                                                  uvma_isacov_instr_c instr_prev,
                                                                  uvma_isacov_instr_c instr_prev2,
                                                                  uvma_isacov_instr_c instr_prev3,
@@ -2108,7 +2109,8 @@ covergroup cg_sequential(string name,
   }
 
   cp_csr: coverpoint(instr_prev.csr) iff (instr_prev != null) {
-    bins CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
+    bins RW_CSR[] = {[USTATUS:MCONFIGPTR]} with (cfg_illegal_csr[item] == 0);
+    ignore_bins ONLY_READ_CSR[] = {[USTATUS:MCONFIGPTR]} with ((cfg_illegal_csr[item] == 0) && (item[11:10] == 2'b11)) iff (is_csr_write);
   }
 
   cross_seq_group_x2: cross cp_group, cp_group_pipe_x2;
@@ -3131,7 +3133,8 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                       .ext_zbs_supported(cfg.core_cfg.ext_zbs_supported),
                       .ext_a_supported(cfg.core_cfg.ext_a_supported),
                       .ext_zcb_supported(cfg.core_cfg.ext_zcb_supported),
-                      .ext_zifencei_supported(cfg.core_cfg.ext_zifencei_supported)
+                      .ext_zifencei_supported(cfg.core_cfg.ext_zifencei_supported),
+                      .is_csr_write(1)
                       );
   end
 
