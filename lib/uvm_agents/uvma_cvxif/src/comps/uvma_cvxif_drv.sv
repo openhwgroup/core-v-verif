@@ -216,8 +216,36 @@ task uvma_cvxif_drv_c::drv_cvxif_post_reset();
    //Disabling cvxif agent means the agent gonna reject all the request from the CPU
    else begin
     `uvm_info(info_tag, $sformatf("CVXIF Agent is disabled : All CPU Requests are rejected !!"), UVM_NONE);
+    // trying to cover some senarios in CC coverage
+    // when the agent rejects CPU requests
+    // issue_valid = 1 & issue_ready = 0 & issue_accept = 1
+    cntxt.vif.issue_ready              <= 0;
+    cntxt.vif.issue_resp.accept        <= 1;
+    cntxt.vif.issue_resp.writeback     <= 0;
+    cntxt.vif.issue_resp.register_read <= 0;
+    cntxt.vif.compressed_ready         <= 1;
+    cntxt.vif.compressed_resp.accept   <= 0;
+    cntxt.vif.compressed_resp.instr    <= 0;
+    @(posedge cntxt.vif.clk);
+    wait (cntxt.vif.issue_valid);
+    cntxt.vif.issue_ready              = 1;
+    cntxt.vif.issue_resp.accept        = 0;
+    cntxt.vif.issue_resp.writeback     = 0;
+    cntxt.vif.issue_resp.register_read = 0;
+    cntxt.vif.compressed_ready         = 1;
+    cntxt.vif.compressed_resp.accept   = 0;
+    cntxt.vif.compressed_resp.instr    = 0;
+    @(posedge cntxt.vif.clk);
+    // issue_valid = 0 & issue_ready = 1 & issue_accept = 1
+    cntxt.vif.issue_ready              = 1;
+    cntxt.vif.issue_resp.accept        = 1;
+    cntxt.vif.issue_resp.writeback     = 0;
+    cntxt.vif.issue_resp.register_read = 0;
+    cntxt.vif.compressed_ready         = 1;
+    cntxt.vif.compressed_resp.accept   = 0;
+    cntxt.vif.compressed_resp.instr    = 0;
+    @(posedge cntxt.vif.clk);
     forever begin
-       @(posedge cntxt.vif.clk);
        reject_slv_resp();
     end
    end
@@ -321,6 +349,7 @@ task uvma_cvxif_drv_c::reject_slv_resp();
    cntxt.vif.compressed_ready         <= 1;
    cntxt.vif.compressed_resp.accept   <= 0;
    cntxt.vif.compressed_resp.instr    <= 0;
+   @(posedge cntxt.vif.clk);
 
 endtask
 
