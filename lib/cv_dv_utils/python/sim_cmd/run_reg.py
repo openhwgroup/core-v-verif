@@ -24,6 +24,10 @@ import threading
 import queue 
 import get_cmd
 
+# Import the 'datetime' module to work with date and time
+import datetime
+
+
 #get_cmd_gen.compile
 parser = argparse.ArgumentParser(description='Run Regression')
 parser.add_argument('--yaml'       ,dest='yaml_file', type=str, help='Top YAML with compile and simulation options')
@@ -54,10 +58,11 @@ def rtest(test, seed, cmd_opt):
     pattern = "{}/scripts/patterns/sim_patterns.pat".format(project_dir)
     cmd = "scan_logs.pl -silent -nopreresetwarn {}  -pat {} ".format(log, pattern)
     ret = os.system(cmd)
+    et = datetime.datetime.now()
     if ret == 0: 
-        print ("passing", test, "seed", seed)
+        print ("passing", test, "seed", seed,  "end time", et.strftime("%Y-%m-%d %H:%M:%S"))
     else:
-        print ("failing", test, "see", seed)
+        print ("failing", test, "see", seed,  "end time", et.strftime("%Y-%m-%d %H:%M:%S"))
 
 vopt_done = 0
 print("compiling rtl and testbench")
@@ -96,7 +101,8 @@ if opt_done == 1:
         if threading.active_count() <= args.nthreads:
           seed = sq.get()
           test = tq.get()
-          print("running", test, "seed", seed)
+          st = datetime.datetime.now()
+          print("running", test, "seed", seed, "start time", st.strftime("%Y-%m-%d %H:%M:%S"))
           t = threading.Thread(target=rtest, args=(test, seed, cmd_opt))
           t.start()
         # os.system("scan_logs.pl -nopreresetwarn {}/{}_{}.log".format(args.outdir, line[0], seed)) 
