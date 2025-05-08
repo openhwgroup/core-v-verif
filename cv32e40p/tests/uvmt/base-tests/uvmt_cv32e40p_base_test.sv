@@ -110,7 +110,7 @@ class uvmt_cv32e40p_base_test_c extends uvm_test;
     * 1. Triggers the start of clock generation via start_clk()
     * 2. Starts the watchdog timeout via watchdog_timeout()
     */
-   extern virtual task run_phase(uvm_phase phase);
+   extern virtual task main_phase(uvm_phase phase);
 
    /**
     * Runs reset_vseq.
@@ -262,13 +262,13 @@ function void uvmt_cv32e40p_base_test_c::end_of_elaboration_phase(uvm_phase phas
 endfunction : end_of_elaboration_phase
 
 
-task uvmt_cv32e40p_base_test_c::run_phase(uvm_phase phase);
+task uvmt_cv32e40p_base_test_c::main_phase(uvm_phase phase);
 
-   super.run_phase(phase);
+   super.main_phase(phase);
 
    watchdog_timer();
 
-endtask : run_phase
+endtask : main_phase
 
 
 task uvmt_cv32e40p_base_test_c::reset_phase(uvm_phase phase);
