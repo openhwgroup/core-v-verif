@@ -61,7 +61,15 @@ package uvmt_cv32e40p_pkg;
 
 endpackage : uvmt_cv32e40p_pkg
 
-// All Interfaces used by the CV32E40P TB are here
-`include "uvmt_cv32e40p_tb_ifs.sv"
+// Interfaces used by the CV32E40P for RVVI communication
+`include "uvmt_cv32e40p_tb_rvvi_if.sv"
+
+// Interfaces used for coverage
+`include "uvmt_cv32e40p_tb_cvg_ifs.sv"
+
+// Interfaces used for DUT wrapper
+`include "uvmt_cv32e40p_tb_dut_ifs.sv"
+
+
 
 `endif // __UVMT_CV32E40P_PKG_SV__
