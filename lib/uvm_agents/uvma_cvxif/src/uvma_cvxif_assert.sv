@@ -97,16 +97,16 @@ module uvma_cvxif_assert #(int unsigned X_HARTID_WIDTH = 32, int unsigned X_ID_W
    issue_req_stable                 : assert property (CVXIF_STABLE_ISSUE_REQ)
                                          else `uvm_error (info_tag , "Violation: ISSUE REQ PACKET IS NOT STABLE DURING AN ISSUE TRANSACTION");
 
-   always @(posedge cvxif_assert.clk) begin
-       for (int i = 0; i < X_NUM_RS ; i++)  begin
-          rs_valid           : assert property (CVXIF_RS_VALID(i))
-                                  else `uvm_error (info_tag ,$sformatf("Violation: RS_VALID[%1d] IS NOT ALLOWED TO BACK TO 0 DURING A TRANSACTION", i));
-          cov_rs_valid       : cover property (CVXIF_RS_VALID(i));
-          rs                 : assert property (CVXIF_RS(i))
-                                  else `uvm_error (info_tag ,$sformatf("Violation: RS[%1d] ISN'T STABLE", i));
-          cov_rs             : cover property (CVXIF_RS(i));
-       end
+   generate
+   for (genvar i = 0; i < X_NUM_RS ; i++)  begin
+      rs_valid           : assert property (CVXIF_RS_VALID(i))
+                              else `uvm_error (info_tag ,$sformatf("Violation: RS_VALID[%1d] IS NOT ALLOWED TO BACK TO 0 DURING A TRANSACTION", i))
+      cov_rs_valid       : cover property (CVXIF_RS_VALID(i));
+      rs                 : assert property (CVXIF_RS(i))
+                              else `uvm_error (info_tag ,$sformatf("Violation: RS[%1d] ISN'T STABLE", i))
+      cov_rs             : cover property (CVXIF_RS(i));
    end
+   endgenerate
 
 /********************************************** Cover Property ******************************************************/
 
