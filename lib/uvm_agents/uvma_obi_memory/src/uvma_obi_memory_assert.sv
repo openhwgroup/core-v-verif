@@ -217,18 +217,22 @@ module uvma_obi_memory_assert
   c_be_contiguous : cover property (p_be_contiguous);
 
   // R-8 Data address LSBs must be consistent with byte enables on writes
-  function bit [1:0] get_addr_lsb(bit[3:0] be);
+  function bit [2:0] get_addr_lsb(bit[7:0] be);
     casex (be)
-      4'b???1: return 0;
-      4'b??10: return 1;
-      4'b?100: return 2;
-      4'b1000: return 3;
+      7'b???????1: return 0;
+      7'b??????10: return 1;
+      7'b?????100: return 2;
+      7'b????1000: return 3;
+      7'b???10000: return 4;
+      7'b??100000: return 5;
+      7'b?1000000: return 6;
+      7'b10000000: return 7;
     endcase
   endfunction : get_addr_lsb
 
   // R-8 Address LSBs must be consistent with byte enables during the address phase
   property p_addr_be_consistent;
-    disable iff (DATA_WIDTH !== 32) req |-> addr[1:0] <= get_addr_lsb(be);
+    req |-> addr[DATA_WIDTH/32:0] <= get_addr_lsb(be);
   endproperty : p_addr_be_consistent
   a_addr_be_consistent: assert property(p_addr_be_consistent)
   else
