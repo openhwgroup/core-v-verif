@@ -192,17 +192,43 @@ module uvma_obi_memory_assert
   c_be_not_zero : cover property (p_be_not_zero);
 
   // R-7 All ones must be contiguous during the address phase
-  reg[3:0] contiguous_be[] = {
-    4'b0001,
-    4'b0011,
-    4'b0111,
-    4'b1111,
-    4'b0010,
-    4'b0110,
-    4'b1110,
-    4'b0100,
-    4'b1100,
-    4'b1000
+  reg[7:0] contiguous_be[] = {
+    8'b00000001,
+    8'b00000011,
+    8'b00000111,
+    8'b00001111,
+    8'b00011111,
+    8'b00111111,
+    8'b01111111,
+    8'b11111111,
+    8'b00000010,
+    8'b00000110,
+    8'b00001110,
+    8'b00011110,
+    8'b00111110,
+    8'b01111110,
+    8'b11111110,
+    8'b00000100,
+    8'b00001100,
+    8'b00011100,
+    8'b00111100,
+    8'b01111100,
+    8'b11111100,
+    8'b00001000,
+    8'b00011000,
+    8'b00111000,
+    8'b01111000,
+    8'b11111000,
+    8'b00010000,
+    8'b00110000,
+    8'b01110000,
+    8'b11110000,
+    8'b00100000,
+    8'b01100000,
+    8'b11100000,
+    8'b01000000,
+    8'b11000000,
+    8'b10000000
   };
   bit be_inside_contiguous_be;
   always_comb begin
@@ -217,18 +243,22 @@ module uvma_obi_memory_assert
   c_be_contiguous : cover property (p_be_contiguous);
 
   // R-8 Data address LSBs must be consistent with byte enables on writes
-  function bit [1:0] get_addr_lsb(bit[3:0] be);
+  function bit [2:0] get_addr_lsb(bit[7:0] be);
     casex (be)
-      4'b???1: return 0;
-      4'b??10: return 1;
-      4'b?100: return 2;
-      4'b1000: return 3;
+      8'b???????1: return 0;
+      8'b??????10: return 1;
+      8'b?????100: return 2;
+      8'b????1000: return 3;
+      8'b???10000: return 4;
+      8'b??100000: return 5;
+      8'b?1000000: return 6;
+      8'b10000000: return 7;
     endcase
   endfunction : get_addr_lsb
 
   // R-8 Address LSBs must be consistent with byte enables during the address phase
   property p_addr_be_consistent;
-    disable iff (DATA_WIDTH !== 32) req |-> addr[1:0] <= get_addr_lsb(be);
+    req |-> addr[DATA_WIDTH/32:0] <= get_addr_lsb(be);
   endproperty : p_addr_be_consistent
   a_addr_be_consistent: assert property(p_addr_be_consistent)
   else
