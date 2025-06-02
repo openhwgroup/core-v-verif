@@ -90,7 +90,6 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
            // ----------------------------------------------------------------------------
            fork 
              get_and_drive_req(); 
- //            spy_and_drive_rsp(); 
            join_none
           // In case of a reset on the fly, kill all processes
           @(reset_asserted);
@@ -108,8 +107,6 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
            seq_item_port.get_next_item(req);
            `uvm_info("REQ ACK DRIVER", "New Request Recieved", UVM_HIGH);
 
-//           @ (posedge generic_vif.clk_i);
-
            if(req.m_txn_idle_cycles > 0)
              generic_vif.wait_n_clocks(req.m_txn_idle_cycles);
 
@@ -126,9 +123,6 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
            // ------------------------------------------------------
            // This is to be used by respose handler
            // ------------------------------------------------------
-          // if(req.m_req_need_rsp) begin 
-          //   rsp_list[req.m_req_tid].push_back(req);
-          // end
            seq_item_port.item_done();
        end
     endtask
