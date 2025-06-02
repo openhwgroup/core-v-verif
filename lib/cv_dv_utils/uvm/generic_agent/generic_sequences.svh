@@ -38,7 +38,7 @@ class generic_base_sequence#(type req_t, type rsp_t) extends uvm_sequence #(gene
     end // if
     `uvm_info( get_full_name(), $sformatf("NUM_TXN=%0d", num_txn), UVM_HIGH );
 
-    use_response_handler(1);
+    //use_response_handler(1);
   endfunction: new
 
   task pre_body();

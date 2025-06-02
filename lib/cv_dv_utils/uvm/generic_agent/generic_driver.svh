@@ -90,7 +90,7 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
            // ----------------------------------------------------------------------------
            fork 
              get_and_drive_req(); 
-             spy_and_drive_rsp(); 
+ //            spy_and_drive_rsp(); 
            join_none
           // In case of a reset on the fly, kill all processes
           @(reset_asserted);
