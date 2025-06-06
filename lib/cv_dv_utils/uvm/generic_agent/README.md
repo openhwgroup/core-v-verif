@@ -68,7 +68,18 @@ User should connect his/her own ready signal directly to req_ready.
 
 By default response handler is deactivated. Following setup needs to be done to enable the response handle
 
-      uvm_config_db #( bit )::set(uvm_root::get(), "*", "generic_sequencer" , 1);
+ ```
+ uvm_config_db #( bit )::set(uvm_root::get(), "*", "generic_sequencer" , 1);
+
+ over write the following task of generic_driver, otherwise it gives an uvm_warning 
+ virtual task spy_and_drive_rsp(); 
+
+ over write following function if generic_sequences
+ virtual function void response_handler(uvm_sequence_item response);
+ 
+ ```
+
+
 
 ## APIs
 The class generic_sequences provide following API to generate and drive a sequences. 
