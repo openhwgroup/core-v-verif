@@ -25,7 +25,7 @@
 class generic_sequencer#(type req_t, type rsp_t) extends uvm_sequencer #(generic_txn#(req_t, rsp_t), generic_txn#(req_t, rsp_t));
 
   `uvm_sequencer_param_utils(generic_sequencer#(req_t, rsp_t))
-
+  bit     use_response_handler;
   // -------------------------------------------------------------------------
   // Constructor
   // -------------------------------------------------------------------------
@@ -33,5 +33,13 @@ class generic_sequencer#(type req_t, type rsp_t) extends uvm_sequencer #(generic
       super.new(name, parent);
       
   endfunction: new
-  
+ 
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase); 
+
+
+    if (!uvm_config_db #( bit )::get(this, "", get_name(), use_response_handler )) begin
+      `uvm_info("BUILD_PHASE", $sformatf("Reponse Handler Is Set"), UVM_LOW);
+    end // if
+  endfunction 
 endclass: generic_sequencer

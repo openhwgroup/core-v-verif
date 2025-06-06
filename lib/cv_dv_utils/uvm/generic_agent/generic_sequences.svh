@@ -37,11 +37,17 @@ class generic_base_sequence#(type req_t, type rsp_t) extends uvm_sequence #(gene
       num_txn = 10000;
     end // if
     `uvm_info( get_full_name(), $sformatf("NUM_TXN=%0d", num_txn), UVM_HIGH );
-
   endfunction: new
+
+
 
   task pre_body();
     $cast(m_sequencer, get_sequencer());
+
+    if(m_sequencer.use_response_handler) begin
+      use_response_handler(1);
+      `uvm_info("BUILD_PHASE", $sformatf("Reponse Handler Is Set"), UVM_HIGH);
+    end
   endtask: pre_body
 
   virtual task body( );
@@ -49,7 +55,7 @@ class generic_base_sequence#(type req_t, type rsp_t) extends uvm_sequence #(gene
   endtask
 
   // The response_handler function serves to keep the sequence response FIFO empty
-  function void response_handler(uvm_sequence_item response);
+  virtual function void response_handler(uvm_sequence_item response);
     rsp_count++;
     `uvm_info("generic SEQUENCE BASE", $sformatf("Number of responses %0d(d)", rsp_count), UVM_HIGH);
   endfunction: response_handler
