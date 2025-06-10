@@ -20,7 +20,7 @@
 
 # How to Write a Verification Plan (Testplan)
 Verification plans are documents that defines _what_ is to be verified.  They go by many names including Testplan, DV plan or just Vplan.  A complete, high quality verification plan can be the most valuable item produced by a verification project.
-## Format of a Verificaton Plan
+## Format of a Verification Plan
 Most CORE-V verification projects use spreadsheets to capture Testplans, and a template is provided. The template for the spreadsheet is simple enough that you can use either Microsoft Office Excel or LibreOffice Calc.  The Verification Plan [template](https://github.com/openhwgroup/core-v-verif/blob/master/docs/VerifPlans/templates/CORE-V_Simulation_VerifPlan_Template.xlsx) for CORE-V-VERIF is located at the root of the [VerificationPlan](https://github.com/openhwgroup/core-v-verif/tree/master/docs/VerifPlans) directory. Note that at OpenHW is also exploring the use of in-house tooling for Verification Planning, but the remainder of this document assumes the use of a spreadsheet.
 ## Verification Planning
 A key activity of any verification effort is to capture a Verification Plan.  The purpose of a verification plan is to identify what features need to be verified; the success criteria of the feature and the coverage metrics for testing the feature.  Testplans also allow us to reason about the capabilities of the verification environment.
