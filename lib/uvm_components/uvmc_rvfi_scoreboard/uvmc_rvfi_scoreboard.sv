@@ -33,6 +33,7 @@ class uvmc_rvfi_scoreboard_c#(int ILEN=DEFAULT_ILEN,
    uvma_core_cntrl_cfg_c         cfg;
    bit [XLEN-1:0] sentinel_value;
    bit            sentinel_enable;
+   string         info_tag = "UVMC_RVFI_SCOREBOARD";
 
    `uvm_component_utils_begin(uvmc_rvfi_scoreboard_c)
       `uvm_field_object(cfg,         UVM_DEFAULT | UVM_REFERENCE)
@@ -102,20 +103,26 @@ task uvmc_rvfi_scoreboard_c::run_phase(uvm_phase phase);
     t_core = new("t_core");
 
     sim_finished = 0;
-    phase.raise_objection(this);
-    while (!sim_finished) begin
-        @(reference_model.size > 0)
-        while (reference_model.size > 0 && !sim_finished)
-        begin
-            t_reference_model = reference_model.pop_front();
-            t_core = core.pop_front();
-            rvfi_compare(t_core.seq2rvfi(), t_reference_model.seq2rvfi());
+    //FIXME: this needs to be part of the ENV Cfg
+    if ($test$plusargs("USE_ISS")) begin
+        phase.raise_objection(this);
+        while (!sim_finished) begin
+            @(reference_model.size > 0)
+            while (reference_model.size > 0 && !sim_finished)
+            begin
+                t_reference_model = reference_model.pop_front();
+                t_core = core.pop_front();
+                rvfi_compare(t_core.seq2rvfi(), t_reference_model.seq2rvfi());
 
-            if (t_reference_model.halt || (sentinel_enable && (sentinel_value == t_reference_model.insn)))
-                sim_finished = 1;
+                if (t_reference_model.halt || (sentinel_enable && (sentinel_value == t_reference_model.insn)))
+                    sim_finished = 1;
+            end
         end
+        phase.drop_objection(this);
     end
-    phase.drop_objection(this);
+    else begin
+        `uvm_info(info_tag, $sformatf("The RVFI_SCOREBOARD is not enabled."), UVM_NONE)
+    end
 
 endtask : run_phase
 
@@ -134,11 +141,11 @@ endfunction : write_rvfi_instr_core
 function void uvmc_rvfi_scoreboard_c::get_and_set_cfg();
 
    if (uvm_config_db#(uvma_core_cntrl_cfg_c)::get(this, "", "cfg", cfg)) begin
-      `uvm_info("CFG", $sformatf("Found configuration handle:\n%s", cfg.sprint()), UVM_DEBUG)
+      `uvm_info(info_tag, $sformatf("Found configuration handle:\n%s", cfg.sprint()), UVM_DEBUG)
       uvm_config_db#(uvma_core_cntrl_cfg_c)::set(this, "*", "cfg", cfg);
    end
    else begin
-      `uvm_fatal("CFG", $sformatf("%s: Could not find configuration handle", this.get_full_name()));
+      `uvm_fatal(info_tag, $sformatf("%s: Could not find configuration handle", this.get_full_name()));
    end
 
 endfunction : get_and_set_cfg
