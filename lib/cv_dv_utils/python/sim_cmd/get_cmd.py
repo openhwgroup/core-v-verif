@@ -63,6 +63,11 @@ def cmp_cmd(yaml_file, outdir, opt, vopt_option, work):
       if 'svlog_source' in comp:
         src_list  = comp["svlog_source"]
         srcs      = src_list.split()
+        cmd       = "vlog -sv"
+      elif 'vlog_source' in comp:
+        cmd       = "vlog"
+        src_list  = comp["vlog_source"]
+        srcs      = src_list.split()
       else: 
         src_list  = ""
         srcs      = ""
