@@ -156,7 +156,7 @@ def get_cmd_opt(yaml_file):
     sim_cmd_opt = "{} {}".format(cmd, sim_opt)
     return sim_cmd_opt
 
-def run_test(test_name, seed, debug, batch, dump, coverage, stdout, outdir, vsim_opt):
+def run_test(test_name, seed, debug, batch, dump, stdout, outdir, vsim_opt):
 
    if outdir == None: 
       outdir = "output"
@@ -197,12 +197,4 @@ def run_test(test_name, seed, debug, batch, dump, coverage, stdout, outdir, vsim
    if os.path.isdir("{}".format(outdir)) == False:
      os.system("mkdir {}".format(outdir))
    
-   if coverage == 1:
-     ucdbfile    = "\"coverage save -onexit {}/{}_{}.ucdb\"".format(outdir, test_name, seed)
-     coveragestr = "-do {}".format(ucdbfile)
-     coverageopt = "-coverage -assertdebug"
-   else:
-     coveragestr = ""
-     coverageopt = ""
-
-   os.system("{} {} {} {} -sv_seed {} +UVM_VERBOSITY={} +UVM_TESTNAME={} {} {}/{}_{}.log {}".format(vsim_opt,  batchstr, dumpstr, coverageopt, seed, debug, test_name, stdoutstr, outdir, test_name, seed, wlfstr))
+   os.system("{} {} {} -sv_seed {} +UVM_VERBOSITY={} +UVM_TESTNAME={} {} {}/{}_{}.log {}".format(vsim_opt,  batchstr, dumpstr, seed, debug, test_name, stdoutstr, outdir, test_name, seed, wlfstr))
