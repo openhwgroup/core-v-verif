@@ -39,7 +39,6 @@ class generic_agent #(type req_t, type rsp_t) extends uvm_agent;
 
   virtual generic_if #(req_t, rsp_t)generic_vif; 
   generic_monitor    #(req_t, rsp_t)m_monitor;
-  
   // -------------------------------------------------------------------------
   // Constructor
   // -------------------------------------------------------------------------
@@ -53,15 +52,16 @@ class generic_agent #(type req_t, type rsp_t) extends uvm_agent;
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
 
-    m_monitor = generic_monitor#(req_t, rsp_t)::type_id::create("monitor", this);
+    m_monitor = generic_monitor#(req_t, rsp_t)::type_id::create("generic_monitor", this);
     if(is_active == UVM_ACTIVE) begin
-      m_sequencer = generic_sequencer#(req_t, rsp_t)::type_id::create("sequencer", this);
-      m_driver    = generic_driver#(req_t, rsp_t)::type_id::create("driver", this);
+      m_sequencer = generic_sequencer#(req_t, rsp_t)::type_id::create("generic_sequencer", this);
+      m_driver    = generic_driver#(req_t, rsp_t)::type_id::create("generic_driver", this);
     end
 
     if (!uvm_config_db #( virtual generic_if#(req_t, rsp_t))::get(this, "", get_name(), generic_vif )) begin
         `uvm_fatal("BUILD_PHASE", $sformatf("Unable to get generic_vif_config for %s from configuration database", get_name() ) );
     end // if
+
 
     `uvm_info(get_full_name( ), "Build stage complete.", UVM_LOW)
   endfunction: build_phase
@@ -73,8 +73,10 @@ class generic_agent #(type req_t, type rsp_t) extends uvm_agent;
       if(is_active == UVM_ACTIVE) begin
         m_driver.seq_item_port.connect(m_sequencer.seq_item_export);
         m_driver.set_generic_vif(generic_vif);
+        m_driver.use_response_handler = m_sequencer.use_response_handler;
       end
       m_monitor.set_generic_vif(generic_vif);
+
       `uvm_info(get_full_name( ), "Connect stage complete.", UVM_LOW)
   endfunction: connect_phase
 

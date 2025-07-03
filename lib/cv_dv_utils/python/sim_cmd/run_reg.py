@@ -33,9 +33,6 @@ parser = argparse.ArgumentParser(description='Run Regression')
 parser.add_argument('--yaml'       ,dest='yaml_file', type=str, help='Top YAML with compile and simulation options')
 parser.add_argument('--reg_list'   ,dest='reglist'   , type=str, help='file that contains the regression list, the number of seeds and a default seed')
 parser.add_argument('--nthreads'   ,dest='nthreads'  , type=int, help='Number of test run at the same time: default 2')
-parser.add_argument('--coverage'   ,dest='coverage'   , type=int, help='If 1, a ucdb(questasim) file will be generated')
-parser.add_argument('--cc'         ,dest='cc'         , type=int, help='If 1, code coverage is activated')
-parser.add_argument('--cc_opt'     ,dest='cc_opt'     , type=int, help='If 1, option for code coverage')
 parser.add_argument('--outdir'     , dest='outdir'    , type=str, help='output directory: default regression')
 args = parser.parse_args()
 
@@ -46,14 +43,10 @@ if args.outdir == None:
     outdir = "regression"
 if args.nthreads == None:
     args.nthreads = 2
-if args.cc == None:
-    args.cc = 0
-if args.coverage == None:
-    args.coverage = 0
 
 
 def rtest(test, seed, cmd_opt):
-    get_cmd.run_test(test, seed,  "UVM_NONE", 1, 0, args.coverage, 0, outdir, cmd_opt )
+    get_cmd.run_test(test, seed,  "UVM_NONE", 1, 0, 0, outdir, cmd_opt )
     log = "{}/{}_{}.log".format(outdir, test, seed) 
     pattern = "{}/scripts/patterns/sim_patterns.pat".format(project_dir)
     cmd = "scan_logs.pl -silent -nopreresetwarn {}  -pat {} ".format(log, pattern)
