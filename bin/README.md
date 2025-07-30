@@ -19,6 +19,14 @@ An easy way to get the Python plug-ins installed on your machine is:
 > % cd \<core-v-verif>/bin<br>
 > % pip3 install -r requirements.txt<br>
 
+Note for Ubuntu users: as of 23.03 Ubuntu has implement PEP 668 and the recommended and safest approaches to install Python packages on Ubuntu is use virtual environments.
+The quickest way to do that is:
+> % sudo apt install python3-venv
+> % python3 -m venv venv_cv32e40p
+> % source venv_cv32e40p/bin/activate
+
+It is recommended that you manage you python venvs in a more intelligent manner, but the above will work.
+
 Utility Documentation
 =====================
 
