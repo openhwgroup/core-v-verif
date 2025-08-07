@@ -435,12 +435,12 @@ endif
 		-S \
 		$*.elf > $*.objdump
 	$(RISCV_EXE_PREFIX)objdump \
-    	-d \
-        -S \
-		-M no-aliases \
-		-M numeric \
-        -l \
-		$*.elf | ${CORE_V_VERIF}/bin/objdump2itb - > $*.itb
+                -d \
+                -S \
+                -M no-aliases \
+                -M numeric \
+                -l \
+                $*.elf | ${CORE_V_VERIF}/bin/objdump2itb - > $*.itb
 
 # Patterned targets to generate ELF.  Used only if explicit targets do not match.
 #

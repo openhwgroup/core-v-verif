@@ -153,14 +153,20 @@ XRUN_FLAGS        = -clean -smartorder -sv -top worklib.tb_top -timescale 1ns/1p
 XRUN_DIR          = xcelium.d
 
 # verilator configuration
-VERILATOR           = verilator
-VERI_FLAGS         +=
-VERI_COMPILE_FLAGS += -Wno-BLKANDNBLK $(SV_CMP_FLAGS) # hope this doesn't hurt us in the long run
+VERILATOR          ?= verilator
+VERI_RUN_FLAGS     ?=
+VERI_COMPILE_FLAGS ?= -Wno-BLKANDNBLK \
+                      -Wno-MULTIDRIVEN \
+                      -Wno-COMBDLY \
+                      -Wno-lint \
+                      -Wno-UNOPTFLAT \
+                      -Wno-MODDUP \
+                      $(SV_CMP_FLAGS)
 VERI_TRACE         ?=
 VERI_OBJ_DIR       ?= cobj_dir
-#VERI_LOG_DIR       ?= cobj_dir/logs
 VERI_LOG_DIR       ?= $(SIM_TEST_PROGRAM_RESULTS)
-VERI_CFLAGS        += -O2
+VERI_CFLAGS        ?= -std=c++14 \
+                      -O2
 
 #riviera configuration
 
@@ -472,7 +478,7 @@ xrun-clean-all: xrun-clean
 # We first test if the user wants to to vcd dumping. This hacky part is required
 # because we need to conditionally compile the testbench (-DVCD_TRACE) and pass
 # the --trace flags to the verilator call
-#ifeq ($(findstring +vcd,$(VERI_FLAGS)),+vcd)
+#ifeq ($(findstring +vcd,$(VERI_RUN_FLAGS)),+vcd)
 
 ifneq (${WAVES}, 0)
 VERI_TRACE="--trace"
@@ -488,15 +494,17 @@ testbench_verilator: CV_CORE_pkg $(TBSRC_VERI) $(TBSRC_PKG)
 	@echo "$(BANNER)"
 	@echo "* Compiling CORE TB and CV32E40P with Verilator"
 	@echo "$(BANNER)"
-	$(VERILATOR) --cc --sv --exe \
+	$(VERILATOR) \
+		--cc \
+		--sv \
+		--exe \
 		$(VERI_TRACE) \
-		--Wno-lint --Wno-UNOPTFLAT \
-		--Wno-MODDUP --top-module \
-		tb_top_verilator $(TBSRC_VERI) \
+		--top-module tb_top_verilator \
+		$(TBSRC_VERI) \
 		-f $(CV_CORE_MANIFEST) \
 		$(CV_CORE_PKG)/bhv/$(CV_CORE_LC)_core_log.sv \
 		$(TBSRC_CORE)/tb_top_verilator.cpp --Mdir $(VERI_OBJ_DIR) \
-		-CFLAGS "-std=gnu++11 $(VERI_CFLAGS)" \
+		-CFLAGS $(VERI_CFLAGS) \
 		$(VERI_COMPILE_FLAGS)
 	$(MAKE) -C $(VERI_OBJ_DIR) -f Vtb_top_verilator.mk
 	mkdir -p $(SIM_RESULTS)
@@ -509,7 +517,7 @@ veri-test: verilate $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 	@echo "$(BANNER)"
 	mkdir -p $(VERI_LOG_DIR)
 	$(SIM_TEST_RESULTS)/verilator_executable \
-		$(VERI_FLAGS) \
+		$(VERI_RUN_FLAGS) \
 		"+firmware=$(TEST_PROGRAM_RELPATH)/$(TEST)/$(TEST).hex" \
 		| tee $(VERI_LOG_DIR)/$(TEST).log
 
@@ -682,13 +690,14 @@ clean-sim-results:
 
 # clean up toolchain generated files
 clean-test-programs:
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.o       -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.hex     -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.elf     -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.map     -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.readelf -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name *.objdump -exec rm {} \;
-	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name corev_*.S -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "*.o"       -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "*.hex"     -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "*.elf"     -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "*.map"     -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "*.itb"     -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "*.readelf" -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "*.objdump" -exec rm {} \;
+	find $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs -name "corev_*.S" -exec rm {} \;
 
 .PHONY: clean clean_all distclean
 clean: clean-sim-results clean-test-programs questa-clean verilate-clean vcs-clean firmware-clean dsim-clean xrun-clean vcs-clean riviera-clean
