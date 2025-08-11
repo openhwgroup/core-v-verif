@@ -1,0 +1,24 @@
+diff --git a/vendor/patches/riscv/riscv-isa-sim/0046-no-pmp-config-via-device-trees.patch b/vendor/patches/riscv/riscv-isa-sim/0046-no-pmp-config-via-device-trees.patch
+new file mode 100644
+index 000000000..e69de29bb
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.cc b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+index a3107ed7f..f67853d05 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
+@@ -168,6 +168,8 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+     if (cpu_idx >= nprocs())
+       break;
+ 
++#if 0 // Disable PMP configuration from device trees, rely on parameters
++      // (from Yaml config files or from cmdline) instead.
+     //handle pmp
+     reg_t pmp_num, pmp_granularity;
+     if (fdt_parse_pmp_num(fdt, cpu_offset, &pmp_num) != 0)
+@@ -177,6 +179,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+     if (fdt_parse_pmp_alignment(fdt, cpu_offset, &pmp_granularity) == 0) {
+       procs[cpu_idx]->set_pmp_granularity(pmp_granularity);
+     }
++#endif
+ 
+     //handle mmu-type
+     const char *mmu_type;
