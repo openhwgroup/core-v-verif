@@ -10,7 +10,7 @@ The recommended toolchain for all CORE-V cores is available from Embecosm
 It is recommended that you install this at `/opt/corev`.
 As detailed in [README](./README.md#required-corev-environment-variables), you will need to define a shell variable to point to it:
 ```
-$ export CV_SW_TOOLCHAIN="/opt/riscv"
+$ export CV_SW_TOOLCHAIN="/opt/corev"
 ```
 
 ### RISC-V Toolchain
