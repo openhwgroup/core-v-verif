@@ -74,19 +74,22 @@ class CFunction:
 # Regular expression to extract a function from objdump
 # Example:
 # 00000256 <end_handler_incr_mepc>:
-FUNC_PATTERN     = "(?P<addr>[0-9a-f]{8}) <(?P<name>\S*)>:"
+# Note: raw string to treat \S literally for regex
+FUNC_PATTERN     = r"(?P<addr>[0-9a-f]{8}) <(?P<name>\S*)>:"
 FUNC_RE          = re.compile(FUNC_PATTERN)
 
 # Regular expression to extract an individual instruction
 # Example:
 #      264:       00a31363                bne     t1,a0,26a <end_handler_incr_mepc2>
-INST_PATTERN     = "(?P<addr>[0-9a-f]{1,8}):\t*(?P<mcode>[0-9a-f]{4}([0-9a-f]{4})?)\s{2,}(?P<asm>[a-z].*)$"
+# Note: raw string to treat \s literally for regex
+INST_PATTERN     = r"(?P<addr>[0-9a-f]{1,8}):\t*(?P<mcode>[0-9a-f]{4}([0-9a-f]{4})?)\s{2,}(?P<asm>[a-z].*)$"
 INST_RE          = re.compile(INST_PATTERN)
 
 # Regular expression to extract a source annotation for each instruction
 # Example:
 # /work/strichmo/core-v-verif/cv32e40x/tests/programs/custom/debug_test_trigger/debugger.S:47
-SRC_FILE_PATTERN = "^(?P<dir>/\S+)/(?P<file>[^/\s]+):(?P<line>[0-9]*)$" 
+# Note: raw string to treat \S and \s literally for regex
+SRC_FILE_PATTERN = r"^(?P<dir>/\S+)/(?P<file>[^/\s]+):(?P<line>[0-9]*)$" 
 SRC_FILE_RE      = re.compile(SRC_FILE_PATTERN)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
