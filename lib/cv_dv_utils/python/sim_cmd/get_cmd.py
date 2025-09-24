@@ -120,8 +120,8 @@ def cmp_cmd(yaml_file, outdir, opt, vopt_option, work):
     src_cmd += " -sv " + s
 
   if tool == "questa":
-    compile_cmd = "{} {} {} {} -work {} -l {}/{}.log".format(cmd, opt, file_cmd, src_cmd, work_lib, outdir, "log")
-    vopt_cmd    = "{} {} -work {} {} -o opt".format(vopt_cmd, vopt_option, work_lib, top_entity)
+    compile_cmd = "{} {} {} {} -work {} -l {}/{}.log".format(cmd, opt, file_cmd, src_cmd, work_lib, outdir, yaml_file)
+    vopt_cmd    = "{} {} -work {} {} -o opt -logfile {}/{}.log".format(vopt_cmd, vopt_option, work_lib, top_entity, outdir, "vopt")
   elif tool == "vcs":
     compile_cmd = "{} {} {} {} -l {}/{}.log".format(cmd, opt, file_cmd, src_list, outdir, yaml_file)
     vopt_cmd = ""
@@ -161,7 +161,7 @@ def get_cmd_opt(yaml_file):
     sim_cmd_opt = "{} {}".format(cmd, sim_opt)
     return sim_cmd_opt
 
-def run_test(test_name, seed, debug, batch, dump, stdout, outdir, vsim_opt):
+def run_test(test_name, seed, debug, batch, dump, stdout, outdir, cover, vsim_opt):
 
    if outdir == None: 
       outdir = "output"
@@ -198,8 +198,11 @@ def run_test(test_name, seed, debug, batch, dump, stdout, outdir, vsim_opt):
        stdoutstr = ">"
    else:
        stdoutstr = "-l"
-  
+
+   if cover == 1:
+       covstr = "-ucdbfile {}/{}_{}.ucdb".format(outdir, test_name, seed) 
+
    if os.path.isdir("{}".format(outdir)) == False:
      os.system("mkdir {}".format(outdir))
    
-   os.system("{} {} {} -sv_seed {} +UVM_VERBOSITY={} +UVM_TESTNAME={} {} {}/{}_{}.log {}".format(vsim_opt,  batchstr, dumpstr, seed, debug, test_name, stdoutstr, outdir, test_name, seed, wlfstr))
+   os.system("{} {} {} -sv_seed {} +UVM_VERBOSITY={} +UVM_TESTNAME={} {} {}/{}_{}.log {} {}".format(vsim_opt,  batchstr, dumpstr, seed, debug, test_name, stdoutstr, outdir, test_name, seed, wlfstr, covstr))

@@ -33,6 +33,7 @@ parser = argparse.ArgumentParser(description='Run Regression')
 parser.add_argument('--yaml'       ,dest='yaml_file', type=str, help='Top YAML with compile and simulation options')
 parser.add_argument('--reg_list'   ,dest='reglist'   , type=str, help='file that contains the regression list, the number of seeds and a default seed')
 parser.add_argument('--nthreads'   ,dest='nthreads'  , type=int, help='Number of test run at the same time: default 2')
+parser.add_argument('--cover'    , dest='cover',     type=int, help='1: generate coverage file, 0: nothing is done, cover option are passed from yaml file ') #FIXME
 parser.add_argument('--outdir'     , dest='outdir'    , type=str, help='output directory: default regression')
 args = parser.parse_args()
 
@@ -45,8 +46,8 @@ if args.nthreads == None:
     args.nthreads = 2
 
 
-def rtest(test, seed, cmd_opt):
-    get_cmd.run_test(test, seed,  "UVM_NONE", 1, 0, 0, outdir, cmd_opt )
+def rtest(test, seed, cover, cmd_opt):
+    get_cmd.run_test(test, seed,  "UVM_NONE", 1, 0, 0, outdir, cover, cmd_opt )
     log = "{}/{}_{}.log".format(outdir, test, seed) 
     pattern = "{}/scripts/patterns/sim_patterns.pat".format(project_dir)
     cmd = "scan_logs.pl -silent -nopreresetwarn {}  -pat {} ".format(log, pattern)
@@ -74,6 +75,10 @@ if vopt_done == 1:
    cmd_opt = get_cmd.get_cmd_opt(args.yaml_file)
    opt_done = 1
 
+if args.cover == 1:
+   cov = 1 
+else:
+   cov = 0
 ## queues for test and seed
 if opt_done == 1:
   if args.reglist == None:
@@ -96,7 +101,7 @@ if opt_done == 1:
           test = tq.get()
           st = datetime.datetime.now()
           print("running", test, "seed", seed, "start time", st.strftime("%Y-%m-%d %H:%M:%S"))
-          t = threading.Thread(target=rtest, args=(test, seed, cmd_opt))
+          t = threading.Thread(target=rtest, args=(test, seed, cov, cmd_opt))
           t.start()
         # os.system("scan_logs.pl -nopreresetwarn {}/{}_{}.log".format(args.outdir, line[0], seed)) 
         
