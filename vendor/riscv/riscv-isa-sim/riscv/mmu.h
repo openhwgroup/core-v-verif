@@ -47,13 +47,16 @@ class mmu_t
 private:
   std::map<reg_t, reg_t> alloc_cache;
   std::vector<std::pair<reg_t, reg_t >> addr_tbl;
+  bool allow_unmapped;
 public:
-  mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc);
+  mmu_t(simif_t* sim, endianness_t endianness, processor_t* proc, bool allow_unmapped);
   ~mmu_t();
 
 #define RISCV_XLATE_VIRT      (1U << 0)
 #define RISCV_XLATE_VIRT_HLVX (1U << 1)
 #define RISCV_XLATE_LR        (1U << 2)
+
+  void set_unmapped(bool allow) { allow_unmapped = allow; }
 
   template<typename T>
   T ALWAYS_INLINE load(reg_t addr, uint32_t xlate_flags = 0) {

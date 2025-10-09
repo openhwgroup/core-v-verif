@@ -34,8 +34,9 @@ function automatic string get_isa_str(st_core_cntrl_cfg cfg);
     if (cfg.ext_zbc_supported)     rtl_isa_plus = {rtl_isa_plus, "_zbc"};
     if (cfg.ext_zbs_supported)     rtl_isa_plus = {rtl_isa_plus, "_zbs"};
     if (cfg.ext_zcb_supported)     rtl_isa_plus = {rtl_isa_plus, "_zcb"};
-    if (cfg.ext_zicsr_supported)     rtl_isa_plus = {rtl_isa_plus, "_zicsr"};
-    if (cfg.ext_zicntr_supported)    rtl_isa_plus = {rtl_isa_plus, "_zicntr"};
+    if (cfg.ext_zicsr_supported)   rtl_isa_plus = {rtl_isa_plus, "_zicsr"};
+    if (cfg.ext_zicntr_supported)  rtl_isa_plus = {rtl_isa_plus, "_zicntr"};
+    if (cfg.ext_zifencei_supported) rtl_isa_plus = {rtl_isa_plus, "_zifencei"};
 
     return {rtl_isa, rtl_isa_plus};
 

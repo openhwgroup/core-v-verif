@@ -1,0 +1,33 @@
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/isa_parser.cc b/vendor/riscv/riscv-isa-sim/disasm/isa_parser.cc
+index ddb486a61..0449ad0d2 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/isa_parser.cc
++++ b/vendor/riscv/riscv-isa-sim/disasm/isa_parser.cc
+@@ -114,8 +114,7 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
+       // Spike necessarily has Zicsr, because
+       // Zicsr is implied by the privileged architecture
+     } else if (ext_str == "zifencei") {
+-      // For compatibility with version 2.0 of the base ISAs, we
+-      // unconditionally include FENCE.I, so Zifencei adds nothing more.
++      extension_table[EXT_ZIFENCEI] = true;
+     } else if (ext_str == "zihintpause") {
+       // HINTs encoded in base-ISA instructions are always present.
+     } else if (ext_str == "zihintntl") {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/insns/fence_i.h b/vendor/riscv/riscv-isa-sim/riscv/insns/fence_i.h
+index 38dcaf3fc..4c1a903a5 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/insns/fence_i.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/insns/fence_i.h
+@@ -1 +1,2 @@
++require_extension(EXT_ZIFENCEI);
+ MMU.flush_icache();
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/isa_parser.h b/vendor/riscv/riscv-isa-sim/riscv/isa_parser.h
+index 9effd164d..73547c19e 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/isa_parser.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/isa_parser.h
+@@ -56,6 +56,7 @@ typedef enum {
+   EXT_ZICBOZ,
+   EXT_ZICNTR,
+   EXT_ZICOND,
++  EXT_ZIFENCEI,
+   EXT_ZIHPM,
+   EXT_XZBP,
+   EXT_XZBS,

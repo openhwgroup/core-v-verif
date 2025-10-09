@@ -30,6 +30,7 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
     // Local variable
     // ------------------------------------------------------------------------
     protected string name ;
+    bit use_response_handler;
 //    generic_txn rsp_list[integer][$]; 
 
     // ------------------------------------------------------------------------
@@ -90,7 +91,6 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
            // ----------------------------------------------------------------------------
            fork 
              get_and_drive_req(); 
-             spy_and_drive_rsp(); 
            join_none
           // In case of a reset on the fly, kill all processes
           @(reset_asserted);
@@ -108,8 +108,6 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
            seq_item_port.get_next_item(req);
            `uvm_info("REQ ACK DRIVER", "New Request Recieved", UVM_HIGH);
 
-//           @ (posedge generic_vif.clk_i);
-
            if(req.m_txn_idle_cycles > 0)
              generic_vif.wait_n_clocks(req.m_txn_idle_cycles);
 
@@ -126,9 +124,6 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
            // ------------------------------------------------------
            // This is to be used by respose handler
            // ------------------------------------------------------
-          // if(req.m_req_need_rsp) begin 
-          //   rsp_list[req.m_req_tid].push_back(req);
-          // end
            seq_item_port.item_done();
        end
     endtask
@@ -137,19 +132,9 @@ class generic_driver #(type req_t, type rsp_t) extends uvm_driver #(generic_txn 
     // get and drive 
     // ----------------------------------
     virtual task spy_and_drive_rsp( );
-       generic_txn #(req_t, rsp_t)rsp;
-       // Drive generic iterface
-       forever begin
-           @ (posedge generic_vif.clk_i);
-           
-           if(generic_vif.rsp_valid & generic_vif.rsp_ready) begin
-             rsp       = generic_txn#(req_t, rsp_t)::type_id::create("new rsp");
-             rsp.m_rsp <= generic_vif.rsp;
-
-             seq_item_port.put(rsp);
-             `uvm_info("RES ACK DRIVER", "New Response Sent", UVM_HIGH);
-           end
-       end
+      if(use_response_handler) begin
+        `uvm_warning(this.name, "use_response_handler is enabled: Please over write virtual task spy_and_drive_rsp in generic driver");
+      end
     endtask
     // ------------------------------------------------------
     // API to set the interface 

@@ -20,6 +20,8 @@ class uvma_cvxif_drv_c extends uvm_driver #(uvma_cvxif_resp_item_c);
    uvma_cvxif_cfg_c    cfg;
    uvma_cvxif_cntxt_c  cntxt;
 
+   int unsigned TIMEOUT = 0;
+
    `uvm_component_utils_begin(uvma_cvxif_drv_c)
       `uvm_field_object(cfg   , UVM_DEFAULT)
       `uvm_field_object(cntxt , UVM_DEFAULT)
@@ -27,11 +29,8 @@ class uvma_cvxif_drv_c extends uvm_driver #(uvma_cvxif_resp_item_c);
 
    string info_tag = "CVXIF_DRV";
 
-   drv_result resp_queue [$];
-   drv_result res_resp;
-   drv_result aux_item;
-   logic go=1;
-   logic res_ready;
+   uvma_cvxif_resp_item_c resp_item_queue[$];
+   uvma_cvxif_resp_item_c res_item;
 
    extern function new(string name="uvma_cvxif_drv", uvm_component parent=null);
 
@@ -41,32 +40,47 @@ class uvma_cvxif_drv_c extends uvm_driver #(uvma_cvxif_resp_item_c);
 
    extern virtual task run_phase(uvm_phase phase);
 
-   //generate randomly the issue_ready signal
+   //Generate randomly the issue_ready signal
    extern virtual task gen_slv_random_ready();
 
-   //get response item and call task to drive the issue reponse to the vif
-   extern virtual task slv_get_item_proc();
+   //Drive response
+   extern virtual task drv_slv_resp(input uvma_cvxif_resp_item_c item);
 
-   //fill res_resp typdef with responses received from seq
-   extern virtual task fill_slv_res_resp(input uvma_cvxif_resp_item_c res_item);
+   //Reject issue request
+   extern virtual task reject_slv_resp();
 
-   //drive issue response
-   extern virtual task drv_slv_issue_resp(input uvma_cvxif_resp_item_c item);
+   //Drive issue response
+   extern virtual task drv_issue_resp(input uvma_cvxif_resp_item_c item);
 
-   //de-assert issue_response
-   extern virtual task deassert_slv_issue();
+   //Drive compressed response
+   extern virtual task drv_compressed_resp(input uvma_cvxif_resp_item_c item);
 
-   //drive results in order fashion
-   extern virtual task drv_slv_result_in_order_proc();
+   //De-assert issue response
+   extern virtual task deassert_issue_resp();
 
-   //drive results in out of order fashion
-   extern virtual task drv_slv_result_out_of_order_proc();
+   //De-assert compressed response
+   extern virtual task deassert_compressed_resp();
 
-   //drive result response
-   extern virtual task drv_slv_result_resp(input drv_result item);
+   //Drive result response
+   extern virtual task drv_slv_result_resp(input uvma_cvxif_resp_item_c item);
 
-   //de-assert result signals
+   //De-assert result signals
    extern virtual task deassert_slv_result();
+
+   //Called by run_phase() while agent is in pre-reset state.
+   extern task drv_cvxif_pre_reset();
+
+   //Called by run_phase() while agent is in reset state.
+   extern task drv_cvxif_in_reset();
+
+   //Called by run_phase() while agent is in post-reset state.
+   extern task drv_cvxif_post_reset();
+
+   //Drive result in order
+   extern task drv_result_in_order();
+
+   //Drive result out of order
+   extern task drv_result_out_of_order();
 
 endclass : uvma_cvxif_drv_c
 
@@ -97,228 +111,306 @@ endfunction : build_phase
 task uvma_cvxif_drv_c::reset_phase(uvm_phase phase);
 
    // init value of slave
-   cntxt.vif.cvxif_req_i.x_commit_valid         <= 0;
-   cntxt.vif.cvxif_req_i.x_commit.x_commit_kill <= 0;
-   cntxt.vif.cvxif_req_i.x_commit.id            <= 0;
+   cntxt.vif.commit_valid             <= 0;
+   cntxt.vif.commit_req.commit_kill   <= 0;
+   cntxt.vif.commit_req.id            <= 0;
 
-   cntxt.vif.cvxif_req_i.x_issue_valid          <= 0;
-   cntxt.vif.cvxif_req_i.x_issue_req.id         <= 0;
-   cntxt.vif.cvxif_req_i.x_issue_req.rs         <= 0;
-   cntxt.vif.cvxif_req_i.x_issue_req.mode       <= 0;
-   cntxt.vif.cvxif_req_i.x_issue_req.rs_valid   <= 0;
+   cntxt.vif.issue_valid              <= 0;
+   cntxt.vif.issue_req.hartid         <= 0;
+   cntxt.vif.issue_req.id             <= 0;
+   cntxt.vif.issue_req.instr          <= 0;
+								      
+   cntxt.vif.register_valid           <= 0;
+   cntxt.vif.register.hartid          <= 0;
+   cntxt.vif.register.id              <= 0;
+   cntxt.vif.register.rs_valid        <= 0;
 
-   cntxt.vif.cvxif_req_i.x_compressed_valid     <= 0;
-   cntxt.vif.cvxif_req_i.x_compressed_req.id    <= 0;
-   cntxt.vif.cvxif_req_i.x_compressed_req.mode  <= 0;
-   cntxt.vif.cvxif_req_i.x_compressed_req.instr <= 0;
+   cntxt.vif.compressed_valid         <= 0;
+   cntxt.vif.compressed_req.hartid    <= 0;
+   cntxt.vif.compressed_req.instr     <= 0;
 
 endtask
 
+
 task uvma_cvxif_drv_c::run_phase(uvm_phase phase);
 
+   super.run_phase(phase);
+
+   //Initial the interface before the CPU start
+   deassert_issue_resp();
+   deassert_compressed_resp();
+   deassert_slv_result();
+
+   forever begin
+      case (cntxt.reset_state)
+         UVMA_CVXIF_RESET_STATE_PRE_RESET : drv_cvxif_pre_reset ();
+         UVMA_CVXIF_RESET_STATE_IN_RESET  : drv_cvxif_in_reset  ();
+         UVMA_CVXIF_RESET_STATE_POST_RESET: drv_cvxif_post_reset();
+
+         default: `uvm_fatal(get_type_name(), $sformatf("Invalid reset_state: %0d", cntxt.reset_state))
+      endcase
+   end
+
+endtask : run_phase
+
+task uvma_cvxif_drv_c::gen_slv_random_ready();
+
    fork
-      begin
-         forever begin
-            if (cfg.ready_mode == UVMA_CVXIF_ISSUE_READY_FIX) begin
-               @(posedge cntxt.vif.clk);
-               break;
-            end
-            else begin
-               gen_slv_random_ready();
-            end
+      forever begin
+         if (cfg.issue_ready_mode == UVMA_CVXIF_ISSUE_READY_RANDOMIZED) begin
+            cntxt.vif.issue_ready <= 1'b1;
+            repeat(cfg.hold_issue_ready)     @(posedge cntxt.vif.clk);
+            cntxt.vif.issue_ready <= 1'b0;
+            repeat(cfg.hold_issue_not_ready) @(posedge cntxt.vif.clk);
+         end
+         else if (cfg.issue_ready_mode == UVMA_CVXIF_ISSUE_READY_FIX) begin
+            @(posedge cntxt.vif.clk);
+            cntxt.vif.issue_ready <= 1'b1;
          end
       end
-
-      begin
-         forever begin
-            fork
-               begin
-                  slv_get_item_proc();
-               end
-               begin
-                  if (cfg.in_order) begin
-                     drv_slv_result_in_order_proc();
-                  end
-                  else begin
-                     drv_slv_result_out_of_order_proc();
-                  end
-               end
-            join_any
+      forever begin
+         if (cfg.compressed_ready_mode == UVMA_CVXIF_COMPRESSED_READY_RANDOMIZED) begin
+            cntxt.vif.compressed_ready <= 1'b1;
+            repeat(cfg.hold_compressed_ready)     @(posedge cntxt.vif.clk);
+            cntxt.vif.compressed_ready <= 1'b0;
+            repeat(cfg.hold_compressed_not_ready) @(posedge cntxt.vif.clk);
+         end
+         else if (cfg.compressed_ready_mode == UVMA_CVXIF_COMPRESSED_READY_FIX) begin
+            @(posedge cntxt.vif.clk);
+            cntxt.vif.compressed_ready <= 1'b1;
          end
       end
    join_any
 
 endtask
 
-task uvma_cvxif_drv_c::gen_slv_random_ready();
+task uvma_cvxif_drv_c::drv_cvxif_post_reset();
 
-   cfg.randomize(uvma_cvxif_issue_ready);
-   cfg.randomize(uvma_cvxif_issue_not_ready);
-   repeat(cfg.uvma_cvxif_issue_ready) @(posedge cntxt.vif.clk);
-      cntxt.vif.cvxif_resp_o.x_issue_ready <= 0;
-   repeat(cfg.uvma_cvxif_issue_not_ready) @(posedge cntxt.vif.clk);
-      cntxt.vif.cvxif_resp_o.x_issue_ready <= 1;
+   if (cfg.enabled_cvxif) begin
+      fork
+         begin
+            gen_slv_random_ready();
+         end
+         forever begin
+            // 1. Get the response item from sequencer
+            resp_item = uvma_cvxif_resp_item_c::type_id::create("resp_item");
+            seq_item_port.get_next_item(resp_item);
+            `uvm_info(info_tag, $sformatf("Response : %p", resp_item), UVM_NONE);
+            // delay response until all necessary register are provided
+            if (resp_item.delay_resp) cntxt.vif.issue_ready <= 0;
+            else drv_slv_resp(resp_item);
+
+            //Tell sequencer we're ready for the next sequence item
+            seq_item_port.item_done();
+         end
+         forever begin
+            if (cfg.ordering_mode == UVMA_CVXIF_ORDERING_MODE_IN_ORDER) begin
+               drv_result_in_order();
+            end
+            if (cfg.ordering_mode == UVMA_CVXIF_ORDERING_MODE_RANDOM) begin
+               drv_result_out_of_order();
+            end
+         end
+      join_any
+   end
+   //Disabling cvxif agent means the agent gonna reject all the request from the CPU
+   else begin
+    `uvm_info(info_tag, $sformatf("CVXIF Agent is disabled : All CPU Requests are rejected !!"), UVM_NONE);
+    // trying to cover some senarios in CC coverage
+    // when the agent rejects CPU requests
+    // issue_valid = 1 & issue_ready = 0 & issue_accept = 1
+    cntxt.vif.issue_ready              <= 0;
+    cntxt.vif.issue_resp.accept        <= 1;
+    cntxt.vif.issue_resp.writeback     <= 0;
+    cntxt.vif.issue_resp.register_read <= 0;
+    cntxt.vif.compressed_ready         <= 1;
+    cntxt.vif.compressed_resp.accept   <= 0;
+    cntxt.vif.compressed_resp.instr    <= 0;
+    @(posedge cntxt.vif.clk);
+    wait (cntxt.vif.issue_valid);
+    cntxt.vif.issue_ready              = 1;
+    cntxt.vif.issue_resp.accept        = 0;
+    cntxt.vif.issue_resp.writeback     = 0;
+    cntxt.vif.issue_resp.register_read = 0;
+    cntxt.vif.compressed_ready         = 1;
+    cntxt.vif.compressed_resp.accept   = 0;
+    cntxt.vif.compressed_resp.instr    = 0;
+    @(posedge cntxt.vif.clk);
+    // issue_valid = 0 & issue_ready = 1 & issue_accept = 1
+    cntxt.vif.issue_ready              = 1;
+    cntxt.vif.issue_resp.accept        = 1;
+    cntxt.vif.issue_resp.writeback     = 0;
+    cntxt.vif.issue_resp.register_read = 0;
+    cntxt.vif.compressed_ready         = 1;
+    cntxt.vif.compressed_resp.accept   = 0;
+    cntxt.vif.compressed_resp.instr    = 0;
+    @(posedge cntxt.vif.clk);
+    forever begin
+       reject_slv_resp();
+    end
+   end
 
 endtask
 
-task uvma_cvxif_drv_c::slv_get_item_proc();
+task uvma_cvxif_drv_c::drv_cvxif_pre_reset();
 
-   // 1. Get the response item from sequencer
-   seq_item_port.get_next_item(resp_item);
-   fill_slv_res_resp(resp_item);
-   aux_item = res_resp;
-
-   // 2. save the result resp in a queue
-   resp_queue.push_back(aux_item);
-
-   // 3. Drive the response on the vif
-   drv_slv_issue_resp(resp_item);
+   deassert_issue_resp();
+   deassert_compressed_resp();
+   deassert_slv_result();
    @(posedge cntxt.vif.clk);
-   deassert_slv_issue();
 
-   // 4. Tell sequencer we're ready for the next sequence item
-   seq_item_port.item_done();
-   `uvm_info(info_tag, $sformatf("item_done"), UVM_HIGH);
-
-endtask
+endtask : drv_cvxif_pre_reset
 
 
-task uvma_cvxif_drv_c::drv_slv_issue_resp(input uvma_cvxif_resp_item_c item);
+task uvma_cvxif_drv_c::drv_cvxif_in_reset();
+
+   deassert_issue_resp();
+   deassert_compressed_resp();
+   deassert_slv_result();
+   @(posedge cntxt.vif.clk);
+
+endtask : drv_cvxif_in_reset
+
+task uvma_cvxif_drv_c::drv_slv_resp(input uvma_cvxif_resp_item_c item);
 
    //issue_resp in same cycle as issue_req
-   cntxt.vif.cvxif_resp_o.x_issue_resp.accept    <= item.issue_resp.accept;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.writeback <= item.issue_resp.writeback;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.dualwrite <= item.issue_resp.dualwrite;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.dualread  <= item.issue_resp.dualread;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.exc       <= item.issue_resp.exc;
-   `uvm_info(info_tag, $sformatf("Driving issue_resp, accept = %d", item.issue_resp.accept), UVM_LOW);
+   fork begin
+      if (item.issue_valid) begin
+         wait (cntxt.vif.issue_ready);
+         if (cntxt.vif.issue_valid) begin
+            drv_issue_resp(item);
+            `uvm_info(info_tag, $sformatf("drive issue done!"), UVM_NONE);
+         end
+         else begin
+            `uvm_info(info_tag, $sformatf("CPU retracts issue req!"), UVM_NONE);
+         end
+         @(posedge cntxt.vif.clk);
+         if (item.result_valid) begin
+           resp_item_queue.push_back(item);
+         end
+         deassert_issue_resp();
+      end
+   end
+
+   begin
+     if (item.compressed_valid) begin
+        wait (cntxt.vif.compressed_ready);
+        if (cntxt.vif.compressed_valid) begin
+           drv_compressed_resp(item);
+           `uvm_info(info_tag, $sformatf("drive compressed done!"), UVM_NONE);
+        end
+        else begin
+           `uvm_info(info_tag, $sformatf("CPU retracts compressed req!"), UVM_NONE);
+        end
+         @(posedge cntxt.vif.clk);
+        deassert_compressed_resp();
+     end
+   end
+   join_none
 
 endtask
 
-task uvma_cvxif_drv_c::deassert_slv_issue();
+task uvma_cvxif_drv_c::drv_issue_resp(input uvma_cvxif_resp_item_c item);
 
-   cntxt.vif.cvxif_resp_o.x_issue_resp.accept    <= 0;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.writeback <= 0;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.dualwrite <= 0;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.dualread  <= 0;
-   cntxt.vif.cvxif_resp_o.x_issue_resp.exc       <= 0;
+   cntxt.vif.issue_resp.accept        <= item.issue_resp.accept;
+   cntxt.vif.issue_resp.writeback     <= item.issue_resp.writeback;
+   cntxt.vif.issue_resp.register_read <= item.issue_resp.register_read;
 
 endtask
 
-task uvma_cvxif_drv_c::drv_slv_result_in_order_proc();
+task uvma_cvxif_drv_c::drv_compressed_resp(input uvma_cvxif_resp_item_c item);
 
-   while (!go) begin
+   cntxt.vif.compressed_resp.accept   <= item.compressed_resp.accept;
+   cntxt.vif.compressed_resp.instr    <= item.compressed_resp.instr;
+
+endtask
+
+task uvma_cvxif_drv_c::deassert_issue_resp();
+
+   cntxt.vif.issue_resp.accept        <= 0;
+   cntxt.vif.issue_resp.writeback     <= 0;
+   cntxt.vif.issue_resp.register_read <= 0;
+
+endtask
+
+task uvma_cvxif_drv_c::deassert_compressed_resp();
+
+   cntxt.vif.compressed_resp.accept   <= 0;
+   cntxt.vif.compressed_resp.instr    <= 0;
+
+endtask
+
+task uvma_cvxif_drv_c::reject_slv_resp();
+
+   cntxt.vif.issue_ready              <= 1;
+   cntxt.vif.issue_resp.accept        <= 0;
+   cntxt.vif.issue_resp.writeback     <= 0;
+   cntxt.vif.issue_resp.register_read <= 0;
+   cntxt.vif.compressed_ready         <= 1;
+   cntxt.vif.compressed_resp.accept   <= 0;
+   cntxt.vif.compressed_resp.instr    <= 0;
+   @(posedge cntxt.vif.clk);
+
+endtask
+
+task uvma_cvxif_drv_c::drv_slv_result_resp(input uvma_cvxif_resp_item_c item);
+
+   if (item.result_valid) begin
+     cntxt.vif.result_valid   <= item.result_valid;
+     cntxt.vif.result.hartid  <= item.result.hartid;
+     cntxt.vif.result.id      <= item.result.id;
+     cntxt.vif.result.rd      <= item.result.rd;
+     cntxt.vif.result.data    <= item.result.data;
+     cntxt.vif.result.we      <= item.result.we;
+   end
+
+   `uvm_info(info_tag, $sformatf("Driving result_resp, id = %d", item.result.id), UVM_NONE);
+
+endtask
+
+task uvma_cvxif_drv_c::drv_result_in_order();
+
+   wait (resp_item_queue.size() != 0);
+   repeat (cfg.instr_delayed) @(posedge cntxt.vif.clk);
+   res_item = resp_item_queue.pop_front();
+   if (res_item.result_valid) begin
+     while (!cntxt.vif.result_ready) @(posedge cntxt.vif.clk);
+     drv_slv_result_resp(res_item);
+     @(posedge cntxt.vif.clk);
+     deassert_slv_result();
+   end
+
+endtask
+
+task uvma_cvxif_drv_c::drv_result_out_of_order();
+
+   if (resp_item_queue.size() == MAX_ELEMENT_TO_DRIVE || TIMEOUT == 0) begin
+      resp_item_queue.shuffle();
+      foreach(resp_item_queue[i]) begin
+        while (!cntxt.vif.result_ready) @(posedge cntxt.vif.clk);
+        repeat (cfg.instr_delayed) @(posedge cntxt.vif.clk);
+        drv_slv_result_resp(resp_item_queue[i]);
+        @(posedge cntxt.vif.clk);
+        deassert_slv_result();
+      end
+      resp_item_queue.delete();
+      TIMEOUT = TIME_TO_WAIT_UNTIL_DRIVE;
+   end
+   else begin
+      TIMEOUT--;
       @(posedge cntxt.vif.clk);
    end
-   forever begin
-      if (resp_queue.size()==0) begin
-         @(posedge cntxt.vif.clk);
-         go=1;
-         break;
-      end
-      else begin
-         go=0;
-         repeat(resp_queue[0].rnd_delay) @(posedge cntxt.vif.clk);
-         drv_slv_result_resp(resp_queue[0]);
-         resp_queue.pop_front();
-         do @(posedge cntxt.vif.clk);
-         while (!resp_queue[0].result_ready);
-         deassert_slv_result();
-         go=1;
-         break;
-      end
-   end
-
-endtask
-
-task uvma_cvxif_drv_c::drv_slv_result_out_of_order_proc();
-
-   while (!go) begin
-     @(posedge cntxt.vif.clk);
-   end
-   forever begin
-
-     if (resp_queue.size()==0) begin
-       @(posedge cntxt.vif.clk);
-       go=1;
-       break;
-     end
-     else begin
-       fork
-         //ctrl_process()
-         begin
-           for (int i=0; i<resp_queue.size(); i++) begin
-              if ( resp_queue[i].rnd_delay==0 ) begin
-                 go=0;
-                 drv_slv_result_resp(resp_queue[i]);
-                 res_ready = resp_queue[i].result_ready;
-                 resp_queue.delete(i);
-                 do @(posedge cntxt.vif.clk);
-                 while (!res_ready);
-                 break;
-              end
-           end
-         end
-
-         //decr_process()
-         begin
-           @(posedge cntxt.vif.clk);
-           for (int i=0; i<resp_queue.size(); i++) begin
-             if (resp_queue[i].rnd_delay!=0) begin
-                resp_queue[i].rnd_delay = (resp_queue[i].rnd_delay)-1;
-                aux_item = resp_queue[i];
-                resp_queue.delete(i);
-                resp_queue.push_back(aux_item);
-             end
-           end
-         end
-
-       join
-     end
-     deassert_slv_result;
-     go=1;
-     break;
-
-   end
-
-endtask
-
-task uvma_cvxif_drv_c::drv_slv_result_resp(input drv_result item);
-
-   cntxt.vif.cvxif_resp_o.x_result_valid   <= item.result_valid;
-   cntxt.vif.cvxif_resp_o.x_result.id      <= item.id;
-   cntxt.vif.cvxif_resp_o.x_result.exc     <= item.exc;
-   cntxt.vif.cvxif_resp_o.x_result.rd      <= item.rd;
-   cntxt.vif.cvxif_resp_o.x_result.data    <= item.data;
-   cntxt.vif.cvxif_resp_o.x_result.we      <= item.we;
-   cntxt.vif.cvxif_resp_o.x_result.exccode <= item.exccode;
-   `uvm_info(info_tag, $sformatf("Driving result_resp, id = %d", item.id), UVM_LOW);
 
 endtask
 
 task uvma_cvxif_drv_c::deassert_slv_result();
 
-   cntxt.vif.cvxif_resp_o.x_result_valid   <= 0;
-   cntxt.vif.cvxif_resp_o.x_result.id      <= 0;
-   cntxt.vif.cvxif_resp_o.x_result.exc     <= 0;
-   cntxt.vif.cvxif_resp_o.x_result.rd      <= 0;
-   cntxt.vif.cvxif_resp_o.x_result.data    <= 0;
-   cntxt.vif.cvxif_resp_o.x_result.we      <= 0;
-   cntxt.vif.cvxif_resp_o.x_result.exccode <= 0;
-
-endtask
-
-task uvma_cvxif_drv_c::fill_slv_res_resp(input uvma_cvxif_resp_item_c res_item);
-
-   res_resp.result_valid = res_item.result_valid;
-   res_resp.id           = res_item.result.id;
-   res_resp.data         = res_item.result.data;
-   res_resp.rd           = res_item.result.rd;
-   res_resp.we           = res_item.result.we;
-   res_resp.exc          = res_item.result.exc;
-   res_resp.exccode      = res_item.result.exccode;
-   res_resp.result_ready = res_item.result_ready;
-   res_resp.rnd_delay    = res_item.rnd_delay;
+   cntxt.vif.result_valid   <= 0;
+   cntxt.vif.result.hartid  <= 0;
+   cntxt.vif.result.id      <= 0;
+   cntxt.vif.result.rd      <= 0;
+   cntxt.vif.result.data    <= 0;
+   cntxt.vif.result.we      <= 0;
 
 endtask
 

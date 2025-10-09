@@ -1,4 +1,5 @@
 #include "Proc.h"
+#include "mmu.h"
 #include "disasm.h"
 #include "extension.h"
 #include "arith.h"
@@ -234,6 +235,16 @@ Processor::Processor(
   std::cout << "[SPIKE]                 PMP Regions " << std::hex << pmpregions_max << std::endl;
   processor_t::set_pmp_num(pmpregions_max);
 
+  uint64_t pmp_granularity = this->params[base + "pmp_granularity"].a_uint64_t;
+  std::cout << "[SPIKE]                 PMP Granularity " << pmp_granularity;
+  // PMP granularity must be at least 4 and a power of two.
+  if (pmp_granularity < 4 || (pmp_granularity & (pmp_granularity - 1)) != 0)
+    std::cout << " is INVALID, will be IGNORED." << std::endl;
+  else {
+    std::cout << std::endl;
+    processor_t::set_pmp_granularity(pmp_granularity);
+  }
+
   ((cfg_t *)cfg)->priv = priv_str.c_str();
 
   uint64_t trigger_count = this->params[base + "trigger_count"].a_uint64_t;
@@ -244,8 +255,14 @@ Processor::Processor(
 
   this->disassembler = new disassembler_t(this->isa);
 
+  // Extensions specified in the ISA string.
   for (auto e : this->isa->get_extensions()) {
-    register_extension(e.second);
+    if (e.second && e.second->name()) {
+      e.second->set_Proc(this);
+      std::cerr << "### [SPIKE] Processor::Processor(): registering and resetting extension '" << e.second->name() << "' in Processor context..." << std::endl;
+      register_extension(e.second);
+      e.second->reset();
+    }
   }
 
   this->taken_trap = false;
@@ -256,8 +273,16 @@ Processor::Processor(
   ((cfg_t *)cfg)->misaligned =
       (this->params[base + "misaligned"]).a_bool;
 
+  // Allow/disallow memory accesses to unmapped addresses (single common flag
+  // for FETCH, LOAD, and STORE).
+  // If the param is missing in the Yaml file or there is no Yaml file at all,
+  // the value will be 'false' (default for missing Boolean param).
+  this->mmu->set_unmapped((this->params[base + "allow_unmapped_mem_access"]).a_bool);
+
   this->csr_counters_injection =
       (this->params[base + "csr_counters_injection"]).a_bool;
+
+  // Initialize extensions specified in Yaml 'extensions:' entry.
   string extensions_str =
       (this->params[base + "extensions"]).a_string;
 
@@ -285,12 +310,16 @@ Processor::Processor(
 
   for (auto ext : registered_extensions_v) {
     if (ext.second) {
+      // Register the extension and reset it.
       extension_t *extension = find_extension(ext.first.c_str())();
-      this->register_extension(extension);
+      std::cerr << "### [SPIKE] Registering Yaml-specified extension '" << extension->name() << "'..." << std::endl;
+      extension->set_Proc(this);
+      register_extension(extension);
       extension->reset();
     }
   }
 
+  std::cerr << "### [SPIKE] Calling Processor::reset() on hart " << std::dec << this->get_id() << "..." << std::endl;
   this->reset();
 }
 
@@ -333,6 +362,9 @@ void Processor::default_params(string base, openhw::Params &params, Processor *p
   if (!params.exist(base, "pmpregions_writable"))
     params.set_uint64_t(base, "pmpregions_writable", 0x0UL, "0x0",
                         "Number of PMP regions");
+  if (!params.exist(base, "pmp_granularity"))
+    params.set_uint64_t(base, "pmp_granularity", 0x8UL, "0x8",
+                        "Granularity of PMP addresses in bytes");
   if (!params.exist(base, "pmpaddr0"))
     params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
 			"Default PMPADDR0 value");
@@ -556,7 +588,7 @@ void Processor::reset()
     uint64_t pmpregions_writable = this->params[base + "pmpregions_writable"].a_uint64_t;
     uint64_t pmpregions_max = this->params[base + "pmpregions_max"].a_uint64_t;
 
-    for (int i = pmpregions_writable; i < pmpregions_max; i++) {
+    for (uint64_t i = pmpregions_writable; i < pmpregions_max; i++) {
         uint64_t csr_pmpaddr = CSR_PMPADDR0 + i;
         uint64_t csr_pmpcfg = CSR_PMPCFG0 + (i/4);
 

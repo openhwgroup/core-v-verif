@@ -1,0 +1,72 @@
+From 2db54b12c6d81e4727703775f5f05ee04768acda Mon Sep 17 00:00:00 2001
+From: Ayoub Jalali <ayoub.jalali@external.thalesgroup.com>
+Date: Tue, 8 Apr 2025 14:20:40 +0200
+Subject: [PATCH] spike disasm : don't optimaze jump instructions
+
+---
+ ...asm-don-t-optimaze-jump-instructions.patch | 32 +++++++++++++++++++
+ vendor/riscv/riscv-isa-sim/disasm/disasm.cc   |  2 --
+ 2 files changed, 32 insertions(+), 2 deletions(-)
+ create mode 100644 vendor/patches/riscv/riscv-isa-sim/0045-spike-disasm-don-t-optimaze-jump-instructions.patch
+
+diff --git a/vendor/patches/riscv/riscv-isa-sim/0045-spike-disasm-don-t-optimaze-jump-instructions.patch b/vendor/patches/riscv/riscv-isa-sim/0045-spike-disasm-don-t-optimaze-jump-instructions.patch
+new file mode 100644
+index 000000000..15e1202fa
+--- /dev/null
++++ b/vendor/patches/riscv/riscv-isa-sim/0045-spike-disasm-don-t-optimaze-jump-instructions.patch
+@@ -0,0 +1,32 @@
++From c50152db2ab7723c1ec73f0505075d99247e3884 Mon Sep 17 00:00:00 2001
++From: Ayoub Jalali <ayoub.jalali@external.thalesgroup.com>
++Date: Tue, 8 Apr 2025 14:20:40 +0200
++Subject: [PATCH] don't optimaze jump instruction
++
++---
++ vendor/riscv/riscv-isa-sim/disasm/disasm.cc | 2 --
++ 1 file changed, 2 deletions(-)
++
++diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++index 8ab0d6663..6cd16b614 100644
++--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++@@ -803,7 +803,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
++     DEFINE_XAMO(sc_d)
++   }
++ 
++-  add_insn(new disasm_insn_t("j", match_jal, mask_jal | mask_rd, {&jump_target}));
++   add_insn(new disasm_insn_t("jal", match_jal | match_rd_ra, mask_jal | mask_rd, {&jump_target}));
++   add_insn(new disasm_insn_t("jal", match_jal, mask_jal, {&xrd, &jump_target}));
++ 
++@@ -817,7 +816,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
++   DEFINE_LTYPE(lui);
++   DEFINE_LTYPE(auipc);
++ 
++-  DEFINE_I2TYPE("jr", jalr);
++   add_insn(new disasm_insn_t("jalr", match_jalr | match_rd_ra, mask_jalr | mask_rd | mask_imm, {&xrs1}));
++   DEFINE_ITYPE(jalr);
++ 
++-- 
++2.43.5
++
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+index 8ab0d6663..6cd16b614 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+@@ -803,7 +803,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+     DEFINE_XAMO(sc_d)
+   }
+ 
+-  add_insn(new disasm_insn_t("j", match_jal, mask_jal | mask_rd, {&jump_target}));
+   add_insn(new disasm_insn_t("jal", match_jal | match_rd_ra, mask_jal | mask_rd, {&jump_target}));
+   add_insn(new disasm_insn_t("jal", match_jal, mask_jal, {&xrd, &jump_target}));
+ 
+@@ -817,7 +816,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+   DEFINE_LTYPE(lui);
+   DEFINE_LTYPE(auipc);
+ 
+-  DEFINE_I2TYPE("jr", jalr);
+   add_insn(new disasm_insn_t("jalr", match_jalr | match_rd_ra, mask_jalr | mask_rd | mask_imm, {&xrs1}));
+   DEFINE_ITYPE(jalr);
+ 
+-- 
+2.43.5
+

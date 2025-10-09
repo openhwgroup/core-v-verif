@@ -97,7 +97,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
   }
 #endif
 
-  debug_mmu = new mmu_t(this, cfg->endianness, NULL);
+  debug_mmu = new mmu_t(this, cfg->endianness, NULL, false); // false == Do not allow accesses to unmapped mem
 
   openhw::Param a_num_procs = params["/top/num_procs"];
   uint64_t num_procs = a_num_procs.a_uint64_t ? (a_num_procs).a_uint64_t : cfg->nprocs();
@@ -168,6 +168,8 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
     if (cpu_idx >= nprocs())
       break;
 
+#if 0 // Disable PMP configuration from device trees, rely on parameters
+      // (from Yaml config files or from cmdline) instead.
     //handle pmp
     reg_t pmp_num, pmp_granularity;
     if (fdt_parse_pmp_num(fdt, cpu_offset, &pmp_num) != 0)
@@ -177,6 +179,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
     if (fdt_parse_pmp_alignment(fdt, cpu_offset, &pmp_granularity) == 0) {
       procs[cpu_idx]->set_pmp_granularity(pmp_granularity);
     }
+#endif
 
     //handle mmu-type
     const char *mmu_type;

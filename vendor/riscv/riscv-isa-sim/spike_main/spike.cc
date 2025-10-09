@@ -664,11 +664,16 @@ int main(int argc, char** argv)
     s.get_core(i)->set_nb_register_source(number_register_source);
     if (ic) s.get_core(i)->get_mmu()->register_memtracer(&*ic);
     if (dc) s.get_core(i)->get_mmu()->register_memtracer(&*dc);
+
+    // Extensions have already been initialized and reset.
+    // Re-registering an extension creates a new instance each time.
+#if 0
     for (auto e : extensions) {
       extension_t *ext = e();
       s.get_core(i)->register_extension(ext);
       ext->reset();
     }
+#endif
     s.get_core(i)->get_mmu()->set_cache_blocksz(blocksz);
   }
 

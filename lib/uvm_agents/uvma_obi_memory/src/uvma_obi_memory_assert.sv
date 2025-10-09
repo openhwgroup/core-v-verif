@@ -118,18 +118,22 @@ module uvma_obi_memory_assert
   a_addr_stable: assert property(p_addr_signal_stable(addr))
   else
     `uvm_error(info_tag, "addr signal not stable in address phase")
+  c_addr_stable : cover property(p_addr_signal_stable(addr));
 
   a_we_stable: assert property(p_addr_signal_stable(we))
   else
     `uvm_error(info_tag, "we signal not stable in address phase")
+  c_we_stable : cover property(p_addr_signal_stable(we));
 
   a_wdata_stable: assert property(p_addr_signal_stable(wdata))
   else
     `uvm_error(info_tag, "wdata signal not stable in address phase")
+  c_wdata_stable : cover property(p_addr_signal_stable(wdata));
 
   a_be_stable: assert property(p_addr_signal_stable(be))
   else
     `uvm_error(info_tag, "be signal not stable in address phase")
+  c_be_stable : cover property(p_addr_signal_stable(be));
 
   // R-3.1.2 : Req may not deassewrt until the gnt is asserted
   property p_req_until_gnt;
@@ -138,6 +142,7 @@ module uvma_obi_memory_assert
   a_req_until_gnt : assert property(p_req_until_gnt)
   else
     `uvm_error(info_tag, "req may not deassert until gnt asserted")
+  c_req_until_gnt : cover property(p_req_until_gnt);
 
   // These next 2 are not strictly a functional requirement, but the testbench should simulate this
   // Therefore these are coded as a set of cover properties
@@ -175,65 +180,90 @@ module uvma_obi_memory_assert
   a_r_after_a : assert property(p_r_after_a)
   else
     `uvm_error(info_tag, "response phase started before address phase")
+  c_r_after_a : cover property (p_r_after_a);
 
   // R-7 At least one byte enable must be set
   property p_be_not_zero;
-    req ##0 we |-> be != 0;
+    req |-> be != 0;
   endproperty : p_be_not_zero
   a_be_not_zero : assert property(p_be_not_zero)
   else
     `uvm_error(info_tag, "be was zero during an address cycle")
+  c_be_not_zero : cover property (p_be_not_zero);
 
-  // R-7 All ones must be contiguous in writes
-  reg[3:0] contiguous_be[] = {
-    4'b0001,
-    4'b0011,
-    4'b0111,
-    4'b1111,
-    4'b0010,
-    4'b0110,
-    4'b1110,
-    4'b0100,
-    4'b1100,
-    4'b1000
+  // R-7 All ones must be contiguous during the address phase
+  reg[7:0] contiguous_be[] = {
+    8'b00000001,
+    8'b00000011,
+    8'b00000111,
+    8'b00001111,
+    8'b00011111,
+    8'b00111111,
+    8'b01111111,
+    8'b11111111,
+    8'b00000010,
+    8'b00000110,
+    8'b00001110,
+    8'b00011110,
+    8'b00111110,
+    8'b01111110,
+    8'b11111110,
+    8'b00000100,
+    8'b00001100,
+    8'b00011100,
+    8'b00111100,
+    8'b01111100,
+    8'b11111100,
+    8'b00001000,
+    8'b00011000,
+    8'b00111000,
+    8'b01111000,
+    8'b11111000,
+    8'b00010000,
+    8'b00110000,
+    8'b01110000,
+    8'b11110000,
+    8'b00100000,
+    8'b01100000,
+    8'b11100000,
+    8'b01000000,
+    8'b11000000,
+    8'b10000000
   };
   bit be_inside_contiguous_be;
   always_comb begin
     be_inside_contiguous_be = be inside {contiguous_be};
   end
   property p_be_contiguous;
-    req ##0 we |-> be_inside_contiguous_be;
+    req |-> be_inside_contiguous_be;
   endproperty : p_be_contiguous
   a_be_contiguous : assert property(p_be_contiguous)
   else
     `uvm_error(info_tag, $sformatf("be of 0x%0x was not contiguous", $sampled(be)));
+  c_be_contiguous : cover property (p_be_contiguous);
 
   // R-8 Data address LSBs must be consistent with byte enables on writes
-  function bit [1:0] get_addr_lsb(bit[3:0] be);
+  function bit [2:0] get_addr_lsb(bit[7:0] be);
     casex (be)
-      4'b???1: return 0;
-      4'b??10: return 1;
-      4'b?100: return 2;
-      4'b1000: return 3;
+      8'b???????1: return 0;
+      8'b??????10: return 1;
+      8'b?????100: return 2;
+      8'b????1000: return 3;
+      8'b???10000: return 4;
+      8'b??100000: return 5;
+      8'b?1000000: return 6;
+      8'b10000000: return 7;
     endcase
   endfunction : get_addr_lsb
 
-  // R-8 Data address LSBs must be consistent with byte enables on writes
-  function bit [3:0] get_min_be(bit [ADDR_WIDTH-1:0] addr);
-    casex (addr)
-      4'b???1: return 'b0000;
-      4'b??10: return 'b0010;
-      4'b?100: return 'b0100;
-      4'b1000: return 'b1000;
-    endcase
-  endfunction : get_min_be
-
+  // R-8 Address LSBs must be consistent with byte enables during the address phase
   property p_addr_be_consistent;
-    disable iff (DATA_WIDTH !== 32) req |-> (get_min_be(addr) <= be);
+    req |-> addr[DATA_WIDTH/32:0] <= get_addr_lsb(be);
   endproperty : p_addr_be_consistent
   a_addr_be_consistent: assert property(p_addr_be_consistent)
   else
     `uvm_error(info_tag, $sformatf("be of 0x%01x not consistent with addr 0x%08x", $sampled(be), $sampled(addr)));
+  c_addr_be_consistent : cover property (p_addr_be_consistent);
 
 
 endmodule : uvma_obi_memory_assert

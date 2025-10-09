@@ -26,7 +26,6 @@ class uvma_axi_base_seq_c extends uvm_sequence#(uvma_axi_transaction_c);
    `uvm_object_utils(uvma_axi_base_seq_c)
    `uvm_declare_p_sequencer(uvma_axi_vsqr_c)
 
-    uvma_axi_vsqr_c   m_sequencer  ;
 
    /**
     * Default constructor.
@@ -46,22 +45,6 @@ function uvma_axi_base_seq_c::new(string name="uvma_axi_base_seq");
    super.new(name);
 
 endfunction : new
-
-
-// ------------------------------------------------------------------------
-// Pre body task
-// Task in charge of getting the sequencer of the agent, to get the
-// configuration of the agent from the sequencer, to get if the ID are
-// unique or not and to get the transaction configuration for the
-// randomization.
-// ------------------------------------------------------------------------
-//task uvma_axi_base_seq_c::pre_body();
-//  if ( !$cast(m_sequencer, get_sequencer()) )
-//    `uvm_error("AXI BASE SEQ","Error during the cast of the sequencer");
-//   cfg   = m_sequencer.cfg;
-//   cntxt = m_sequencer.cntxt;
-//endtask: pre_body
-
 
 
 task uvma_axi_base_seq_c::pre_start();

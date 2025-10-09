@@ -803,7 +803,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
     DEFINE_XAMO(sc_d)
   }
 
-  add_insn(new disasm_insn_t("j", match_jal, mask_jal | mask_rd, {&jump_target}));
   add_insn(new disasm_insn_t("jal", match_jal | match_rd_ra, mask_jal | mask_rd, {&jump_target}));
   add_insn(new disasm_insn_t("jal", match_jal, mask_jal, {&xrd, &jump_target}));
 
@@ -817,14 +816,9 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
   DEFINE_LTYPE(lui);
   DEFINE_LTYPE(auipc);
 
-  add_insn(new disasm_insn_t("ret", match_jalr | match_rs1_ra, mask_jalr | mask_rd | mask_rs1 | mask_imm, {}));
-  DEFINE_I2TYPE("jr", jalr);
   add_insn(new disasm_insn_t("jalr", match_jalr | match_rd_ra, mask_jalr | mask_rd | mask_imm, {&xrs1}));
   DEFINE_ITYPE(jalr);
 
-  add_noarg_insn(this, "nop", match_addi, mask_addi | mask_rd | mask_rs1 | mask_imm);
-  DEFINE_I0TYPE("li", addi);
-  DEFINE_I1TYPE("mv", addi);
   DEFINE_ITYPE(addi);
   DEFINE_ITYPE(slti);
   add_insn(new disasm_insn_t("seqz", match_sltiu | (1 << imm_shift), mask_sltiu | mask_imm, {&xrd, &xrs1}));
@@ -973,6 +967,16 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
     DEFINE_SFENCE_TYPE(sinval_vma);
     DEFINE_SFENCE_TYPE(hinval_vvma);
     DEFINE_SFENCE_TYPE(hinval_gvma);
+  }
+
+  if (isa->extension_enabled(EXT_XCVXIF)) {
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_madd);
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_msub);
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_nmadd);
+    DEFINE_R3TYPE(cvxif_32_cus_add_rs3_nmsub);
+    // DEFINE_R3TYPE(cvxif_32_cus_add_rs3_rtype);
+    DISASM_INSN("cvxif_16_cus_cnop", cvxif_16_cus_cnop, 0, {&xrd, &rvc_rs2});
+    DISASM_INSN("cvxif_16_cus_cadd", cvxif_16_cus_cadd, 0, {&xrd, &rvc_rs2});
   }
 
   if (isa->extension_enabled('F')) {
@@ -1252,7 +1256,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
   // ext-c
   if (isa->extension_enabled(EXT_ZCA)) {
     DISASM_INSN("c.ebreak", c_add, mask_rd | mask_rvc_rs2, {});
-    add_insn(new disasm_insn_t("ret", match_c_jr | match_rd_ra, mask_c_jr | mask_rd | mask_rvc_imm, {}));
     DISASM_INSN("c.jr", c_jr, mask_rvc_imm, {&rvc_rs1});
     DISASM_INSN("c.jalr", c_jalr, mask_rvc_imm, {&rvc_rs1});
     DISASM_INSN("c.nop", c_addi, mask_rd | mask_rvc_imm, {});
