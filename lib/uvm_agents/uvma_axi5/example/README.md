@@ -7,6 +7,12 @@ In this example, an AXI master agent is connected to an AXI slave agent. This ex
 # Configuration 
 Please set memory response model response to random 0
 
+Environnement Variables
+Please CORE_V_VERIF to $cva6/verif/core-v-verif 
+DV_UVMA_AXI_PATH  to $CORE_V_VERIF/lib/uvm_agents/uvma_axi5
+DV_UVML_MEM_PATH  to $CORE_V_VERIF/lib/uvm_libs/uvml_mem
+DV_UVML_TRN_PATH  to $CORE_V_VERIF/lib/uvm_libs/uvml_trn
+DV_UVML_LOGS_PATH to $CORE_V_VERIF/lib/uvm_libs/uvml_logs
 # Usage
 To compile and run using VCS: 
 python3 $CORE_V_VERIF/lib/cv_dv_utils/python/sim_cmd/compile.py --yaml simulator_vcs.yaml --outdir out
