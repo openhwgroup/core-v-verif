@@ -16,7 +16,7 @@
 //[END OF HEADER]
 // ----------------------------------------------------------------------------
 //  Description : This class (uvm_object) holds an abstract representation of 
-//                the configuration of one Slice in the RWI. 
+//                the configuration of DUT
 //
 //                
 // 
