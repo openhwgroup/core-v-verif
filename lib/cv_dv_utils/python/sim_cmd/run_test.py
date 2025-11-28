@@ -21,7 +21,6 @@
 import argparse
 import os
 import yaml
-import get_cmd as sim
 
 parser = argparse.ArgumentParser(description='compile options')
 parser.add_argument('--yaml'     ,dest='yaml_file', type=str, help='Top YAML with compile and simulation options')
@@ -32,21 +31,269 @@ parser.add_argument('--batch'    , dest='batch',     type=int, help='1: batch mo
 parser.add_argument('--dump'     , dest='dump',      type=int, help='1: all signals are logged, 0: nothing is looged, default 1') #FIXME
 parser.add_argument('--cover'    , dest='cover',     type=int, help='1: generate coverage file, 0: nothing is done, cover option are passed from yaml file ') #FIXME
 parser.add_argument('--stdout'   , dest='stdout', type=int, help='1: stdout 0: nostdout')
-parser.add_argument('--outdir'   , dest='outdir', type=str, help='output dirctory de fault "output"')
+parser.add_argument('--outdir'   , dest='outdir', type=str, help='output dirctory default "output"')
 
 args = parser.parse_args()
 
 
 option_ok = 1
+#check for the insertion of the yaml top file
 if args.yaml_file == None:
-   print("Please specify the YAML")
+   print("[ERROR] Please specify the YAML")
    option_ok = 0
 else:
-   cmd_opt = sim.get_cmd_opt(args.yaml_file)
+   yaml_file = args.yaml_file
+
+#check for the insertion of the test name   
 if args.test_name == None: 
-   print("Please specify the testname")
+   print("[ERROR] Please specify the testname")
    option_ok = 0
+else:
+   test_name = args.test_name
+
+#set default values if seed, debug, batch, dump, stdout and outdir are not defined
+if args.seed == None:
+   print("[INFO] Setting default seed = 1")
+   seed = 1
+else:
+   seed = args.seed
+
+if args.debug == None:
+   print("[INFO] Setting default UVM debug = UVM LOW")
+   debug = "UVM_LOW"
+else:
+   debug = args.debug
+
+if args.batch == None:
+   print("[INFO] Setting default mode = batch mode")
+   batch = 1
+else:
+   batch = args.batch
+
+if args.dump == None:
+   print("[INFO] Setting default dump = 0")
+   dump = 0
+else:
+   dump = args.dump
+
+if args.stdout == None:
+   print("[INFO] Setting default output (-l)")
+   stdout = 1
+else:
+   stdout = args.stdout
+
+if args.outdir == None:
+   print("[INFO] Setting default output directory = output")
+   outdir = "output"
+else:
+   outdir = args.outdir
+
+#check outdir --> if it is not present create it
+if os.path.isdir("{}".format(outdir)) == False:
+     os.system("mkdir {}".format(outdir))
+
 
 if option_ok == 1:
-  sim.run_test(args.test_name, args.seed, args.debug, args.batch, args.dump, args.stdout, args.outdir, args.cover, cmd_opt )
+  #Recognize the used tool
+   with open(args.yaml_file, 'r') as yaml_top:
+     sim_yaml = yaml.safe_load(yaml_top)
+
+   for entry in sim_yaml: 
+      # getting the sim options
+      if 'compile' in entry:
+         comp_entry = entry['compile']
+      else:
+         comp_entry = ""
+
+      if 'work_lib' in comp_entry:
+         worklib = comp_entry['work_lib']
+      else:
+         worklib = ""
+
+      if 'top_entity' in comp_entry:
+         top = comp_entry['top_entity']
+      else:
+         top = ""      
+
+      if 'sim' in entry:
+         sim_entry      = entry['sim']
+      else: 
+         sim_entry = ""
+
+      if 'sim_option' in sim_entry:
+         sim_opt = sim_entry['sim_option']
+      else:
+         sim_opt = ""
+
+      #Branch the simulation depending on the tool
+      if entry['tool'] == "questa":
+         #directory that stores dbg files
+         dbg_dir = os.path.join(outdir, "questa_db")
+         if os.path.isdir("{}".format(dbg_dir)) == False:
+            os.system("mkdir {}".format(dbg_dir))
+         
+         #Full path to output dbg
+         db_file = os.path.join(dbg_dir, f"{test_name}_{seed}.db")
+         
+         #DO
+         do_file = "questa_run.do"
+         if os.path.isfile("{}".format(do_file)) == False:
+            print("[INFO]: creating new questa_run.do file...")
+            os.system("touch {}".format(do_file))
+         else:
+            print("[INFO]: removing old questa_run.do file...")
+            os.system("rm {}".format(do_file))
+            print("[INFO]: creating new questa_run.do file...")
+            os.system("touch {}".format(do_file))
+         
+         if batch == 1:
+            batchstr = "-c"
+         else:
+            batchstr = "-visualizer"
+
+         if dump == 1:
+            with open(do_file, "w") as do:
+               if batch == 1:
+                  do.write("run -all\n")
+                  do.write("quit -f\n")
+               else:
+                  do.write("add log -r /*\n")
+
+            dumpstr = f"-qwavedb=+wavefile={db_file}+signal+memory=4096+class+assertion -do {do_file}"
+            
+         else:
+            with open(do_file, "w") as do:
+               if batch == 1:
+                  do.write("run -all\n")
+                  do.write("quit\n")
+               else:
+                  do.write("add log -r /*\n")
+
+            dumpstr = f"-do {do_file}"
+
+         if stdout == 0:
+            stdoutstr = ">"
+         else:
+            stdoutstr = "-l"
+
+         print("[INFO]: Starting simulation with Questasim...")
+         sim_cmd = f"vsim -lib {worklib} {sim_opt} {batchstr} {dumpstr} -sv_seed {seed} +UVM_VERBOSITY={debug} +UVM_TESTNAME={test_name} {stdoutstr} {outdir}/{test_name}_{seed}.log"
+         print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
+         os.system(sim_cmd)
+
+      elif entry['tool'] == "xcelium":
+         #directory that stores shm files
+         shm_dir = os.path.join(outdir, "xlm_db")
+         if os.path.isdir("{}".format(shm_dir)) == False:
+            os.system("mkdir {}".format(shm_dir))
+         
+         #Full path to output shm
+         shm_file = os.path.join(shm_dir, f"{test_name}_{seed}.shm")
+         
+         #TCL
+         tcl_file = "xlm_run.tcl"
+         if os.path.isfile("{}".format(tcl_file)) == False:
+            print("[INFO]: creating new xlm_run.tcl file...")
+            os.system("touch {}".format(tcl_file))
+         else:
+            print("[INFO]: removing old xlm_run.tcl file...")
+            os.system("rm {}".format(tcl_file))
+            print("[INFO]: creating new xlm_run.tcl file...")
+            os.system("touch {}".format(tcl_file))
+         
+
+         #options customization
+         #DUMPING: batch=1 and dump=0 --> just results on terminal
+         #         batch=1 and dump=1 --> create db, probe signals, post proc shm file
+         #         batch=0 and dump=0 --> just open the gui without running simulation
+         #         batch=0 and dump=1 --> open simulation in gui mode and dump res in .shm file
+         if batch == 1:
+            batchstr = "-batch"
+         else:
+            batchstr = "-gui"
+
+         if dump == 1:
+            with open(tcl_file, "w") as tcl:
+               tcl.write(f"database -open waves -into {shm_file} -default\n")
+               tcl.write( "probe -create -all -depth all -database waves\n")
+               if batch == 1:
+                  tcl.write( "run\n")
+                  tcl.write( "exit\n")
+         else:
+            with open(tcl_file, "w") as tcl:
+               if batch == 1:
+                  tcl.write("run\n")
+                  tcl.write("exit\n")
+            
+         dumpstr = f"-input {tcl_file}"
+
+         if stdout == 0:
+            stdoutstr = ">"
+         else:
+            stdoutstr = "-l"
+            
+         print("[INFO]: Starting simulation with Xcelium...")
+         sim_cmd = f"xrun -r {sim_opt} {batchstr} {dumpstr} -seed {seed} +UVM_VERBOSITY={debug} +UVM_TESTNAME={test_name} {stdoutstr} {outdir}/{test_name}_{seed}.log"
+         print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
+         os.system(sim_cmd)
+
+
+      elif entry['tool'] == "vcs":
+         #directory that stores fsbd files
+         fsdb_dir = os.path.join(outdir, "vcs_db")
+         if os.path.isdir("{}".format(fsdb_dir)) == False:
+            os.system("mkdir {}".format(fsdb_dir))
+         
+         #Full path to output fsdb
+         fsdb_file = os.path.join(fsdb_dir, f"{test_name}_{seed}.fsdb")
+         
+         #TCL
+         tcl_file = "vcs_run.tcl"
+         if os.path.isfile("{}".format(tcl_file)) == False:
+            print("[INFO]: creating new vcs_run.tcl file...")
+            os.system("touch {}".format(tcl_file))
+         else:
+            print("[INFO]: removing old vcs_run.tcl file...")
+            os.system("rm {}".format(tcl_file))
+            print("[INFO]: creating new vcs_run.tcl file...")
+            os.system("touch {}".format(tcl_file))
+
+
+
+         #options customization
+         if batch == 1:
+            batchstr = "-ucli"
+         else:
+            batchstr = "-gui"
+
+         if dump == 1:
+            with open(tcl_file, "w") as tcl:
+               if batch == 1:
+                  tcl.write(f"dump -file {fsdb_file} -type FSDB\n")
+                  tcl.write( f"dump -add {top} -depth 0 -fid FSDB0\n")
+                  tcl.write( "run\n")
+                  tcl.write( "quit\n")
+               else:
+                  #inter.fsdb automatically generated by verdi gui
+                  if os.path.isfile("inter.fsdb") == True:
+                     os.system(f"cp ./inter.fsdb ./{fsdb_file}")
+         else:
+            with open(tcl_file, "w") as tcl:
+               if batch == 1:
+                  tcl.write("run\n")
+                  tcl.write("quit\n")
+            
+         dumpstr = f"-i {tcl_file}"
+
+         if stdout == 0:
+            stdoutstr = ">"
+         else:
+            stdoutstr = "-l"
+
+         print("[INFO]: Starting simulation with VCS...")
+         sim_cmd = f"./simv {sim_opt} {batchstr} {dumpstr} +ntb_random_seed={seed} +UVM_VERBOSITY={debug} +UVM_TESTNAME={test_name} {stdoutstr} {outdir}/{test_name}_{seed}.log"
+         print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
+         os.system(sim_cmd)
+      else:
+         print("[ERROR]: Not supported tool")
 

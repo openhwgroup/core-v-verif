@@ -16,15 +16,12 @@
 ##[END OF HEADER]
 ## ----------------------------------------------------------------------------
 
-
-- tool: questa
+- tool: questa/xcelium
   compile:
     work_lib    : "<name>"
-    svlog_option: "<vlog options to propgate from top to bottom>" 
-    svlog_source: "list of sv sources (ex module.sv top.sv)" 
-    yaml_lists  :  "list of yaml of other modules (ex module1_template.yaml, module2_template.yaml"
-    vopt_option :  "<vopt options>"
+    filelist    : "path to the .f file which contains the list of files to be compiled included the top entity"
+    comp_option : "<compile options to propgate from top to bottom>" 
+    elab_option :  "<elaboration options of the commands vopt/xrun -elaborate>"
     top_entity  :  "<top>"
   sim:
-    work_lib    : "<name>"
-    sim_option  : "sim options" 
+    sim_option  : "sim options of the commands vsim/xrun -r"
