@@ -23,10 +23,15 @@
 These are python scripts, they allow to compile and run a test. 
 
 # Usage
-To compile a code in system verilog
-python3 compile.py --yaml simulator_vcs.yaml --outdir out
+To compile a code in system verilog:
+```
+python3 compile.py --yaml file.yaml
+```
 
-To run a test 
-python3 run_test.py --yaml simulator_vcs.yaml --test_name bursty_test_c
+To run a UVM test:
+```
+python3 run_test.py --yaml file.yaml --test_name name_of_the_test --seed n_seed --debug UVM_verbosity
+```
 
-The templates of yaml files are provided with the script, which can be used to compile and run the test
+
+The templates of yaml files are provided with the script, which can be used to compile and run the test with Questasim, Xcelium and VCS
