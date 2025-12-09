@@ -204,6 +204,9 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
 
             `uvm_info("spike_tandem", {cause_str}, UVM_NONE);
             `uvm_info("spike_tandem", {instr_rm}, UVM_NONE);
+            // TODO: this is redundant as the UVM messaging service will
+            // terminate a simulation after N errors (N is typically 5 in
+            // core-v-verif).
             if (instr_mismatch_count >= INSTR_MISMATCH_MAX) begin
                 `uvm_fatal("spike_tandem", {instr_core, " <- CORE\n"});
             end

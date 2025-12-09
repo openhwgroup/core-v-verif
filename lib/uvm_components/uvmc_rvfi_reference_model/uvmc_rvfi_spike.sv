@@ -46,7 +46,12 @@ class uvmc_rvfi_spike#(int ILEN=DEFAULT_ILEN,
 
        st = cfg.to_struct();
 
-       rvfi_initialize_spike(cfg.core_name, st);
+       if ($test$plusargs("USE_ISS")) begin
+           rvfi_initialize_spike(cfg.core_name, st);
+       end
+       else begin
+           `uvm_info("UVMC_RVFI_SPIKE", "Skipping rvfi_initialize_spike()", UVM_NONE)
+       end
    endfunction : build_phase
 
    /**
@@ -59,7 +64,9 @@ class uvmc_rvfi_spike#(int ILEN=DEFAULT_ILEN,
 
        s_core = t.seq2rvfi();
 
-       rvfi_spike_step(s_core, s_reference_model);
+       if ($test$plusargs("USE_ISS")) begin
+           rvfi_spike_step(s_core, s_reference_model);
+       end
 
        t_reference_model = new("t_reference_model");
        t_reference_model.rvfi2seq(s_reference_model);

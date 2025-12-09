@@ -178,7 +178,16 @@ RTLSRC_HOME   := $(CV_CORE_PKG)/rtl
 RTLSRC_INCDIR := $(RTLSRC_HOME)/include
 
 # SVLIB
-SVLIB_PKG            := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab/svlib
+SVLIB_PKG        := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab/svlib
+export SVLIB_PKG  = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab/svlib
+
+# RVVI
+RVVI_HOME             := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv-verification/RVVI
+export RVVI_HOME       = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv-verification/RVVI
+RVVI_STUB             := $(RVVI_HOME)/../stubs
+export RVVI_STUB       = $(RVVI_HOME)/../stubs
+RVVI_IMPERASDV        := $(RVVI_HOME)/source/host/rvvi
+export RVVI_IMPERASDV  = $(RVVI_HOME)/source/host/rvvi
 
 ###############################################################################
 # Seed management for constrained-random sims
@@ -395,6 +404,48 @@ endif
 endif
 endif
 
+################################################################################
+# Display all the shell env vars defined here (handy debug tool).
+echo_env:
+	@echo "ENV vars set in uvmt.mk:"
+	@echo "   CV_CORE_LC                        = $(CV_CORE_LC)"
+	@echo "   CV_CORE_UC                        = $(CV_CORE_UC)"
+	@echo "   DV_UVMT_PATH                      = $(DV_UVMT_PATH)"
+	@echo "   DV_UVME_PATH                      = $(DV_UVME_PATH)"
+	@echo "   DV_UVML_HRTBT_PATH                = $(DV_UVML_HRTBT_PATH)"
+	@echo "   DV_UVMA_CORE_CNTRL_PATH           = $(DV_UVMA_CORE_CNTRL_PATH)"
+	@echo "   DV_UVMA_ISACOV_PATH               = $(DV_UVMA_ISACOV_PATH)"
+	@echo "   DV_UVMA_RVFI_PATH                 = $(DV_UVMA_RVFI_PATH)"
+	@echo "   DV_UVMA_RVVI_PATH                 = $(DV_UVMA_RVVI_PATH)"
+	@echo "   DV_UVMA_RVVI_OVPSIM_PATH          = $(DV_UVMA_RVVI_OVPSIM_PATH)"
+	@echo "   DV_UVMA_CLKNRST_PATH              = $(DV_UVMA_CLKNRST_PATH)"
+	@echo "   DV_UVMA_INTERRUPT_PATH            = $(DV_UVMA_INTERRUPT_PATH)"
+	@echo "   DV_UVMA_DEBUG_PATH                = $(DV_UVMA_DEBUG_PATH)"
+	@echo "   DV_UVMA_PMA_PATH                  = $(DV_UVMA_PMA_PATH)"
+	@echo "   DV_UVMA_OBI_MEMORY_PATH           = $(DV_UVMA_OBI_MEMORY_PATH)"
+	@echo "   DV_UVMA_FENCEI_PATH               = $(DV_UVMA_FENCEI_PATH)"
+	@echo "   DV_UVML_TRN_PATH                  = $(DV_UVML_TRN_PATH)"
+	@echo "   DV_UVML_LOGS_PATH                 = $(DV_UVML_LOGS_PATH)"
+	@echo "   DV_UVML_SB_PATH                   = $(DV_UVML_SB_PATH)"
+	@echo "   DV_UVML_MEM_PATH                  = $(DV_UVML_MEM_PATH)"
+	@echo "   DV_UVMC_RVFI_SCOREBOARD_PATH      = $(DV_UVMC_RVFI_SCOREBOARD_PATH)"
+	@echo "   DV_UVMC_RVFI_REFERENCE_MODEL_PATH = $(DV_UVMC_RVFI_REFERENCE_MODEL_PATH)"
+	@echo "   DV_OVPM_HOME                      = $(DV_OVPM_HOME)"
+	@echo "   DV_OVPM_MODEL                     = $(DV_OVPM_MODEL)"
+	@echo "   DV_OVPM_DESIGN                    = $(DV_OVPM_DESIGN)"
+	@echo "   DV_SVLIB_PATH                     = $(DV_SVLIB_PATH)"
+	@echo "   SVLIB_PKG                         = $(SVLIB_PKG)"
+	@echo "   RISCV_DV_ROOT                     = $(RISCV_DV_ROOT)"
+	@echo "   COREV_DV_ROOT                     = $(COREV_DV_ROOT)"
+	@echo "   CV_CORE_COREV_DV_ROOT             = $(CV_CORE_COREV_DV_ROOT)"
+	@echo "   DPI_DASM_ROOT                     = $(DPI_DASM_ROOT)"
+	@echo "   DPI_DASM_SPIKE_ROOT               = $(DPI_DASM_SPIKE_ROOT)"
+	@echo "   TBSRC_HOME                        = $(TBSRC_HOME)"
+	@echo "   RVVI_HOME                         = $(RVVI_HOME)"
+	@echo "   RVVI_STUB                         = $(RVVI_STUB)"
+	@echo "   RVVI_IMPERASDV                    = $(RVVI_IMPERASDV)"
+	@echo "   DESIGN_RTL_DIR                    = $(DESIGN_RTL_DIR)"
+
 ###############################################################################
 # Clean up your mess!
 #   1. Clean all generated files of the C and assembler tests
@@ -428,3 +479,6 @@ clean_dpi_dasm_spike:
 
 clean_svlib:
 	rm -rf $(SVLIB_PKG)
+
+clean_rvvi_stub:
+	rm -rf $(RVVI_STUB_LIB)

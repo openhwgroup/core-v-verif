@@ -33,6 +33,7 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
 
    // Common options
    rand bit                      enabled;
+   rand bit                      ap_write_en;
    rand uvm_active_passive_enum  is_active;
 
    rand bit                      unified_csr_vif;
@@ -61,6 +62,7 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
 
    `uvm_object_utils_begin(uvma_rvfi_cfg_c)
       `uvm_field_int (                         enabled                    , UVM_DEFAULT)
+      `uvm_field_int (                         ap_write_en                , UVM_DEFAULT)
       `uvm_field_int (                         nret                       , UVM_DEFAULT)
       `uvm_field_int (                         unified_csr_vif            , UVM_DEFAULT)
       `uvm_field_enum(uvm_active_passive_enum, is_active                  , UVM_DEFAULT)
@@ -85,6 +87,7 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
 
    constraint defaults_cons {
       soft enabled                 == 1;
+      soft ap_write_en             == 0;
       soft is_active               == UVM_PASSIVE;
       soft cov_model_enabled       == 0;
       soft trn_log_enabled         == 1;

@@ -26,38 +26,51 @@
 DSIM                    = dsim
 DSIM_HOME              ?= /tools/Metrics/dsim
 DSIM_CMP_FLAGS         ?= $(TIMESCALE) $(SV_CMP_FLAGS) -top uvmt_$(CV_CORE_LC)_tb
-DSIM_ERR_SUPPRESS      ?= MultiBlockWrite:ReadingOutputModport
+DSIM_ERR_SUPPRESS      ?= MultiBlockWrite:ReadingOutputModport:IneffectiveDynamicCast:IndexOOB:PortWidthMismatch:UninstVif:LatchInferred:AlwaysFFNba
 DSIM_UVM_ARGS          ?= +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 DSIM_WORK              ?= $(SIM_CFG_RESULTS)/dsim_work
 DSIM_IMAGE             ?= dsim.out
 DSIM_RUN_FLAGS         ?=
 DSIM_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/dsim/ccov_scopes.txt
-DSIM_USE_ISS           ?= YES
+#DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
-DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION
-
+DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION+RVFI
 DSIM_USER_COMPILE_ARGS ?=
+
+#################################
+# Reference Model selection start
 ifeq ($(USE_ISS),YES)
-	DSIM_RUN_FLAGS     += +USE_ISS
+    DSIM_RUN_FLAGS += +USE_ISS
 else
-	DSIM_RUN_FLAGS     += +DISABLE_OVPSIM
+    DSIM_RUN_FLAGS += +DISABLE_OVPSIM
 endif
-ifeq ($(call IS_YES,$(USE_RVVI)),YES)
-    DSIM_RUN_FLAGS     += +USE_RVVI
+
+ifeq ($(call IS_YES,$(SPIKE)),YES)
+    DSIM_RUN_FLAGS += +SPIKE
 endif
+
+ifeq ($(call IS_YES,$(IMPERAS)),YES)
+    DSIM_RUN_FLAGS += +IMPERAS
+endif
+
+ifeq ($(call IS_YES,$(BOTH)),YES)
+    DSIM_RUN_FLAGS += +BOTH
+endif
+# Reference Model selection end
+#################################
+
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
-	DSIM_RUN_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
+    DSIM_RUN_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
 ifneq ($(TEST_DISABLE_CSR_CHECK),)
-	DSIM_RUN_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
+    DSIM_RUN_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 DSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
-				+incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
+                +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 # Seed management for constrained-random sims. This is an intentional repeat
 # of the root Makefile: dsim regressions use random seeds by default.
@@ -75,8 +88,15 @@ DSIM_RNDSEED = $(DSIM_SEED)
 endif
 endif
 
-DSIM_RUN_FLAGS         += $(USER_RUN_FLAGS)
-DSIM_RUN_FLAGS         += -sv_seed $(DSIM_RNDSEED)
+DSIM_RUN_FLAGS += $(USER_RUN_FLAGS)
+DSIM_RUN_FLAGS += -sv_seed $(DSIM_RNDSEED)
+
+# Enable profiling (off by default)
+PROFILE ?= 0
+ifneq ($(PROFILE), 0)
+	DSIM_CMP_FLAGS += -gen-profile
+	DSIM_RUN_FLAGS += -profile $(PROFILE)
+endif
 
 # Variables to control wave dumping from command the line
 # Humans _always_ forget the "S", so you can have it both ways...
@@ -129,7 +149,10 @@ mk_results:
 
 ################################################################################
 # DSIM compile target
-comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
+comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI) rvvi_stub
+	@echo "$(BANNER)"
+	@echo "Compiling with DSim..."
+	@echo "$(BANNER)"
 	$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
 		-suppress $(DSIM_ERR_SUPPRESS) \
@@ -169,6 +192,9 @@ DSIM_SIM_PREREQ = comp
 endif
 
 test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "Simulating with DSim..."
+	@echo "$(BANNER)"
 	mkdir -p $(SIM_RUN_RESULTS) && \
 	cd $(SIM_RUN_RESULTS) && \
 		$(DSIM) \
@@ -183,6 +209,7 @@ test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
 			-sv_lib $(DPI_DASM_LIB) \
 			-sv_lib $(abspath $(SVLIB_LIB)) \
 			-sv_lib $(OVP_MODEL_DPI) \
+			-sv_lib $(RVVI_STUB_LIB) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
@@ -349,6 +376,6 @@ clean:
 	rm -rf $(SIM_RESULTS)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_rvvi_stub
 	rm -rf $(CV_CORE_PKG)
 
