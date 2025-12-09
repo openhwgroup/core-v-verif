@@ -62,9 +62,6 @@ Various utilities for running tests and performing various verification-related 
 ### core-v-cores
 Empty sub-directory into which the RTL from one or more of the [CORE-V-CORES](https://github.com/openhwgroup/core-v-cores) repositories is cloned.
 
-### cv32e40p, cv32e40x, cv32e40s, cva6
-Core-specific verification code.
-
 ### docs
 Sources for the Verification Strategy document, DV plans, coding style guidelines and available coverage reports.
 
@@ -72,7 +69,7 @@ Sources for the Verification Strategy document, DV plans, coding style guideline
 Common simulation Makefiles that support testbenches for all CORE-V cores.
 
 ### lib
-Common components for the all CORE-V verification environments.
+Common components for the all CORE-V verification environments.  **Note:** this dir is likely to be moved to vendor_lib in the future.
 
 ### vendor_lib
 Verification components supported by third-parties.
