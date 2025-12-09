@@ -99,9 +99,10 @@ def cmp_cmd(yaml_file, outdir, opt, vopt_option, work):
         yaml_list = comp["yaml_lists"]
         yamls     = yaml_list.split()
         for y in yamls:
-            var   = y.split('{', 1)[1].split('}')[0]
-            path  = os.environ[var];
-            y = re.sub('\${.*}', path, y)
+            if "{" in y:
+             var   = y.split('{', 1)[1].split('}')[0]
+             path  = os.environ[var];
+             y = re.sub('\${.*}', path, y)
             print(y)
             cmp_cmd(y, outdir, opt, vopt_option, work_lib)
   
@@ -199,8 +200,9 @@ def run_test(test_name, seed, debug, batch, dump, stdout, outdir, cover, vsim_op
    else:
        stdoutstr = "-l"
 
+   covstr = ""
    if cover == 1:
-       covstr = "-ucdbfile {}/{}_{}.ucdb".format(outdir, test_name, seed) 
+       covstr = "-ucdbfile {}/{}_{}.ucdb".format(outdir, test_name, seed)
 
    if os.path.isdir("{}".format(outdir)) == False:
      os.system("mkdir {}".format(outdir))
