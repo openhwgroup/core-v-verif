@@ -28,48 +28,43 @@ interface uvma_rvfi_instr_if
     int XLEN=DEFAULT_XLEN)
   //import uvma_rvfi_pkg::*;
   (
-    input logic                      clk,
-    input logic                      reset_n,
+    input                      clk,
+    input                      reset_n,
 
-    input logic                      rvfi_valid,
-    input logic [ORDER_WL-1:0]       rvfi_order,
-    input logic [ILEN-1:0]           rvfi_insn,
-    input rvfi_trap_t                rvfi_trap,
-    input logic                      rvfi_halt,
-    input logic [RVFI_DBG_WL-1:0]    rvfi_dbg,
-    input logic                      rvfi_dbg_mode,
-    input logic [RVFI_NMIP_WL-1:0]   rvfi_nmip,
-    input rvfi_intr_t                rvfi_intr,
-    input logic [MODE_WL-1:0]        rvfi_mode,
-    input logic [IXL_WL-1:0]         rvfi_ixl,
-    input logic [XLEN-1:0]           rvfi_pc_rdata,
-    input logic [XLEN-1:0]           rvfi_pc_wdata,
+    input                      rvfi_valid,
+    input [ORDER_WL-1:0]       rvfi_order,
+    input [ILEN-1:0]           rvfi_insn,
+    input [TRAP_WL-1:0]        rvfi_trap,
+    input                      rvfi_halt,
+    input [RVFI_DBG_WL-1:0]    rvfi_dbg,
+    input                      rvfi_dbg_mode,
+    input [RVFI_NMIP_WL-1:0]   rvfi_nmip,
+    input [RVFI_INTR_WL-1:0]   rvfi_intr,
+    input [MODE_WL-1:0]        rvfi_mode,
+    input [IXL_WL-1:0]         rvfi_ixl,
+    input [XLEN-1:0]           rvfi_pc_rdata,
+    input [XLEN-1:0]           rvfi_pc_wdata,
 
-    input logic [GPR_ADDR_WL-1:0]    rvfi_rs1_addr,
-    input logic [XLEN-1:0]           rvfi_rs1_rdata,
+    input [GPR_ADDR_WL-1:0]    rvfi_rs1_addr,
+    input [XLEN-1:0]           rvfi_rs1_rdata,
 
-    input logic [GPR_ADDR_WL-1:0]    rvfi_rs2_addr,
-    input logic [XLEN-1:0]           rvfi_rs2_rdata,
+    input [GPR_ADDR_WL-1:0]    rvfi_rs2_addr,
+    input [XLEN-1:0]           rvfi_rs2_rdata,
 
-    input logic [GPR_ADDR_WL-1:0]    rvfi_rs3_addr,
-    input logic [XLEN-1:0]           rvfi_rs3_rdata,
+    input [GPR_ADDR_WL-1:0]    rvfi_rs3_addr,
+    input [XLEN-1:0]           rvfi_rs3_rdata,
 
-    input logic [GPR_ADDR_WL-1:0]    rvfi_rd1_addr,
-    input logic [XLEN-1:0]           rvfi_rd1_wdata,
+    input [GPR_ADDR_WL-1:0]    rvfi_rd1_addr,
+    input [XLEN-1:0]           rvfi_rd1_wdata,
 
-    input logic [GPR_ADDR_WL-1:0]    rvfi_rd2_addr,
-    input logic [XLEN-1:0]           rvfi_rd2_wdata,
+    input [GPR_ADDR_WL-1:0]    rvfi_rd2_addr,
+    input [XLEN-1:0]           rvfi_rd2_wdata,
 
-    input logic [(32*XLEN)-1:0]      rvfi_gpr_rdata,
-    input logic [(32)-1:0]           rvfi_gpr_rmask,
-    input logic [(32*XLEN)-1:0]      rvfi_gpr_wdata,
-    input logic [(32)-1:0]           rvfi_gpr_wmask,
-
-    input logic [(NMEM*XLEN)-1:0]    rvfi_mem_addr,
-    input logic [(NMEM*XLEN)-1:0]    rvfi_mem_rdata,
-    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_rmask,
-    input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
-    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask
+    input [XLEN-1:0]           rvfi_mem_addr,
+    input [XLEN-1:0]           rvfi_mem_rdata,
+    input [XLEN/8-1:0]         rvfi_mem_rmask,
+    input [XLEN-1:0]           rvfi_mem_wdata,
+    input [XLEN/8-1:0]         rvfi_mem_wmask
 
   );
 
@@ -121,10 +116,6 @@ interface uvma_rvfi_instr_if
         rvfi_rd1_wdata,
         rvfi_rd2_addr,
         rvfi_rd2_wdata,
-        rvfi_gpr_rdata,
-        rvfi_gpr_rmask,
-        rvfi_gpr_wdata,
-        rvfi_gpr_wmask,
         rvfi_mem_addr,
         rvfi_mem_rdata,
         rvfi_mem_rmask,
@@ -133,92 +124,6 @@ interface uvma_rvfi_instr_if
   endclocking : mon_cb
 
   modport passive_mp    (clocking mon_cb);
-
-  // -------------------------------------------------------------------
-  // Functions
-  // -------------------------------------------------------------------
-
-  // NOTE: All of these functions are only valid when the RVFI bus holds
-  //       valid values, indicated by rvfi_valid == 1
-
-  // Check if instruction is of a certain type
-  // Usage: ref_mask sets the parts of the instruction you want to compare,
-  //        ref_instr is the reference to match
-  function logic match_instr( bit [ DEFAULT_XLEN-1:0] ref_instr,
-                              bit [ DEFAULT_XLEN-1:0] ref_mask
-                              );
-
-  return ((rvfi_insn & ref_mask) == ref_instr);
-
-  endfunction : match_instr
-
-// Return wdata of register "gpr"
-function bit [ DEFAULT_XLEN-1:0] get_gpr_wdata( int gpr);
-  return rvfi_gpr_wdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
-endfunction : get_gpr_wdata
-
-// Return rdata of register "gpr"
-function bit [ DEFAULT_XLEN-1:0] get_gpr_rdata( int gpr);
-  return rvfi_gpr_rdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
-endfunction : get_gpr_rdata
-
-// Return valid data of memory transaction "txn"
-function bit [ DEFAULT_XLEN-1:0] get_mem_data_word( int txn);
-  bit [ DEFAULT_XLEN-1:0] ret;
-
-  for (int i = 0; i <  DEFAULT_XLEN/8; i++) begin
-    if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) + i]) begin
-      ret[i*8 +:8] = rvfi_mem_wdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
-    end else begin
-      ret[i*8 +:8] = rvfi_mem_rdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
-    end
-  end
-
-  return ret;
-
-endfunction : get_mem_data_word
-
-//Return addr of memory transaction "txn"
-function bit [ DEFAULT_XLEN-1:0] get_mem_addr(int txn);
-
-  return rvfi_mem_addr[txn* DEFAULT_XLEN +: DEFAULT_XLEN];
-
-endfunction : get_mem_addr
-
-//Return rmask of memory transaction "txn"
-function bit [( DEFAULT_XLEN/8)-1:0] get_mem_rmask( int txn);
-
-  return rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
-
-endfunction : get_mem_rmask
-
-//Return wmask of memory transaction "txn"
-function bit [( DEFAULT_XLEN/8)-1:0] get_mem_wmask( int txn);
-
-  return rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
-
-endfunction : get_mem_wmask
-
-
-//Check memory transaction activity
-
-//Checks if a position in the rvfi memory transaction list
-//indicates any activity.
-//return {read, write}
-function bit [1:0] check_mem_act(  int txn);
-  static bit read = 0;
-  static bit write = 0;
-
-  if (rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
-    read = 1;
-  end
-  if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
-    write = 1;
-  end
-
-  return {read,write};
-
-endfunction : check_mem_act
 
 endinterface : uvma_rvfi_instr_if
 

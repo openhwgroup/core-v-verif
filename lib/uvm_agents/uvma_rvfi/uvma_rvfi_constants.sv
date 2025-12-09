@@ -22,12 +22,12 @@
 localparam ORDER_WL         = 64;
 localparam MODE_WL          = 2;
 localparam IXL_WL           = 2;
-localparam TRAP_WL          = 14;
+localparam TRAP_WL          = 12;
 localparam GPR_ADDR_WL      = 5;
 localparam RVFI_DBG_WL      = 3;
 localparam RVFI_NMIP_WL     = 2;
+localparam RVFI_INTR_WL     = 16;
 localparam CYCLE_CNT_WL     = 32;
-localparam NMEM             = 128;
 
 // Fields within TRAP
 localparam TRAP_EXCP_LSB         = 0;
@@ -43,6 +43,14 @@ localparam TRAP_DBG_CAUSE_WL     = 3;
 
 localparam DEFAULT_ILEN     = 32;
 localparam DEFAULT_XLEN     = 32;
+localparam MAX_XLEN         = 64;
 localparam DEFAULT_NRET     = 1;
+
+localparam CSR_MAX_SIZE = 4096;
+
+const string format_header_str = "%8s | RVFI | %8s | %6s | %8s | %8s | %s | %03s | %08s | %03s | %08s | %03s | %08s | %03s | %08s | %08s | %s";
+const string format_instr_str  = "%8s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %8x | x%-2d | %8x | x%-2d | %16x";
+`define FORMAT_INSTR_STR_MACRO "%8s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %8x | x%-2d | %8x | x%-2d | %16x | %s"
+const string format_mem_str    = "| %02s | %08x | %08s |";
 
 `endif // __UVMA_RVFI_CONSTANTS_SV__
