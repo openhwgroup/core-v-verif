@@ -1,3 +1,6 @@
+# Copyright 2025 Fondazione Chips-IT
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 import argparse
 import os
 from pathlib import Path
