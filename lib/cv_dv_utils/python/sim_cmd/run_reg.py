@@ -52,7 +52,7 @@ if args.nthreads == None:
 
 
 def rtest(yaml_file, test, seed):
-    run_cmd = f"python3 {scripts_dir}/run_test.py --yaml {yaml_file} --test_name {test} --seed {seed} --debug UVM_LOW --dump 1 --stdout 0 --outdir {outdir}"
+    run_cmd = f"python3 {scripts_dir}/run_test.py --yaml {yaml_file} --test_name {test} --seed {seed} --debug UVM_NONE --dump 0 --stdout 0 --outdir {outdir}"
     print("[INFO] Simulation command:\n{}".format(run_cmd))
     os.system(run_cmd)
     log = "{}/{}_{}.log".format(outdir, test, seed) 
