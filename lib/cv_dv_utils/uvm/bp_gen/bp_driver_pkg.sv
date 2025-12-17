@@ -39,7 +39,7 @@ typedef enum {
    `include "bp_driver.svh";
    `include "bp_sequencer.svh";
    `include "bp_sequences.svh";
-   //`include "bp_virtual_sequence.svh";
+   `include "bp_virtual_sequence.svh";
    `include "bp_agent.svh";
 
 endpackage : bp_driver_pkg
