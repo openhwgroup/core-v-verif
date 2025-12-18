@@ -38,6 +38,13 @@ First, have a look at the [OpenHW Group's website](https://www.openhwgroup.org) 
 <br>
 For first time users of CORE-V-VERIF, the **Quick Start Guide** in the [CORE-V-VERIF Verification Strategy](https://docs.openhwgroup.org/projects/core-v-verif/en/latest/quick_start.html) is the best place to start.
 
+## Bender
+This project supports the usage of Bender, a dependency management tool for hardware design projects which provides a way to define dependencies among IPs, execute unit tests, and verify that the source files are valid input for various simulation and synthesis tools.
+For more information regarding the installation and the usage of Bender please look at its repo [link](https://github.com/pulp-platform/bender.git).
+
+In the context of this project, since it is mainly used as a submodule as in [cvfpu-uvm](https://github.com/openhwgroup/cvfpu-uvm.git), the Bender.yml file which is the main package manifest that contains metadata, dependencies, and source file lists contains the target correspondent to the top project. All the core-v-verif files that are needed as dependencies for the main project that includes core-v-verif are reported under that target.
+
+The Bender command for generating the list of the compilation files is included in the compile.py python parser file.
 <!--
 ### Getting started with CV32E4\* cores
 If you want to run a simulation there are two options:
