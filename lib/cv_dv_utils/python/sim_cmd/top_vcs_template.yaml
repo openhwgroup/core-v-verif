@@ -18,9 +18,9 @@
 
 - tool: vcs
   compile:
-    svlog_option: "<svlog options>" 
-    svlog_option: "<vlog options to propgate>"
-    svlog_flist : "file list (example $MODULE/module_pkg.Flit)"     
-    top_entity  :  "<name>"
+    work_lib    : "<name>"
+    filelist    : "path to the .f file which contains the list of files to be compiled included the top entity"
+    comp_option : "<compile options to propgate from top to bottom>"   
+    top_entity  :  "<top>"
   sim:
-    sim_option  : "sim option" 
+    sim_option  : "sim options of the command simv"

@@ -16,11 +16,12 @@
 ##[END OF HEADER]
 ## ----------------------------------------------------------------------------
 
-
-
-
-- tool: questa
+- tool: questa/xcelium
   compile:
-    work_lib    : "module1 lib name"
-    svlog_option: "local svlog options"
-    svlog_flist : "file lists (ex module1_pkg.Flist)" 
+    work_lib    : "<name>"
+    filelist    : "path to the .f file which contains the list of files to be compiled included the top entity"
+    comp_option : "<compile options to propgate from top to bottom>" 
+    elab_option :  "<elaboration options of the commands vopt/xrun -elaborate>"
+    top_entity  :  "<top>"
+  sim:
+    sim_option  : "sim options of the commands vsim/xrun -r"

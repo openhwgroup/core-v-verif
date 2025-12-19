@@ -78,7 +78,6 @@
 //                 
 //
 // ----------------------------------------------------------------------------
-
 class dummy_txn extends uvm_sequence_item;
 
 endclass : dummy_txn
@@ -142,7 +141,10 @@ class reset_driver_c #(              bit p_init_value = 1'b0,
     function void connect_phase( uvm_phase phase );
         super.connect_phase( phase );
 
+    `ifndef XCELIUM
+        // Questasim: create hvl_obj
         m_v_reset_vif.hvl_obj = new( get_full_name( ) );
+    `endif
 
         `uvm_info( "RESET CONNECT", "Reset driver now connected", UVM_MEDIUM );
 
@@ -154,7 +156,15 @@ class reset_driver_c #(              bit p_init_value = 1'b0,
            m_reset_counter.num_active_resets++;
            `uvm_info( "RESET START", $sformatf("RESET START (%0d active)", m_reset_counter.num_active_resets ), UVM_LOW );
            m_v_reset_vif.assert_reset( );
-           @( m_v_reset_vif.hvl_obj.reset_deasserted );
+
+    `ifdef XCELIUM
+          // Xcelium: use the direct event
+          @( m_v_reset_vif.reset_deasserted );
+    `else
+          // QuestaSim: use the event through the object hvl_obj
+          @( m_v_reset_vif.hvl_obj.reset_deasserted );
+    `endif
+
            m_reset_counter.num_active_resets--;
            `uvm_info( "RESET DONE", $sformatf("RESET DONE (%0d active)", m_reset_counter.num_active_resets ), UVM_NONE );
            phase.drop_objection( this, "Reset de-asserted");

@@ -1,0 +1,51 @@
+# Copyright 2025 Fondazione Chips-IT
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+package:
+  name: core-v-verif
+  authors:
+    - "Riccardo Giunti (riccardo.giunti@chips.it)"
+
+sources:
+  -
+    target: cvfpu_uvm
+    include_dirs:
+      - lib/cv_dv_utils/uvm/memory_partition
+      - lib/cv_dv_utils/uvm/reset_gen
+      - lib/cv_dv_utils/uvm/watchdog
+      - lib/cv_dv_utils/uvm/clock_gen
+      - lib/cv_dv_utils/uvm/unix_utils
+      - lib/cv_dv_utils/uvm/pulse_gen
+      - lib/cv_dv_utils/uvm/bp_gen
+      - lib/cv_dv_utils/uvm/generic_agent
+      - lib/cv_dv_utils/uvm/memory_rsp_model
+      - lib/cv_dv_utils/uvm/memory_rsp_model/axi2mem
+      - lib/cv_dv_utils/uvm/memory_shadow
+      - lib/cv_dv_utils/uvm/clock_mon
+      - lib/cv_dv_utils/uvm/perf_mon
+    files:
+      - lib/cv_dv_utils/uvm/memory_partition/memory_partitions_pkg.sv
+      - lib/cv_dv_utils/uvm/reset_gen/reset_vif_xrtl_pkg.sv
+      - lib/cv_dv_utils/uvm/reset_gen/xrtl_reset_vif.sv
+      - lib/cv_dv_utils/uvm/reset_gen/reset_driver_pkg.sv
+      - lib/cv_dv_utils/uvm/watchdog/watchdog_pkg.sv
+      - lib/cv_dv_utils/uvm/clock_gen/xrtl_clock_vif.sv
+      - lib/cv_dv_utils/uvm/clock_gen/clock_vif_xrtl_pkg.sv
+      - lib/cv_dv_utils/uvm/clock_gen/clock_driver_pkg.sv
+      - lib/cv_dv_utils/uvm/unix_utils/unix_utils_pkg.sv
+      - lib/cv_dv_utils/uvm/pulse_gen/pulse_if.sv
+      - lib/cv_dv_utils/uvm/pulse_gen/pulse_gen_pkg.sv
+      - lib/cv_dv_utils/uvm/bp_gen/bp_vif_xrtl_pkg.sv
+      - lib/cv_dv_utils/uvm/bp_gen/bp_driver_pkg.sv
+      - lib/cv_dv_utils/uvm/bp_gen/bp_vif.sv
+      - lib/cv_dv_utils/uvm/generic_agent/generic_agent_pkg.sv
+      - lib/cv_dv_utils/uvm/generic_agent/generic_if.sv
+      - lib/cv_dv_utils/uvm/memory_rsp_model/memory_response_model_pkg.sv
+      - lib/cv_dv_utils/uvm/memory_rsp_model/memory_response_if.sv
+      - lib/cv_dv_utils/uvm/memory_rsp_model/axi2mem/axi2mem_pkg.sv
+      - lib/cv_dv_utils/uvm/memory_rsp_model/axi2mem/axi_intf.sv
+      - lib/cv_dv_utils/uvm/memory_shadow/memory_shadow_pkg.sv
+      - lib/cv_dv_utils/uvm/clock_mon/xrtl_clock_mon_vif.sv
+      - lib/cv_dv_utils/uvm/clock_mon/clock_mon_vif_xrtl_pkg.sv
+      - lib/cv_dv_utils/uvm/clock_mon/clock_monitor_pkg.sv
+      - lib/cv_dv_utils/uvm/perf_mon/perf_mon_pkg.sv

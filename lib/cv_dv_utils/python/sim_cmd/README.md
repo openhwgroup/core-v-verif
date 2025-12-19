@@ -23,10 +23,25 @@
 These are python scripts, they allow to compile and run a test. 
 
 # Usage
-To compile a code in system verilog
-python3 compile.py --yaml simulator_vcs.yaml --outdir out
+To compile a code in system verilog:
+```
+python3 compile.py --yaml_file.yaml
+```
 
-To run a test 
-python3 run_test.py --yaml simulator_vcs.yaml --test_name bursty_test_c
+To run a UVM test:
+```
+python3 run_test.py --yaml_file.yaml --test_name name_of_the_test --seed n_seed --debug UVM_verbosity --dump 0/1 --batch 0/1
+```
 
-The templates of yaml files are provided with the script, which can be used to compile and run the test
+There is also the possibility to run a set of regression tests reported in a specified reg_list_file:
+```
+python3 run_reg.py --yaml_file.yaml --nthreads n --reg_list reg_list_file
+```
+where the nthreads option specifies the occurences of the simulation tool that run in parallel.
+
+The user can also use post_proc.py after batch mode simulations with dumping option enabled for inspecting the DUT waveforms:
+```
+python3 ${SCRIPTS_DIR}/post_proc.py --tool user_tool --db_file ./path/to/db/file 
+```
+
+The templates of yaml files are provided with the script, which can be used to compile and run the test with Questasim, Xcelium and VCS
