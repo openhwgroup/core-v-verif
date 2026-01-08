@@ -17,6 +17,15 @@ Certificate of Origin on contributions merged into OpenHW Group repositories.
 All pull-requests to OpenHW Group git repositories should be signed-off using the
 `--signoff` (or `-s`) option to the git commit command (see below), although this is no longer strictly necessary.
 
+## Licensing
+CORE-V-VERIF is an open source project, using permissive licensing.
+Our preferred license is [Solderpad](https://github.com/openhwgroup/core-v-verif/blob/master/LICENSE.md), and we accept most well known permissive licenses.
+If you are submitting a new file that does not yet have a copyright header please add the following [SPDX](https://spdx.dev/) header:
+```
+// Copyright (c) <year> <organization>
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+```
+
 ## Branches
 The core-v-verif repository provides testbenches for multiple OpenHW cores.  As such the core-v-verif repository uses branches for maintaining stability between 
 the different core testbenches as well as recognizing independent development streams.  An adapted form of the Git Flow is used in this repository.  
