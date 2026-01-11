@@ -74,30 +74,36 @@ csr_pass:
     wfi
 
 csr_fail:
-    lui a0,print_port>>12
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    addi a1,zero,'C'
-    sw a1,0(a0)
-    addi a1,zero,'V'
-    sw a1,0(a0)
-    addi a1,zero,'3'
-    sw a1,0(a0)
-    addi a1,zero,'2'
-    sw a1,0(a0)
-    addi a1,zero,' '
-    sw a1,0(a0)
-    addi a1,zero,'F'
-    sw a1,0(a0)
-    addi a1,zero,'A'
-    sw a1,0(a0)
-    addi a1,zero,'I'
-    sw a1,0(a0)
-    addi a1,zero,'L'
-    sw a1,0(a0)
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    sw a1,0(a0)
+    lui a0,print_port>>12    
+    addi a1, zero, '\n'
+    sw a1, 0(a0)
+    addi a1, zero, 'C'
+    sw a1, 0(a0)
+    addi a1, zero, 'V'
+    sw a1, 0(a0)
+    addi a1, zero, '3'
+    sw a1, 0(a0)
+    addi a1, zero, '2'
+    sw a1, 0(a0)
+    addi a1, zero, ' '
+    sw a1, 0(a0)
+    addi a1, zero, 'F'
+    sw a1, 0(a0)
+    addi a1, zero, 'A'
+    sw a1, 0(a0)
+    addi a1, zero, 'I'
+    sw a1, 0(a0)
+    addi a1, zero, 'L'
+    sw a1, 0(a0)
+    addi a1, zero, ' '
+    sw a1, 0(a0)
+    
+    # PRINT THE ERROR CODE (1-5)
+    sw x29, 0(a0)             # Print the test ID stored in x29
+    
+    addi a1, zero, '\n'
+    sw a1, 0(a0)
+>>>>>>> ec9259f2 (Added more tests and prints a number based on which test failed)
 
     li x18, 1
     li x17, 0x20000000
