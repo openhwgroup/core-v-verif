@@ -1,4 +1,4 @@
-# Copyright (c) 2026 OpenHW Group
+# Copyright (c) 2026 Sumeyya Aktas
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 .include "user_define.h"
@@ -8,7 +8,7 @@
 
 .section .rodata
 msg_pass: .string "\nCSR PASS\n"
-msg_fail: .string "\nCSR FAIL E:"
+msg_fail: .string "\nCSR FAIL Test: "
 
 .section .text
 

@@ -1,0 +1,5 @@
+name: cv32e40p_mscratch_csr_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    CSR test for mscratch read/write, walking ones 
+    and zeros patterns, and atomic CSRRS/CSRRC for cv32e40p
