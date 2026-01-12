@@ -25,6 +25,10 @@ If you are submitting a new file that does not yet have a copyright header pleas
 // Copyright (c) <year> <organization>
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ```
+In the above header, "organization" should either be your employer, your institution or yourself:
+- If you are being paid to make a contribution on behalf of an employer, then the copyright will be held by your employer.
+- If an educational institution is supporting your contribution (for example, by providing access to computer and/or tools), then the copyright should be assigned to your educational institution.
+- Otherwise, you may assign the copyright to yourself.  You may use your full name or email address as you see fit.
 
 ## Branches
 The core-v-verif repository provides testbenches for multiple OpenHW cores.  As such the core-v-verif repository uses branches for maintaining stability between 
