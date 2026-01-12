@@ -6,13 +6,14 @@
 .section .text.start
 .globl _start
 
+.section .rodata
+msg_pass: .string "\nCSR PASS\n"
+msg_fail: .string "\nCSR FAIL E:"
+
 .section .text
 
 _start:
-    j _start_main
-
-_start_main:
-    # All zeros and all ones patterns
+    # All zeros and all ones
     li x29, '1'
     li x15, 0x00000000
     csrw 0x340, x15           
@@ -24,7 +25,7 @@ _start_main:
     csrr x11, 0x340           
     bne x11, x15, csr_fail
 
-    # Detects adjacent bit shorts (bridging faults)
+    # Bridging faults
     li x29, '2'
     li x15, 0x55555555        
     csrw 0x340, x15
@@ -36,7 +37,6 @@ _start_main:
     csrr x11, 0x340
     bne x11, x15, csr_fail
 
-    # Tests each bit position individually with a single 1
     li x29, '3'
     li x15, 1
 walking_ones:
@@ -46,7 +46,6 @@ walking_ones:
     slli x15, x15, 1          
     bnez x15, walking_ones    
 
-    # Tests each bit position individually with a single 0
     li x29, '4'
     li x16, 1
 walking_zeros:
@@ -66,68 +65,38 @@ walking_zeros:
     csrr x11, 0x340
     bne x11, x16, csr_fail
 
-    j test_done
-
-test_done:
-    lui a0, print_port>>12
-    addi a1, zero, '\n'
-    sw a1, 0(a0)
-    addi a1, zero, 'C'
-    sw a1, 0(a0)
-    addi a1, zero, 'S'
-    sw a1, 0(a0)
-    addi a1, zero, 'R'
-    sw a1, 0(a0)
-    addi a1, zero, ' '
-    sw a1, 0(a0)
-    addi a1, zero, 'D'
-    sw a1, 0(a0)
-    addi a1, zero, 'O'
-    sw a1, 0(a0)
-    addi a1, zero, 'N'
-    sw a1, 0(a0)
-    addi a1, zero, 'E'
-    sw a1, 0(a0)
-    addi a1, zero, '\n'
-    sw a1, 0(a0)
+    j csr_pass
 
 csr_pass:
-    li x18, 123456789         
-    li x17, 0x20000000        
-    sw x18, 0(x17)
-    wfi                      
-
-csr_fail:
-    lui a0, print_port>>12
-    addi a1, zero, '\n'
-    sw a1, 0(a0)
-    addi a1, zero, 'C'
-    sw a1, 0(a0)
-    addi a1, zero, 'S'
-    sw a1, 0(a0)
-    addi a1, zero, 'R'
-    sw a1, 0(a0)
-    addi a1, zero, ' '
-    sw a1, 0(a0)
-    addi a1, zero, 'F'
-    sw a1, 0(a0)
-    addi a1, zero, 'A'
-    sw a1, 0(a0)
-    addi a1, zero, 'I'
-    sw a1, 0(a0)
-    addi a1, zero, 'L'
-    sw a1, 0(a0)
-    addi a1, zero, ' '
-    sw a1, 0(a0)
-    addi a1, zero, 'E'
-    sw a1, 0(a0)
-    addi a1, zero, ':'
-    sw a1, 0(a0)
-    sw x29, 0(a0)             
-    addi a1, zero, '\n'
-    sw a1, 0(a0)
+    la a0, msg_pass
+    jal ra, print_string
     
-    li x18, 1                 
+    li x18, 123456789        
     li x17, 0x20000000        
     sw x18, 0(x17)
     wfi                       
+
+csr_fail:
+    la a0, msg_fail
+    jal ra, print_string
+
+    lui t0, print_port>>12
+    sw x29, 0(t0)
+    addi t1, zero, '\n'
+    sw t1, 0(t0)
+
+    li x18, 1                 
+    li x17, 0x20000000        
+    sw x18, 0(x17)
+    wfi
+
+print_string:
+    lui t0, print_port>>12
+1:
+    lb t1, 0(a0)
+    beqz t1, 2f
+    sw t1, 0(t0)        
+    addi a0, a0, 1
+    j 1b
+2:
+    ret
