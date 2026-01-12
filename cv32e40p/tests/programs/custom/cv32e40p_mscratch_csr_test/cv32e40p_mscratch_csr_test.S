@@ -65,6 +65,24 @@ walking_zeros:
     csrr x11, 0x340
     bne x11, x16, csr_fail
 
+    # Atomic CSRRS / CSRRC behavior
+    li x29, '6'
+
+    li x15, 0x0
+    csrw 0x340, x15
+    
+    # Atomic set (CSRRS) 
+    li x15, 0xFF
+    csrrs x11, 0x340, x15     
+    bnez x11, csr_fail        
+    
+    # Atomic clear (CSRRC) 
+    li x16, 0xF0
+    csrrc x11, 0x340, x16     
+    li x17, 0x0F
+    csrr x12, 0x340           
+    bne x12, x17, csr_fail
+
     j csr_pass
 
 csr_pass:
