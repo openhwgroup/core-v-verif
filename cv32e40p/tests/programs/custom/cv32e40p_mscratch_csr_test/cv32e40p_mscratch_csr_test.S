@@ -3,12 +3,15 @@
 
 .include "user_define.h"
 
+.equ TRAP_HANDLED, 0x70617373    # Translates to "PASS"
+
 .section .text.start
 .globl _start
 
 .section .rodata
 msg_pass: .string "\nCSR PASS\n"
 msg_fail: .string "\nCSR FAIL Test: "
+msg_trap_handled: .string "\nSuccessfully ran trap handler\n"
 
 .section .text
 
@@ -83,7 +86,36 @@ walking_zeros:
     csrr x12, 0x340           
     bne x12, x17, csr_fail
 
+    # Testing mtvec and the trap mechanism
+    # to ensure traps land at the correct handler
+    li x29, '7'
+    la x15, trap_handler
+    csrw mtvec, x15
+    li x31, 0                 
+    ecall   
+
+    # Print "PASS" here instead of printing it inside
+    # trap_handler since it might overwrite 'ra' 
+    la a0, msg_trap_handled
+    jal ra, print_string                  
+
+    li x15, TRAP_HANDLED
+    bne x31, x15, csr_fail
+
     j csr_pass
+
+.align 4
+trap_handler:
+    csrr x30, mcause
+    li x31, 11
+    bne x30, x31, csr_fail
+
+    li x31, TRAP_HANDLED
+
+    csrr x30, mepc
+    addi x30, x30, 4
+    csrw mepc, x30
+    mret
 
 csr_pass:
     la a0, msg_pass
