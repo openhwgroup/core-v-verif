@@ -1,0 +1,3 @@
+I have successfully cloned the core-v-verif repo using GitHub Desktop.
+Date: 14-Jan-2026
+Name: Samruddhi Mali
