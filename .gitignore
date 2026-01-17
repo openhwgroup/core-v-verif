@@ -73,3 +73,5 @@ VRMDATA
 *.do
 *eembc*
 *.code-workspace
+venv/
+.venv/
