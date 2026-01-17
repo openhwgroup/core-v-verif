@@ -1,0 +1,6 @@
+name: mscratch_test
+uvm_test: uvmt_cv32e40p_base_test
+description: >
+  Test read/write access to mscratch CSR.
+files:
+  - mscratch_test.c
