@@ -1,0 +1,5 @@
+name: mscratch_perm_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    A test designed to verify read and write access for each bit of the mscratch register,
+    as well as to ensure correct behavior during atomic operations.
