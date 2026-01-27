@@ -1,0 +1,4 @@
+name: mscratch_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Stretch Goal: test-program to demonstrate that a test-program has write/read access to all 32-bits of the mscratch CSR
