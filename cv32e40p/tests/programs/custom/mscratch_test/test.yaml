@@ -1,0 +1,9 @@
+name: mscratch_test
+description: Verify 32-bit read/write access to mscratch CSR
+uvm_test: none
+type: c
+isa: rv32imc
+cc_flags: "-O2"
+linker_script: "link.ld"
+timeout: 100000
+
