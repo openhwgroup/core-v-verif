@@ -1,0 +1,5 @@
+name: mscratch_rw_test
+uvm_test: uvmt_$(CV_CORE_LC)_test_c
+description: >
+    Test to check read and write access of the mscratch register along
+    with correct behavior of atomic access and other checks
