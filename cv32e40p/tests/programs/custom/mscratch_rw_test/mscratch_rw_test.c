@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Preetham
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 /**
  * mscratch CSR Essential Test Program
  * 
