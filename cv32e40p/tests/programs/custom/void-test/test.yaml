@@ -1,0 +1,10 @@
+# Test configuration for void-test
+name: void-test
+uvm_test: uvmt_cv32e40p_base_test_c
+description: "A custom void-test for verifying the software flow."
+
+cv_sw_toolchain: /opt/riscv     # Use to override global toolchain path
+cv_sw_prefix: riscv-openhw-elf- # Use to override toolchain prefix
+cv_sw_march: rv32imc_zicsr
+cv_sw_cc: gcc
+cv_sw_cflags: "-O2 -g"
