@@ -1,0 +1,6 @@
+name: mscratch_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Test machine scratch CSR (mscratch) read/write functionality.
+    Verifies that all 32-bits of the mscratch register can be
+    correctly written and read back with various test patterns.
