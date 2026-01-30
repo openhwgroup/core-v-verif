@@ -103,7 +103,7 @@ For an example see:
 `$(CORE_V_VERIF)/$(CORE_V_CORE)/tests/programs/custom/hello-world/test.yaml`
 
 
-The test-program defintion can overload the defintion of the CV_SW_TOOLCHAIN and CV_SW_PREXFIX, if required.
+The test-program defintion can overload the defintion of the CV_SW_TOOLCHAIN and CV_SW_PREFIX, if required.
 For example:
 ```
 cv_sw_toolchain: /opt/llvm
