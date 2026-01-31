@@ -1,0 +1,4 @@
+name: mscratch_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    mscratch test for write/read access of all 32 bits
