@@ -1,0 +1,26 @@
+@import url(pocoo.css);
+@import url(https://fonts.googleapis.com/css?family=Fira+Mono:400,700|Bitter:400,400italic,700);
+
+body {
+  font-family: "Bitter", "Garamond", "Georgia", serif;
+}
+
+pre, code {
+  font-family: "Fira Mono", "Consolas", "Menlo", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", monospace;
+}
+
+div.body {
+  color: #163228;
+}
+
+a {
+  color: #bca612;
+}
+
+a:hover {
+  color: #95840e;
+}
+
+p.version-warning {
+  background-color: #e39046;
+}

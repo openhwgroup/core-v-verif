@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: python-jsonschema-objects
+Version: 0.5.7
+Summary: An object wrapper for JSON Schema definitions
+Home-page: http://python-jsonschema-objects.readthedocs.org/
+Author: Chris Wacek
+Author-email: cwacek@gmail.com
+License: MIT
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Intended Audience :: Developers
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Requires-Dist: inflection>=0.2
+Requires-Dist: Markdown>=2.4
+Requires-Dist: jsonschema>=4.18
+
+UNKNOWN
+
+

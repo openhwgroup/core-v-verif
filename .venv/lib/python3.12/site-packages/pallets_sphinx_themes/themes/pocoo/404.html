@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+
+{% set title = _('Page Not Found') %}
+
+{% block body %}
+  <h1 id="notfound">Page Not Found</h1>
+  <p>
+    The page you requested does not exist. You may have followed a bad
+    link, or the page may have been moved or removed.
+  <p>
+    Go to the <a href="{{ pathto(master_doc) }}">overview</a> or
+    <a href="{{ pathto('search') }}">search</a>.
+{% endblock %}

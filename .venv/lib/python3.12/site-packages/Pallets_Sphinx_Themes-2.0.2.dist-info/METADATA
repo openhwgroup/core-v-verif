@@ -1,0 +1,62 @@
+Metadata-Version: 2.1
+Name: Pallets-Sphinx-Themes
+Version: 2.0.2
+Summary: Sphinx themes for Pallets and related projects.
+Home-page: https://github.com/pallets/pallets-sphinx-themes/
+Author: Pallets
+Author-email: contact@palletsprojects.com
+License: BSD-3-Clause
+Project-URL: Donate, https://palletsprojects.com/donate
+Project-URL: Source Code, https://github.com/pallets/pallets-sphinx-themes/
+Project-URL: Issue Tracker, https://github.com/pallets/pallets-sphinx-themes/issues/
+Project-URL: Twitter, https://twitter.com/PalletsTeam
+Project-URL: Chat, https://discord.gg/pallets
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Framework :: Sphinx
+Classifier: Framework :: Sphinx :: Theme
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Documentation
+Classifier: Topic :: Documentation :: Sphinx
+Classifier: Topic :: Software Development :: Documentation
+Requires-Python: >=3.6
+Description-Content-Type: text/x-rst
+License-File: LICENSE.rst
+Requires-Dist: packaging
+Requires-Dist: Sphinx
+Requires-Dist: importlib-metadata ; python_version < "3.8"
+
+Pallets Sphinx Themes
+=====================
+
+Themes for the Pallets projects. If you're writing an extension, use the
+appropriate theme to make your documentation look consistent.
+
+Available themes:
+
+-   flask
+-   jinja
+-   werkzeug
+-   click
+
+Install this package:
+
+.. code-block:: text
+
+    pip install Pallets-Sphinx-Themes
+
+Enable the extension and choose the theme in ``docs/conf.py``:
+
+.. code-block:: python
+
+    extensions = [
+        "pallets_sphinx_themes",
+        ...
+    ]
+
+    html_theme = "flask"
+
+

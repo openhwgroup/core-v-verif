@@ -1,0 +1,8 @@
+{% if versions %}
+  <h3>Versions</h3>
+  <ul class="versions">{% for version in versions %}
+    <li><a href="{{ version.href() }}" {% if version.current %}class="current"{% endif %}>
+      {{ version.name }}
+    </a></li>
+  {% endfor %}</ul>
+{% endif %}

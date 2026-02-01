@@ -1,0 +1,36 @@
+Metadata-Version: 2.4
+Name: PyBoolector
+Version: 3.2.4.19342042739
+Summary: Python wrapper around the Boolector SMT solver
+Home-page: https://github.com/boolector/boolector
+Download-URL: https://pypi.org/project/PyBoolector/
+Maintainer: Matthew Ballance
+Maintainer-email: matt.ballance@gmail.com
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+License-File: LICENSE
+Dynamic: classifier
+Dynamic: description
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: maintainer
+Dynamic: maintainer-email
+Dynamic: summary
+
+
+    This package, specifically, enables the Boolector Python wrapper
+    to be installed from PyPi
+  

@@ -1,0 +1,2 @@
+[console_scripts]
+pyucis = ucis.__main__:main

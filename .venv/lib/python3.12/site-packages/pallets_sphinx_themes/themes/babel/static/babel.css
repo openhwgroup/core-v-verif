@@ -1,0 +1,24 @@
+@import url(pocoo.css);
+@import url(http://fonts.googleapis.com/css?family=Bree+Serif);
+
+body {
+  font-family: "Verdana", "Garamond", "Georgia", serif;
+}
+
+h1, h2, h3, h4, h5, h6, p.admonition-title, div.sphinxsidebar input {
+  font-family: "Bree Serif", "Garamond", "Georgia", serif;
+}
+
+a {
+  color: #b00;
+  border-color: #b00;
+}
+
+a:hover {
+  color: #fc5e1e;
+  border-color: #fc5e1e;
+}
+
+p.version-warning {
+  background-color: #d40;
+}

@@ -1,0 +1,3 @@
+[console_scripts]
+vsc = vsc.__main__:main
+
