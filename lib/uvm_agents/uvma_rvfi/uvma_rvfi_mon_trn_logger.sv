@@ -184,6 +184,7 @@ class uvma_rvfi_mon_trn_logger_c#(int ILEN=DEFAULT_ILEN,
 
          csr_line = $sformatf(
             "    CSR[0x%0x] old=0x%0x new=0x%0x",
+            csr_trn.csr,
             csr_trn.addr,
             csr_trn.rdata,
             csr_trn.get_csr_retirement_data()
