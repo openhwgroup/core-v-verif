@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Sanjay Chitroda
+# SPDX-License-Identifier:Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for test
+name: mscratch_rw
+uvm_test: uvmt_cv32e40p_firmware_test_c
+description: >
+    Verify full 32-bit read/write access to mscratch CSR (0x340)
+isa: RV32IM
+privilege: M
+program: mscratch_rw.c
+expected_result: pass
+
