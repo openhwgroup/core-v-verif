@@ -1,0 +1,10 @@
+name: mscratch
+uvm_test: uvmt_cv32e40p_firmware_test_c
+description: >
+    Read/Write access test to all 32-bits of the mscratch CSR.
+cv_sw_march: rv32imc_zicsr
+cv_sw_cflags: "-O2 -g"    
+pass_patterns:
+  - "mscratch test PASSED"
+fail_patterns:
+  - "mscratch test FAILED"
