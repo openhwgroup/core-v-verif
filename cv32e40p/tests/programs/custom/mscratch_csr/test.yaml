@@ -1,0 +1,5 @@
+name: mscratch_csr
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Read and Write test of all 32 bit mscratch_csr
+
