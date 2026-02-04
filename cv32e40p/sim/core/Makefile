@@ -536,6 +536,7 @@ verilate-clean: tc-clean
 	if [ -d $(SIM_RESULTS) ]; then rm -r $(SIM_RESULTS); fi
 	if [ -d $(VERI_OBJ_DIR) ]; then rm -r $(VERI_OBJ_DIR); fi
 	rm -rf testbench_verilator
+	rm -f *.fst *.vcd
 	if [ -e memory_dump.bin ]; then rm memory_dump.bin; fi
 
 
