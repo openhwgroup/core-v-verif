@@ -1,0 +1,4 @@
+name: mscratch_rw_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    mscratch 32bits read/write test for cv32e40p
