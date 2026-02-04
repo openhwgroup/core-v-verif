@@ -116,3 +116,18 @@ riviera-hello-world` to build the testbench and the firmware, and run it. Use
 `ASIM_FLAGS` to configure the simulator e.g. `make custom-asim-run
 ASIM_FLAGS="-gui"`.
 
+Options
+-------
+A few plusarg options are supported:
+* `+verbose` to show all memory read and writes and other miscellaneous information.
+
+Waveform Tracing
+----------------
+Verilator supports both FST and VCD formats:
+* `make WAVES=1 veri-test TEST=hello-world` — FST format (default)
+* `make WAVES=1 TRACE_FORMAT=vcd veri-test TEST=hello-world` — VCD format
+
+Examples
+--------
+Run all riscv_tests to completion with **dsim**:
+`make dsim-cv32_riscv_tests`
