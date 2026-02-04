@@ -483,9 +483,16 @@ xrun-clean-all: xrun-clean
 # the --trace flags to the verilator call
 #ifeq ($(findstring +vcd,$(VERI_FLAGS)),+vcd)
 
+TRACE_FORMAT ?= fst
+
 ifneq (${WAVES}, 0)
+ifeq ($(TRACE_FORMAT),vcd)
 VERI_TRACE="--trace"
 VERI_CFLAGS+="-DVCD_TRACE"
+else
+VERI_TRACE="--trace-fst"
+VERI_CFLAGS+="-DFST_TRACE"
+endif
 endif
 
 verilate: testbench_verilator

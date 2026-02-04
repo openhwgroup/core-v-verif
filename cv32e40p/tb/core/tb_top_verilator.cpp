@@ -1,7 +1,11 @@
 #include "svdpi.h"
 #include "Vtb_top_verilator__Dpi.h"
 #include "Vtb_top_verilator.h"
+#ifdef FST_TRACE
+#include "verilated_fst_c.h"
+#elif defined(VCD_TRACE)
 #include "verilated_vcd_c.h"
+#endif
 #include "verilated.h"
 
 #include <iostream>
@@ -42,7 +46,11 @@ int main(int argc, char **argv, char **env)
         "TOP.tb_top_verilator.cv32e40p_core_tb_wrapper_i.ram_i.dp_ram_i"));
     Verilated::scopesDump();
 
-#ifdef VCD_TRACE
+#ifdef FST_TRACE
+    VerilatedFstC *tfp = new VerilatedFstC;
+    top->trace(tfp, 99);
+    tfp->open("verilator_tb.fst");
+#elif defined(VCD_TRACE)
     VerilatedVcdC *tfp = new VerilatedVcdC;
     top->trace(tfp, 99);
     tfp->open("verilator_tb.vcd");
@@ -68,12 +76,12 @@ int main(int argc, char **argv, char **env)
             top->rst_ni = 1;
         top->clk_i = !top->clk_i;
         top->eval();
-#ifdef VCD_TRACE
+#if defined(FST_TRACE) || defined(VCD_TRACE)
         tfp->dump(t);
 #endif
         t += 5;
     }
-#ifdef VCD_TRACE
+#if defined(FST_TRACE) || defined(VCD_TRACE)
     tfp->close();
 #endif
     delete top;
