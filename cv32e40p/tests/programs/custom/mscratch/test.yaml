@@ -1,0 +1,6 @@
+name: mscratch
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+  Verify full 32-bit read/write access, bit-level independence,
+  and atomic CSR operations for the mscratch CSR.
+
