@@ -1,0 +1,6 @@
+name: mscratch_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    A test to check read and write access to
+    each bit of the mscratch register along
+    with correct behavior of atomic access
