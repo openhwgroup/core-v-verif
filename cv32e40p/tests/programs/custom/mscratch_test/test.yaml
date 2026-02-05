@@ -1,0 +1,6 @@
+# Copyright (c) 2026 Amit Matth
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: mscratch_test
+uvm_test: uvmt_cv32e40p_firmware_test_c
+description: Add comprehensive mscratch CSR verification with atomic RMW tests
