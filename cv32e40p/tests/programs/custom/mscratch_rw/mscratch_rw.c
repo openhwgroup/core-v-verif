@@ -21,7 +21,6 @@
 *******************************************************************************
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -99,7 +98,6 @@ int main(int argc, char *argv[])
             printf("Wrote: 0x%08x  Read: 0x%08x\n", test_val, readback);
             test_passed = 0;
             failure_count++;
-            /* Continue testing other bits */
         }
     }
     if (failure_count == 0) {
@@ -119,7 +117,6 @@ int main(int argc, char *argv[])
             printf("Wrote: 0x%08x  Read: 0x%08x\n", test_val, readback);
             test_passed = 0;
             failure_count++;
-            /* Continue testing other bits */
         }
     }
     if (failure_count == 0) {
@@ -158,12 +155,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* Restore original mscratch value */
+    /* 5. Restoring original mscratch value test */
     CSR_WRITE(mscratch, original_value);
     CSR_READ(mscratch, readback);
     if (readback != original_value) {
-        printf("\nWARNING: Could not fully restore original mscratch value!\n");
+        printf("\nFAIL: Could not fully restore original mscratch value!\n");
         printf("    Original: 0x%08x  Restored: 0x%08x\n", original_value, readback);
+	test_passed = 0;
+        failure_count++;
     }
 
     /* Final summary */
