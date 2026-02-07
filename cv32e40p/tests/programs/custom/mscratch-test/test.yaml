@@ -1,0 +1,6 @@
+name: mscratch-test
+description: Verify full 32-bit read/write behavior of mscratch CSR
+uvm_test: false
+isa: rv32imc
+program: mscratch-test.c
+
