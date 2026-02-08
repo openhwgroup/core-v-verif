@@ -1,0 +1,7 @@
+name: mscratch_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Comprehensive test for the mscratch CSR (Machine Scratch Register).
+    Verifies full 32-bit read/write access using walking bit patterns,
+    boundary values, and persistence checks. Tests all individual bits
+    and common bit patterns to ensure the CSR is fully functional.
