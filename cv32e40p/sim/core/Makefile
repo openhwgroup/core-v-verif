@@ -85,7 +85,7 @@ TEST         ?= hello-world
 #       TEST_UVM_TEST=uvmt_$(CV_CORE_LC)_firmware_test_c
 
 YAML2MAKE = $(CORE_V_VERIF)/bin/yaml2make
-TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE))
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE) --output=$(SIM_RESULTS)/test_$(TEST).mk)
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))
 endif

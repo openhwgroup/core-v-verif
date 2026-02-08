@@ -185,13 +185,17 @@ else
 YAML2MAKE_DEBUG =
 endif
 
+# Output directory for generated .mk files (cleaned by make clean).
+# Uses SIM_CFG_RESULTS (uvmt context) with fallback to SIM_RESULTS (core context).
+YAML2MAKE_OUTPUT_DIR ?= $(if $(SIM_CFG_RESULTS),$(SIM_CFG_RESULTS),$(SIM_RESULTS))
+
 # If the gen_corev-dv target is defined then read in a test defintions file
 YAML2MAKE = $(CORE_V_VERIF)/bin/yaml2make
 ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
 $(error ERROR must specify a TEST variable with gen_corev-dv target)
 endif
-GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE))
+GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE) --output=$(YAML2MAKE_OUTPUT_DIR)/gen_$(TEST).mk)
 ifeq ($(GEN_FLAGS_MAKE),)
 $(error ERROR Could not find corev-dv.yaml for test: $(TEST))
 endif
@@ -204,7 +208,7 @@ ifneq ($(filter $(TEST_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
 $(error ERROR! must specify a TEST variable)
 endif
-TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE))
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE) --output=$(YAML2MAKE_OUTPUT_DIR)/test_$(TEST).mk)
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))
 endif
@@ -220,7 +224,7 @@ CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
 CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp riscof_sim_run
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
-CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
+CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE) --output=$(YAML2MAKE_OUTPUT_DIR)/cfg_$(CFG).mk)
 ifeq ($(CFG_FLAGS_MAKE),)
 $(error ERROR Error finding or parsing configuration: $(CFG).yaml)
 endif
@@ -254,7 +258,7 @@ ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(TEST_CFG_FILE_LIST),)
 
 define GET_TEST_CONFIG_LIST =
-TEST_CFG_LIST_FLAGS_MAKE_$(1) := $$(shell $(CFGYAML2MAKE) --yaml=$(1).yaml $(YAML2MAKE_DEBUG) --prefix=TEST_CFG_FILE_LIST_$(1) --core=$(CV_CORE) --debug)
+TEST_CFG_LIST_FLAGS_MAKE_$(1) := $$(shell $(CFGYAML2MAKE) --yaml=$(1).yaml $(YAML2MAKE_DEBUG) --prefix=TEST_CFG_FILE_LIST_$(1) --core=$(CV_CORE) --output=$(YAML2MAKE_OUTPUT_DIR)/test_cfg_$(1).mk)
 ifeq ($$(TEST_CFG_LIST_FLAGS_MAKE_$(1)),)
   $$(error ERROR Error finding or parsing configuration: $(1).yaml)
 endif

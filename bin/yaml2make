@@ -123,14 +123,19 @@ def read_file(test, type, run_index):
 
     return test_spec
 
-def emit_make(test_spec, prefix):
+def emit_make(test_spec, prefix, output=None):
     '''Emit a hash from the YAML test specification into a makefile that can be included'''
-    fh = tempfile.NamedTemporaryFile(mode='w', delete=False)
+    if output:
+        os.makedirs(os.path.dirname(os.path.abspath(output)), exist_ok=True)
+        fh = open(output, 'w')
+    else:
+        fh = tempfile.NamedTemporaryFile(mode='w', delete=False)
+
     for k,v in sorted(test_spec.items()):
         fh.write('{}{}={}\n'.format('' if not prefix else prefix.upper() + '_', k.upper(), v.rstrip()))
     fh.close()
 
-    return fh.name
+    return os.path.abspath(output) if output else fh.name
 
 ################################################################################
 # Command-line arguments
@@ -141,6 +146,7 @@ parser.add_argument('--yaml', help='Required: Name of YAML test specification to
 parser.add_argument('--core', default=DEFAULT_CORE, help='Default core to test')
 parser.add_argument('--prefix', help='Prefix to add to make variables generated')
 parser.add_argument('--run-index', default='0', help='Add a run index to append to test specifications')
+parser.add_argument('--output', help='Output file path for generated .mk file')
 parser.add_argument('-d', '--debug', action='store_true', help='Display debug messages')
 args = parser.parse_args()
 
@@ -164,7 +170,7 @@ CFG_PATH = [p.replace('<CV_CORE>', args.core.lower()) for p in CFG_PATH]
 TEST_PATHS = [p.replace('<CV_CORE>', args.core.lower()) for p in TEST_PATHS]
 
 test_spec = read_file(test=args.test, type=args.yaml, run_index=args.run_index)
-temp_file = emit_make(test_spec=test_spec, prefix=args.prefix)
+temp_file = emit_make(test_spec=test_spec, prefix=args.prefix, output=args.output)
 
 logger.debug('File written to {}'.format(temp_file))
 print(temp_file)
