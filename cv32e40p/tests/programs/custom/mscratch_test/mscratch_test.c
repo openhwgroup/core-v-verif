@@ -1,38 +1,8 @@
+// Copyright (c) 2026 Marin Radic
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 /*
-**
-** Copyright 2026 OpenHW Group
-**
-** Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     https://solderpad.org/licenses/
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-**
-*****fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-**
 ** CSR Read/Write Test - Standalone, Self-Checking
-**
 ** SCOPE: MSCRATCH (0x340) ONLY
-**
-** Why only MSCRATCH:
-**   - Simple 32-bit fully R/W register with no masking or constraints
-**   - Direct assignment: mscratch_n = csr_wdata_int;
-**
-** Other CSRs fail for these reasons:
-**   DSCRATCH0/1 (0x7B2/0x7B3): Debug mode only (illegal instruction in normal mode)
-**   MEPC (0x341): Bit 0 masked: mepc_n = csr_wdata_int & ~32'b1;
-**   DEPC (0x7B1): Debug mode only + bit 0 masked
-**   MSTATUS (0x300): Only specific bits R/W (uie, mie, upie, mpie, mpp, mprv)
-**   MIE (0x304): Masked by IRQ: mie_n = csr_wdata_int & IRQ_MASK;
-**   MTVEC (0x305): Only [31:8] and [0] used, [7:1] ignored
-**
-*****fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 */
 
 #include <stdint.h>
