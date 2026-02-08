@@ -1,0 +1,8 @@
+name: mscratch_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+  Standalone CSR read/write test for MSCRATCH (0x340).
+  Tests full 32-bit write/read with deterministic patterns:
+  reset value, basic patterns, walking ones/zeros, back-to-back writes,
+  idempotent write, pseudo-random values.
+  Macro-based design for simple R/W CSRs with no masking or constraints.
