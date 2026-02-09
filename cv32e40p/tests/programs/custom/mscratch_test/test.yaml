@@ -1,0 +1,14 @@
+name: mscratch_test
+
+description: Test full 32-bit read/write of mscratch CSR
+
+uvm_test: corev_direct_test
+
+program: mscratch_test.c
+
+build:
+  gcc_opts: "-march=rv32imc_zicsr -mabi=ilp32"
+
+sim:
+  timeout: 200000
+
