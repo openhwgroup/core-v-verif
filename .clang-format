@@ -1,0 +1,14 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Linux
+AlwaysBreakBeforeMultilineStrings: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+IndentCaseLabels: false
+AlignEscapedNewlinesLeft: false
+AlignTrailingComments: true
+BreakBeforeBinaryOperators: NonAssignment
+MaxEmptyLinesToKeep: 1
