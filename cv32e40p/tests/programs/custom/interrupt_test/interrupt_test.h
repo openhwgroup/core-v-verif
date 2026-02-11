@@ -26,6 +26,7 @@
 #define TIMER_VAL_ADDR         ((volatile uint32_t *) 0x15000004) 
 
 #define MSTATUS_MIE_BIT 3
+#define MSTATUS_FS_INITIAL 0x00002000
 
 #define MCAUSE_IRQ_MASK 0x1f
 

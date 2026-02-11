@@ -22,6 +22,4 @@
 
 #define CPU_MHZ 1
 
-#define TICKS_ADDR (*((volatile uint32_t*)0x15001004))
-
 #endif

@@ -105,7 +105,7 @@ This Makefile is largely empty and include:
 This include the RTL repo to simulate; Google riscv-dv; RISCV compliance suite and other external repositories.
 - `CORE-V-VERIF/mk/uvmt/uvmt.mk`, which implements simulation execution targets and:
 - `CORE-V-VERIF/mk/Common.mk` supports all common variables, rules and targets, including specific targets to clone the RTL.
-<br><br> 
+<br><br>
 Simulator-specific Makefiles are used to build the command-line to run a specific test with a specific
 simulator.  These files are organized as shown below:
 ```
@@ -145,7 +145,7 @@ is the name of a [test-program](https://core-v-docs-verif-strat.readthedocs.io/e
 Importing the source code in DVT Eclipse IDE [dvt](https://www.dvteclipse.com/products/dvt-eclipse-ide)
 ----------------------
 Alongside the simulator-specific Makefiles, there is also a makefile called `dvt.mk`.
-The command `make SIMULATOR=<sim> open_in_dvt_ide` will import the core-v-verif testbench and RTL source code 
+The command `make SIMULATOR=<sim> open_in_dvt_ide` will import the core-v-verif testbench and RTL source code
 in the DVT Eclipse IDE.
 <br> <br>
 **Note:** `CV_CORE/sim/uvmt/Makefile` is the 'root' Makefile from which users can invoke DVT.
@@ -324,7 +324,7 @@ make compliance_regression RISCV_ISA=rv32imc
 will run all compressed instruction tests in the compliance test-suite, diff the signature files and produce a summary report. Note that four of the test-programs
 in the rv32i compliance suite are deliberately ignored.  See [issue #412](https://github.com/openhwgroup/core-v-verif/issues/412).
 <br><br>
-The _cv_regress_ utility can also be used to run the compliance regression tests found in the [cv32_compliance](https://github.com/openhwgroup/core-v-verif/blob/master/cv32e40p/regress/cv32_compliance.yaml) YAML regression
+The _cv_regress_ utility can also be used to run the compliance regression tests found in the [cv32_compliance](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/cv32e40p/regress/cv32_compliance.yaml) YAML regression
 specification.  This is supported for Metrics JSON (--metrics), shell script (--sh), and Cadence Vmanager VSIF (--vsif) output formats.  Use the following example:
 ```
 # Shell script output
@@ -392,19 +392,19 @@ For certain simulators multiple debug tools are available that enable advanced d
 
 ### Interactive Simulation
 
-To run a simulation in interactive mode (to enable single-stepping, breakpoints, restarting), use the GUI=1 command when running a test.  
+To run a simulation in interactive mode (to enable single-stepping, breakpoints, restarting), use the GUI=1 command when running a test.
 
 If applicable for a simulator, line debugging will be enabled in the compile to enable single-stepping.
 
 **make test TEST=hello-world GUI=1**
 
-### Passing run-time arguments to the simulator
+### Passing run-time arguments to the simulator using **USER_RUN_FLAGS**
 
 The Makefiles support a user controllable variable **USER_RUN_FLAGS** which can be used to pass run-time arguments.  Two typical use-cases for this are provided below:
 
 #### Set the UVM quit count
 
-All error signaling and handling is routed through the standard UVM report server for all OpenHW testbenches.  By default the UVM is configured 
+All error signaling and handling is routed through the standard UVM report server for all OpenHW testbenches.  By default the UVM is configured
 to allow up to 5 errors to be signaled before aborting the test.  There is a run-time plusarg to configure this that should work for all
 tests.  Use the USER_RUN_FLAGS make variable with the standard UVM_MAX_QUIT_COUNT plusarg as below.  Please note that the NO is required
 and signals that you want UVM to use your plusarg over any internally configured quit count values.
@@ -416,6 +416,28 @@ and signals that you want UVM to use your plusarg over any internally configured
 The following will increase the verbosity level to DEBUG.
 
 **make test TEST=hello-world USER_RUN_FLAGS=+UVM_VERBOSITY=UVM_DEBUG**
+
+### Passing run-time arguments to the simulator using **TEST_CFG_FILE**
+
+For a given test, test.yaml file would typically have all the relevant plusargs for that test, but in certain cases there are new features or updates added to TB, or there is a need to run all the tests with a new TB config, say for example a particular bus delay config. This would previously require to either update all existing tests with new plusargs, or add new tests just for this requirement.
+
+Using this **TEST_CFG_FILE** allows us to retain all existing test setup while providing a simple mechanism to run those tests with additional configs, on top of the ones in test.yaml, passed through separate yaml file(s) provided using variable TEST_CFG_FILE with the make command.
+
+This is different from above **USER_RUN_FLAGS** method, as this would also create a unique directory path, log names, coverage db etc. suffixed with unique name based on TEST_CFG_FILE arguments, and hence this mechanism goes beyond the **USER_RUN_FLAGS** method in a sense that it provides a way to run tests through regression scripts as unique tests differentitated from same default TEST by TEST_CFG_FILE. And hence such tests can be also be rerun, for example in case of failing tests from regression report, without the knowledge of CMD line arguments such as the ones passed through USER_RUN_FLAGS mechanism.
+
+TEST_CFG_FILE can take multiple yaml files as input. Such multiple yaml file can be provided by adding separators "," or "+" or a "whitespace"
+
+Example:
+
+**make gen_corev-dv test TEST=corev_rand_arithmetic_base_test USE_ISS=no CFG=pulp_fpu WAVES=1 SEED=random TEST_CFG_FILE=floating_pt_instr_en**
+
+**make gen_corev-dv test TEST=corev_rand_arithmetic_base_test USE_ISS=no CFG=pulp_fpu WAVES=1 SEED=random TEST_CFG_FILE=floating_pt_instr_en,debug_ebreak**
+
+**make gen_corev-dv test TEST=corev_rand_arithmetic_base_test USE_ISS=no CFG=pulp_fpu WAVES=1 SEED=random TEST_CFG_FILE=floating_pt_instr_en,debug_ebreak,insert_illegal_instr**
+
+**make gen_corev-dv test TEST=corev_rand_arithmetic_base_test USE_ISS=no CFG=pulp_fpu WAVES=1 SEED=random TEST_CFG_FILE=floating_pt_instr_en+debug_ebreak**
+
+**make gen_corev-dv test TEST=corev_rand_arithmetic_base_test USE_ISS=no CFG=pulp_fpu WAVES=1 SEED=random TEST_CFG_FILE="floating_pt_instr_en debug_ebreak"**
 
 ### Post-process Waveform Debug
 
@@ -472,4 +494,3 @@ Generate coverage report for all executed tests with coverage databases.
 Invoke GUI coverage browser for all executed tests with coverage databases.
 
 **make cov MERGE=1 GUI=1**
-

@@ -39,6 +39,7 @@ module uvmt_cv32e40p_debug_assert
   logic exception_addr_at_entry_flag;
   logic [31:0] tdata2_at_entry;
   // Locally track which debug cause should be used
+  logic       is_decoding_v1;
   logic [2:0] debug_cause_pri;
   logic [31:0] boot_addr_at_entry;
 
@@ -51,28 +52,36 @@ module uvmt_cv32e40p_debug_assert
   // Clocking blocks
   // ---------------------------------------------------------------------------
 
+  assign is_decoding_v1 = cov_assert_if.is_decoding ||
+                          (((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE && !cov_assert_if.branch_taken_ex_i &&
+                             !cov_assert_if.data_err_i && !cov_assert_if.is_fetch_failed_i) ||
+                            cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP
+                           ) && cov_assert_if.id_stage_instr_valid_i &&
+                           (cov_assert_if.debug_req_i || cov_assert_if.trigger_match_i) && !cov_assert_if.debug_mode_q
+                          );
+
   // Single clock, single reset design, use default clocking
   default clocking @(posedge cov_assert_if.clk_i); endclocking
   default disable iff !(cov_assert_if.rst_ni);
   
-  assign cov_assert_if.is_ebreak = cov_assert_if.is_decoding &
+  assign cov_assert_if.is_ebreak = is_decoding_v1 &
                                    cov_assert_if.id_stage_instr_valid_i &
                      (cov_assert_if.id_stage_instr_rdata_i == 32'h00100073) & 
                      cov_assert_if.id_stage_is_compressed == 1'b0;
 
-  assign cov_assert_if.is_cebreak = cov_assert_if.is_decoding &
+  assign cov_assert_if.is_cebreak = is_decoding_v1 &
                                     cov_assert_if.id_stage_instr_valid_i &
                      (cov_assert_if.id_stage_instr_rdata_i == 32'h00100073) & 
                      cov_assert_if.id_stage_is_compressed == 1'b1;
 
-  assign cov_assert_if.is_mulhsu = cov_assert_if.is_decoding &
+  assign cov_assert_if.is_mulhsu = is_decoding_v1 &
                                    cov_assert_if.id_stage_instr_valid_i & 
                                    cov_assert_if.id_stage_instr_rdata_i[31:25] == 7'h1 &
                                    cov_assert_if.id_stage_instr_rdata_i[14:12] == 3'b010 &
                                    cov_assert_if.id_stage_instr_rdata_i[6:0]   == 7'h33;
 
 
-  assign decode_valid =  cov_assert_if.id_stage_instr_valid_i & cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE;
+  assign decode_valid =  cov_assert_if.id_stage_instr_valid_i & ((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) || (cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP));
     // ---------------------------------------
     // Assertions
     // ---------------------------------------
@@ -116,17 +125,28 @@ module uvmt_cv32e40p_debug_assert
         else
             `uvm_error(info_tag,$sformatf("Debug mode with wrong cause after ebreak, case = %d",cov_assert_if.dcsr_q[8:6]));
 
+    ////////////////////////////////////////////////////////////////////////////
+    // It appears that the properties "p_cebreak_exception" and
+    // "p_ebreak_exception" are identical in all but name.  However, those two
+    // properties are not duplicate as they are using two different instruction
+    // decoding signals:
+    //    - property p_ebreak_exception uses i_ebreak.
+    //    - property p_cebreak_exception uses i_cebreak which differs thanks to
+    //      cov_assert_if.id_stage_is_compressed value.
+    //
+
+
     // c.ebreak without dcsr.ebreakm results in exception at mtvec
     // Exclude single stepping as the sequence gets very complicated
     property p_cebreak_exception;
         disable iff(cov_assert_if.debug_req_i | !cov_assert_if.rst_ni)
-        $rose(cov_assert_if.is_cebreak) && cov_assert_if.dcsr_q[15] == 1'b0 && !cov_assert_if.debug_mode_q  && cov_assert_if.is_decoding && cov_assert_if.id_valid &&
+        $rose(cov_assert_if.is_cebreak) && cov_assert_if.dcsr_q[15] == 1'b0 && !cov_assert_if.debug_mode_q  && is_decoding_v1 && cov_assert_if.id_valid &&
         !cov_assert_if.debug_req_i && !cov_assert_if.dcsr_q[2]
         |-> (decode_valid) [->1:2] ##0  !cov_assert_if.debug_mode_q && (cov_assert_if.mcause_q[5:0] === cv32e40p_pkg::EXC_CAUSE_BREAKPOINT) 
                                                                 && (cov_assert_if.mepc_q == pc_at_ebreak) &&
                                                                    (cov_assert_if.id_stage_pc == cov_assert_if.mtvec);
     endproperty
-    
+
     a_cebreak_exception: assert property(p_cebreak_exception)
         else
             `uvm_error(info_tag,$sformatf("Exception not entered correctly after c.ebreak with dcsr.ebreak=0"));
@@ -135,13 +155,13 @@ module uvmt_cv32e40p_debug_assert
     // Exclude single stepping as the sequence gets very complicated
     property p_ebreak_exception;
         disable iff(cov_assert_if.debug_req_i | !cov_assert_if.rst_ni)
-        $rose(cov_assert_if.is_ebreak) && cov_assert_if.dcsr_q[15] == 1'b0 && !cov_assert_if.debug_mode_q  && cov_assert_if.is_decoding && cov_assert_if.id_valid &&
+        $rose(cov_assert_if.is_ebreak) && cov_assert_if.dcsr_q[15] == 1'b0 && !cov_assert_if.debug_mode_q  && is_decoding_v1 && cov_assert_if.id_valid &&
         !cov_assert_if.debug_req_i && !cov_assert_if.dcsr_q[2] 
         |-> (decode_valid) [->1:2] ##0  !cov_assert_if.debug_mode_q && (cov_assert_if.mcause_q[5:0] === cv32e40p_pkg::EXC_CAUSE_BREAKPOINT) 
                                                                 && (cov_assert_if.mepc_q == pc_at_ebreak) &&
                                                                    (cov_assert_if.id_stage_pc == cov_assert_if.mtvec);
     endproperty
-    
+
     // TODO: Fails formal as above
     a_ebreak_exception: assert property(p_ebreak_exception)
         else
@@ -169,7 +189,7 @@ module uvmt_cv32e40p_debug_assert
 
     // Trigger match results in debug mode
     property p_trigger_match;
-        cov_assert_if.trigger_match_i ##0 cov_assert_if.tdata1[2] ##0 !cov_assert_if.debug_mode_q ##0 cov_assert_if.id_stage_instr_valid_i ##0 cov_assert_if.is_decoding
+        cov_assert_if.trigger_match_i ##0 cov_assert_if.tdata1[2] ##0 !cov_assert_if.debug_mode_q ##0 cov_assert_if.id_stage_instr_valid_i ##0 is_decoding_v1
         |-> decode_valid [->2] ##0 (cov_assert_if.debug_mode_q && (cov_assert_if.dcsr_q[8:6]=== cv32e40p_pkg::DBG_CAUSE_TRIGGER) && 
                                                             (cov_assert_if.depc_q == tdata2_at_entry)) &&
                                                             (cov_assert_if.id_stage_pc == halt_addr_at_entry);
@@ -190,7 +210,7 @@ module uvmt_cv32e40p_debug_assert
 
     // Exception in debug mode results in pc->dm_exception_addr_i
     property p_debug_mode_exception;
-        $rose(cov_assert_if.illegal_insn_i) && cov_assert_if.debug_mode_q && cov_assert_if.is_decoding |-> (decode_valid & cov_assert_if.id_valid) [->2] ##0 cov_assert_if.debug_mode_q && (cov_assert_if.id_stage_pc == exception_addr_at_entry);
+        $rose(cov_assert_if.illegal_insn_i) && cov_assert_if.debug_mode_q && is_decoding_v1 |-> (decode_valid & cov_assert_if.id_valid) [->2] ##0 cov_assert_if.debug_mode_q && (cov_assert_if.id_stage_pc == exception_addr_at_entry);
     endproperty
 
     a_debug_mode_exception : assert property(p_debug_mode_exception)
@@ -199,7 +219,7 @@ module uvmt_cv32e40p_debug_assert
 
     // ECALL in debug mode results in pc->dm_exception_addr_i
     property p_debug_mode_ecall;
-        $rose(cov_assert_if.ecall_insn_i) && cov_assert_if.debug_mode_q  && cov_assert_if.is_decoding && cov_assert_if.id_stage_instr_valid_i
+        $rose(cov_assert_if.ecall_insn_i) && cov_assert_if.debug_mode_q  && is_decoding_v1 && cov_assert_if.id_stage_instr_valid_i
         |-> (decode_valid & cov_assert_if.id_valid) [->1:3] ##0 cov_assert_if.debug_mode_q && (cov_assert_if.id_stage_pc == exception_addr_at_entry);
     endproperty
 
@@ -351,7 +371,7 @@ module uvmt_cv32e40p_debug_assert
     // not pc from interrupt handler
     // PC is checked in another assertion
     property p_debug_req_and_irq;
-        cov_assert_if.debug_req_i && cov_assert_if.pending_enabled_irq  && cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE
+        cov_assert_if.debug_req_i && cov_assert_if.pending_enabled_irq  && ((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) || (cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP))
         |-> (decode_valid & cov_assert_if.id_valid) [->1:2] ##0 cov_assert_if.debug_mode_q;
     endproperty
 
@@ -411,7 +431,7 @@ module uvmt_cv32e40p_debug_assert
     else begin
       // Enter wfi if we have a valid instruction, not in debug mode and not
       // single stepping
-      if (cov_assert_if.is_wfi && !cov_assert_if.debug_mode_q && cov_assert_if.is_decoding && cov_assert_if.id_stage_instr_valid_i & !cov_assert_if.dcsr_q[2]) begin
+      if (cov_assert_if.is_wfi && !cov_assert_if.debug_mode_q && is_decoding_v1 && cov_assert_if.id_stage_instr_valid_i & !cov_assert_if.dcsr_q[2]) begin
         cov_assert_if.in_wfi <= 1'b1;
 
       end else if (cov_assert_if.pending_enabled_irq || cov_assert_if.debug_req_i)
@@ -452,7 +472,7 @@ module uvmt_cv32e40p_debug_assert
     assign cov_assert_if.is_wfi = cov_assert_if.id_stage_instr_valid_i & cov_assert_if.id_valid &
                                   ((cov_assert_if.id_stage_instr_rdata_i & WFI_INSTR_MASK) == WFI_INSTR_DATA);
     assign cov_assert_if.pending_enabled_irq = |(cov_assert_if.irq_i & cov_assert_if.mie_q);
-    assign cov_assert_if.is_dret             = cov_assert_if.id_valid & cov_assert_if.id_stage_instr_valid_i & cov_assert_if.is_decoding & (cov_assert_if.id_stage_instr_rdata_i == 32'h7B200073);
+    assign cov_assert_if.is_dret             = cov_assert_if.id_valid & cov_assert_if.id_stage_instr_valid_i & is_decoding_v1 & (cov_assert_if.id_stage_instr_rdata_i == 32'h7B200073);
 
     // Track which debug cause should be expected
     always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
@@ -461,8 +481,8 @@ module uvmt_cv32e40p_debug_assert
         end else begin
             // Debug evaluated in decode state with valid instructions only
             //if(cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE & !cov_assert_if.debug_mode_q) begin
-            if(cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) begin
-                if(cov_assert_if.is_decoding & cov_assert_if.id_stage_instr_valid_i) begin
+            if((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE || cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP)) begin
+                if(is_decoding_v1 & cov_assert_if.id_stage_instr_valid_i) begin
                     if(cov_assert_if.trigger_match_i)
                         debug_cause_pri <= 3'b010;
                     else if((cov_assert_if.dcsr_q[15]) & (cov_assert_if.is_ebreak | cov_assert_if.is_cebreak))
@@ -497,7 +517,7 @@ module uvmt_cv32e40p_debug_assert
             first_debug_ins <= 1'b0;
             if(cov_assert_if.debug_mode_q) begin
                 if(!first_debug_ins_flag) begin
-                    if(cov_assert_if.is_decoding & cov_assert_if.id_stage_instr_valid_i) begin
+                    if(is_decoding_v1 & cov_assert_if.id_stage_instr_valid_i) begin
                         first_debug_ins_flag <= 1'b1;
                         first_debug_ins <= 1'b1;
                     end

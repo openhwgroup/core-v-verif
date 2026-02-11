@@ -1,12 +1,14 @@
 Core-V-Verif Utilities
 ==================================
 
-This directory contains various utilities for running tests and performing various verification-related 
+This directory contains various utilities for running tests and performing various verification-related
 activities in the core-v-verif repository.
 
 Unless otherwise noted all utilities in this directory should be agnostic to $CWD.  Therefore a user
 should be able to run the utilities via a PATH from any directory.  The utilities will be able to 
 determine their own directory based on the implementation language hooks available.
+should be able to run the utilities via a PATH from any directory.  The utilities will be able to
+determine their own directory based on the implementation langugage hooks available.
 
 For example from a bash-type shell:<br>
 > % export PATH=./core-v-verif/bin:$PATH
@@ -53,9 +55,9 @@ and conventions should be passed to the underlying Makefile directory.
 
 ## ci_check
 
-Continuous integration checker script.  This script runs a quick sanity regression on the requested 
+Continuous integration checker script.  This script runs a quick sanity regression on the requested
 simulator for the purposes of ensuring a pull-request can be safely made.  Note that *ci_check* should now
-be able to be executed in any directory where previously it required the user to *cd* to ci/.  Please 
+be able to be executed in any directory where previously it required the user to *cd* to ci/.  Please
 refer to *ci_check*'s help utility for more details on options
 
 If required, the step and compare ISS can be disabled for this regression by setting _--iss=0_
@@ -76,13 +78,14 @@ output platforms are:<br>
 - Metrics JSON (--metrics)
 - Shell Script (--sh)
 - Vmanager VSIF (--vsif)
+- Questa Verification Run Manager RMBD (--rmdb)
 
 The format of the YAML testlist file is given below.  All YAML regression testslists should go in the following directory:
 > core-v-verif/\<project>/regress<br>
 
 where *\<project>* is a core (cv32e40p or cva6)
 
-Note that the utility has the ability to combine multiple testlists to build larger regressions.  Therefore the --file 
+Note that the utility has the ability to combine multiple testlists to build larger regressions.  Therefore the --file
 option may be specified multiple times.
 
 Please refer to the help utility of *cv_regress* for more details on the utility.
@@ -91,9 +94,23 @@ Please refer to the help utility of *cv_regress* for more details on the utility
 > \# Read in *cv32e40p_ci_check* testlist with Questa and emit an executable shell script<br>
 % cv_regress --file=cv32e40p_ci_check.yaml --simulator=vsim --outfile=vsim_ci_check.sh
 
+> \# Generate a ci_check regression for cv32e40pv2 with Questa simulator and regression manager, LSF and coverage enabled<br>
+% cv_regress --rmdb --file=cv32e40pv2_ci_check.yaml --simulator=vsim --outfile=vsim_ci_check.rmdb --lsf --cov <br>
+
+Once regression script is generated, it can be run using the correct tool, either by sourcing the shell script, or as an example using Questa Verification Run Manager:
+
+> % vrun -rmdb vsim_ci_check.rmdb -run cv32e40p
+
+
+### CV32E40Pv2 Regression Generator
+
+For cv32e40pv2 project, regressions have been split into 5 files across 7 configurations. An interactive utiliy can be run to customize regression parameters (ISS, coverage collection, simulator...) and generate all files needed, by following the instructions of the script.
+
+> % sh cv32e40pv2_nr_generator.sh
+
 ### Regression YAML Format
 
-The following describes the YAML format for regression testlists.  
+The following describes the YAML format for regression testlists.
 
 >\<*Required*: the name of the testlist><br>
 name: \<string\><br>
@@ -115,15 +132,22 @@ tests:<br>
 &nbsp;&nbsp;test_name0:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: build dependencies, can be a list of single build_name><br>
 &nbsp;&nbsp;&nbsp;&nbsp;build: \<string><br>
+&nbsp;&nbsp;<*Required*: test label. If using the test only once in the same yaml file, the label can match the *actual* test name><br>
+&nbsp;&nbsp;**test_name0**:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<*Required*: build dependencies, can be a single build_name, or a list of build_name if **builds** is specified (plural) ><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**build(s)**: \<string> (if plural, a list of \<string>) <br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: human-readable test description><br>
-&nbsp;&nbsp;&nbsp;&nbsp;description: \<string><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**description**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: make directory for the test><br>
-&nbsp;&nbsp;&nbsp;&nbsp;dir: \<string><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**dir**: \<string><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: the *actual* test name in case multiple configurations of the same test is run in the same yaml> <br>
+&nbsp;&nbsp;&nbsp;&nbsp;< If omitted, test label (here: test_name0) will be used as testname><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**testname**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: A make command to run before running the test(s).  This could be used for gen_* makes for corev-dv<br>
-&nbsp;&nbsp;&nbsp;&nbsp;precmd: \<string><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**precmd**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: make directory for the test><br>
-&nbsp;&nbsp;&nbsp;&nbsp;cmd: \<string><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**cmd**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: The number of test iterations to run.  Note that all runs will receive a random seed><br>
-&nbsp;&nbsp;&nbsp;&nbsp;num: \<number>
-
-
+&nbsp;&nbsp;&nbsp;&nbsp;**num**: \<number><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<*Optional*: a list of configurations or simulators to be skipped for this specific test><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**skip_sim**: \<number><br>

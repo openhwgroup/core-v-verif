@@ -3,10 +3,12 @@ RISCV            ?= $(CV_SW_TOOLCHAIN)
 RISCV_EXE_PREFIX ?= $(RISCV)/bin/riscv32-unknown-elf-
 RISCV_GCC = $(RISCV_EXE_PREFIX)gcc
 RISCV_AR = $(RISCV_EXE_PREFIX)ar
+CFG_CFLAGS = $(CFG_CFLAGS)
 SRC = crt0.S handlers.S syscalls.c vectors.S
 OBJ = crt0.o handlers.o syscalls.o vectors.o
 LIBCV-VERIF = libcv-verif.a 
 CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(CV_SW_MARCH) -Wall -pedantic
+CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic
 
 all: $(LIBCV-VERIF)
 
@@ -14,10 +16,10 @@ $(LIBCV-VERIF): $(OBJ)
 	$(RISCV_AR) rcs $@ $(OBJ)
 
 %.o : %.c
-	$(RISCV_GCC) $(CFLAGS) -c $< -o $@
+	$(RISCV_GCC) $(CFLAGS) $(CFG_CFLAGS) -c $< -o $@
 	
 %.o : %.S
-	$(RISCV_GCC) $(CFLAGS) -c $< -o $@
+	$(RISCV_GCC) $(CFLAGS) $(CFG_CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ) $(LIBCV-VERIF)

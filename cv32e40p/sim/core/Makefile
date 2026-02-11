@@ -121,10 +121,10 @@ VSIM_SCRIPT_DIR	  = ../tools/vsim
 VSIM_SCRIPT       = $(VSIM_SCRIPT_DIR)/vsim.tcl
 
 # vcs configuration (hopelessly out of date)
-VCS_VERSION             = O-2018.09-SP1-1
-VCS_HOME                = /opt/synopsys/vcs-mx/$(VCS_VERSION)
+VCS_VERSION            ?= Q-2020.03-SP2
+VCS_HOME               ?= /eda/synopsys/vcs/$(VCS_VERSION)
 VCS                     = vcs
-VCS_FLAGS              ?= # user defined
+VCS_FLAGS              ?= -ntb_opts uvm-1.1
 ALL_VCS_FLAGS           = $(VCS_FLAGS)
 VCS_SCRIPT_DIR          = ../tools/vcs
 VCS_SCRIPT              = $(VCS_SCRIPT_DIR)/vcs_batch.tcl
@@ -134,7 +134,8 @@ SIMV                    = ./simv
 # dsim is the Metrics Technologies SystemVerilog simulator  (https://metrics.ca/)
 DSIM                    = dsim
 DSIM_HOME               = /tools/Metrics/dsim
-DSIM_CMP_FLAGS          = +define+CORE_TB -timescale 1ns/1ps $(SV_CMP_FLAGS) -suppress MultiBlockWrite +define+CV32E40P_APU_TRACE
+DSIM_CMP_FLAGS          = +define+CORE_TB +define+CV32E40P_APU_TRACE +acc+b -timescale 1ns/1ps $(SV_CMP_FLAGS)
+DSIM_SUPPRESS           = -suppress MultiBlockWrite -suppress IneffectiveDynamicCast
 DSIM_RUN_FLAGS          =
 DSIM_UVM_ARGS           = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 DSIM_RESULTS           ?= $(PWD)/dsim_results
@@ -142,7 +143,6 @@ DSIM_WORK              ?= $(DSIM_RESULTS)/dsim_work
 DSIM_IMAGE              = dsim.out
 
 ifneq (${WAVES}, 0)
-  DSIM_CMP_FLAGS += +acc
   DSIM_DMP_FILE  ?= dsim.fst
   DSIM_RUN_FLAGS += -waves $(DSIM_DMP_FILE)
 endif
@@ -156,6 +156,8 @@ XRUN_DIR          = xcelium.d
 VERILATOR           = verilator
 VERI_FLAGS         +=
 VERI_COMPILE_FLAGS += -Wno-BLKANDNBLK -Wno-MULTIDRIVEN -Wno-COMBDLY $(SV_CMP_FLAGS) 
+VERI_COMPILE_FLAGS += $(SV_CMP_FLAGS)
+VERI_WARN_WAIVERS  ?= --Wno-lint --Wno-UNOPTFLAT --Wno-MODDUP --Wno-MULTIDRIVEN --Wno-COMBDLY --Wno-BLKANDNBLK
 VERI_TRACE         ?=
 VERI_OBJ_DIR       ?= cobj_dir
 #VERI_LOG_DIR       ?= cobj_dir/logs
@@ -185,7 +187,7 @@ TBSRC_TOP   := $(TBSRC_HOME)/core/tb_top.sv
 TBSRC_CORE  := $(TBSRC_HOME)/core
 TBSRC_PKG   := $(TBSRC_CORE)/tb_riscv/include/perturbation_defines.sv
 TBSRC       := $(TBSRC_CORE)/tb_top.sv \
-               $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
+               $(TBSRC_CORE)/cv32e40p_core_tb_wrapper.sv \
                $(TBSRC_CORE)/mm_ram.sv \
                $(TBSRC_CORE)/dp_ram.sv \
                $(TBSRC_CORE)/tb_riscv/riscv_random_stall.sv \
@@ -199,7 +201,7 @@ RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
 TBSRC_VERI  := $(TBSRC_CORE)/tb_top_verilator.sv \
-               $(TBSRC_CORE)/cv32e40p_tb_wrapper.sv \
+               $(TBSRC_CORE)/cv32e40p_core_tb_wrapper.sv \
                $(TBSRC_CORE)/tb_riscv/riscv_rvalid_stall.sv \
                $(TBSRC_CORE)/tb_riscv/riscv_gnt_stall.sv \
                $(TBSRC_CORE)/mm_ram.sv \
@@ -276,9 +278,13 @@ mk_results:
 
 # Metrics dsim compile targets
 dsim-comp: mk_results CV_CORE_pkg tbsrc_pkg tbsrc
+	@echo "$(BANNER)"
+	@echo "* Compiling with Metrics DSIM"
+	@echo "$(BANNER)"
 		cd $(DSIM_RESULTS) && \
 		$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
+		$(DSIM_SUPPRESS) \
 		$(DSIM_UVM_ARGS) \
 		-f $(CV_CORE_MANIFEST) \
 		$(TBSRC_PKG) \
@@ -287,8 +293,12 @@ dsim-comp: mk_results CV_CORE_pkg tbsrc_pkg tbsrc
 		-genimage $(DSIM_IMAGE)
 
 dsim-comp-rtl-only: mk_results $(CV_CORE_PKG)
+	@echo "$(BANNER)"
+	@echo "* Compiling (only) with Metrics DSIM"
+	@echo "$(BANNER)"
 	$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
+		$(DSIM_SUPPRESS) \
 		-f $(CV_CORE_MANIFEST) \
 		-work $(DSIM_WORK) \
 		-genimage $(DSIM_IMAGE)
@@ -313,7 +323,7 @@ dsim-test: dsim-comp $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 		-work $(DSIM_WORK) \
 		$(DSIM_RUN_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
-		+firmware=$(VERI_CUSTOM)/$(TEST)/$(TEST).hex
+		+firmware=../../$(TEST_PROGRAM_RELPATH)/$(TEST)/$(TEST).hex
 
 # Metrics dsim cleanup
 .PHONY: dsim-clean
@@ -378,13 +388,13 @@ vsim-run-gui: vsim-all
 	$(RTLSRC_VOPT_TB_TOP) -do $(VSIM_SCRIPT)
 
 .PHONY: questa-custom
-questa-custom: vsim-all $(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
-questa-custom: ALL_VSIM_FLAGS += +firmware=$(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
+questa-custom: vsim-all $(SIM_TEST_PROGRAM_RESULTS)/$(CUSTOM_PROG).hex
+questa-custom: ALL_VSIM_FLAGS += +firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(CUSTOM_PROG).hex
 questa-custom: vsim-run
 
 .PHONY: questa-custom-gui
-questa-custom-gui: vsim-all $(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
-questa-custom-gui: ALL_VSIM_FLAGS += +firmware=$(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
+questa-custom-gui: vsim-all $(SIM_TEST_PROGRAM_RESULTS)/$(CUSTOM_PROG).hex
+questa-custom-gui: ALL_VSIM_FLAGS += +firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(CUSTOM_PROG).hex
 questa-custom-gui: vsim-run-gui
 
 .PHONY: questa-cv32_riscv_tests
@@ -474,9 +484,16 @@ xrun-clean-all: xrun-clean
 # the --trace flags to the verilator call
 #ifeq ($(findstring +vcd,$(VERI_FLAGS)),+vcd)
 
+TRACE_FORMAT ?= fst
+
 ifneq (${WAVES}, 0)
+ifeq ($(TRACE_FORMAT),vcd)
 VERI_TRACE="--trace"
 VERI_CFLAGS+="-DVCD_TRACE"
+else
+VERI_TRACE="--trace-fst"
+VERI_CFLAGS+="-DFST_TRACE"
+endif
 endif
 
 verilate: testbench_verilator
@@ -490,13 +507,14 @@ testbench_verilator: CV_CORE_pkg $(TBSRC_VERI) $(TBSRC_PKG)
 	@echo "$(BANNER)"
 	$(VERILATOR) --cc --sv --exe \
 		$(VERI_TRACE) \
-		--Wno-lint --Wno-UNOPTFLAT \
-		--Wno-MODDUP --top-module \
+		$(VERI_WARN_WAIVERS) \
+		--top-module \
 		tb_top_verilator $(TBSRC_VERI) \
 		-f $(CV_CORE_MANIFEST) \
 		$(CV_CORE_PKG)/bhv/$(CV_CORE_LC)_core_log.sv \
 		$(TBSRC_CORE)/tb_top_verilator.cpp --Mdir $(VERI_OBJ_DIR) \
 		-CFLAGS "-std=gnu++14 $(VERI_CFLAGS)" \
+		-CFLAGS "$(VERI_CFLAGS)" \
 		$(VERI_COMPILE_FLAGS)
 	$(MAKE) -C $(VERI_OBJ_DIR) -f Vtb_top_verilator.mk
 	mkdir -p $(SIM_RESULTS)
@@ -520,6 +538,7 @@ verilate-clean: tc-clean
 	if [ -d $(SIM_RESULTS) ]; then rm -r $(SIM_RESULTS); fi
 	if [ -d $(VERI_OBJ_DIR) ]; then rm -r $(VERI_OBJ_DIR); fi
 	rm -rf testbench_verilator
+	rm -f *.fst *.vcd
 	if [ -e memory_dump.bin ]; then rm memory_dump.bin; fi
 
 
@@ -529,9 +548,11 @@ verilate-clean: tc-clean
 vcsify: CV_CORE_pkg tbsrc_pkg tbsrc
 	$(VCS) +vc -sverilog -race=all -ignore unique_checks -full64 \
 		-timescale=1ns/1ps \
+		-debug_access+all \
+		-cm line+tgl+branch+assert \
 		-assert svaext \
 		-CC "-I$(VCS_HOME)/include -O3 -march=native" $(VCS_FLAGS) \
-		-f $(MAKE_DIR)/$(CV_CORE_MANIFEST) \
+		-f $(CV_CORE_MANIFEST) \
 		$(TBSRC_PKG) $(TBSRC)
 
 RTLSRC_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
@@ -540,7 +561,9 @@ vcs-run: vcsify
 	$(SIMV) $(ALL_VCS_FLAGS) -ucli -do $(VCS_SCRIPT)
 
 vcs-run-gui: vcsify
-	$(SIMV) $(ALL_VCS_FLAGS) -gui -do $(VCS_SCRIPT_GUI)
+	$(SIMV) $(ALL_VCS_FLAGS) +firmware=$(CUSTOM)/$(CUSTOM_PROG).hex -cm line+tgl+branch+assert -gui -do $(VCS_SCRIPT_GUI)
+	vpd2vcd inter.vpd inter.vcd
+	urg -dir $(SIMV).vdb/ -grade cost simtime index testfile -show tests
 
 .PHONY: vcs-hello-world
 vcs-hello-world: vcsify $(CUSTOM)/hello-world.hex

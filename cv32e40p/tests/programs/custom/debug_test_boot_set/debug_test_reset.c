@@ -21,6 +21,7 @@
 */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 extern volatile uint32_t test_debugger_entry;

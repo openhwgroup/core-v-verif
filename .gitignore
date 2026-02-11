@@ -21,6 +21,7 @@ metrics.db
 metrics_history.db
 xrun_results
 vsim_results
+vcs_results
 vmgr_sessions
 __pycache__
 *.swp
@@ -58,6 +59,7 @@ cva6/sim/Verdi.ses*
 riviera_results/
 */vendor_lib/dpi_dasm_spike/
 */vendor_lib/verilab/svlib/
+*/vendor_lib/riscof/riscof_arch_test_suite/
 work*
 vsim.dbg
 *.wlf
@@ -70,3 +72,10 @@ tools/verilator*
 *.signature_output
 ucli.key
 vcs.cmd
+VRMDATA
+*fir_q31*
+*float32_division_test*
+*whetstone*
+*.do
+*eembc*
+*.code-workspace

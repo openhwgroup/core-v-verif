@@ -52,13 +52,24 @@ def main():
 
   parser = build_parser()
   args = parser.parse_args()
-  paths = build_paths(args.core)
 
   if args.debug == 'YES':
     logger.setLevel(logging.DEBUG)
 
   if args.core == 'notset':
     logger.info('Must specify a core to benchmark')
+    sys.exit(1)
+
+  if args.cfg == 'default':
+    core_config = 'corev32'
+  elif args.cfg == 'pulp':
+    core_config = 'corev32_pulp'
+  elif args.cfg == 'pulp_fpu':
+    core_config = 'corev32_pulp_fpu'
+  elif args.cfg == 'pulp_fpu_zfinx':
+    core_config = 'corev32_pulp_fpu_zfinx'
+  else:
+    logger.info(f"Invalid config selected: {args.cfg}, must be 'default', 'pulp', 'pulp_fpu' or 'pulp_fpu_zfinx'")
     sys.exit(1)
 
   if args.ccomp == 'notset':
@@ -77,6 +88,14 @@ def main():
     logger.info(f"Invalid 'parallel' option: {args.parallel}, must be 'YES' or 'NO'")
     sys.exit(1)
 
+  if args.absolute == 'YES':
+    absolute = True
+  elif args.absolute == 'NO':
+    absolute = False
+  else:
+    logger.info(f"Invalid 'absolute' option: {args.absolute}, must be 'YES' or 'NO'")
+    sys.exit(1)
+
   if args.build_only == 'YES':
     build_only = True
   elif args.build_only == 'NO':
@@ -84,6 +103,8 @@ def main():
   else:
     logger.info(f"Invalid 'build_only' option: {args.build_only}, must be 'YES' or 'NO'")
     sys.exit(1)
+
+  paths = build_paths(args.core, core_config, args.logdir, args.builddir)
 
   logger.info("Starting EMBench for core-v-verif")
   logger.info(f"Benchmarking core: {args.core}")
@@ -142,18 +163,38 @@ def main():
     except:
       logger.fatal('EMBench python module copy failed')
 
+    # copy python module
+    logger.info(f"Copying {paths['libpy']}/benchmark_speed.py to {paths['embench']}/benchmark_speed.py")
+    try:
+      subprocess.run(
+        ['cp', '-pf', f"{paths['libpy']}/benchmark_speed.py", f"{paths['embench']}/benchmark_speed.py"]
+      )
+    except:
+      logger.fatal('EMBench benchmark_speed python script copy failed')
+
+    logger.info(f"Copying {paths['libpy']}/benchmark_size.py to {paths['embench']}/benchmark_size.py")
+    try:
+      subprocess.run(
+        ['cp', '-pf', f"{paths['libpy']}/benchmark_size.py", f"{paths['embench']}/benchmark_size.py"]
+      )
+    except:
+      logger.fatal('EMBench benchmark_speed python script copy failed')
+
   # ----------------------------------------------------------------------------------------------
   # build benchmark object files (build_all.py)
   # ----------------------------------------------------------------------------------------------
-  cmd = ['build_all.py',
-         '--arch=corev32',
-         '--board=corev32',
+  cmd = [f"{paths['embench']}/build_all.py",
+         f'--arch={core_config}',
+         f'--board={core_config}',
          f'--cflags=-I{paths["bsp"]}',
          f'--chip={args.type}',
          f'--cc={args.ccomp}',
          f'--warmup-heat=0',
          f'--cpu-mhz={args.cpu_mhz}',
-         f'--ldflags=-T{paths["bsp"]}/link.ld',
+         f'--ldflags=-T{paths["bsp"]}/link_gp_relax.ld',
+         f'--builddir={args.builddir}',
+         f'--logdir={args.logdir}',
+         f'--timeout=15',
          '--clean']
   logger.info(f"Calling build script: {' '.join(cmd)}")
   try:
@@ -192,14 +233,21 @@ def main():
         logger.fatal(f"Failed to generate folder {paths['testsem']}/{folder_ext}")
         sys.exit(1)
 
+      logger.debug(f"Creating folder {args.builddir}/{folder_ext}")
+      try:
+        subprocess.run(['mkdir', f"{args.builddir}/{folder_ext}"])
+      except:
+        logger.fatal(f"Failed to generate folder {args.builddir}/{folder_ext}")
+        sys.exit(1)
+
       # copy test files into the tests/programs/embench directories
       for file in os.listdir(f"{paths['emres']}/{folder}"):
         if not file.endswith('.o'):
           logger.debug(f"Copying file {file}")
           try:
-            subprocess.run(['cp', f"{paths['emres']}/{folder}/{file}", f"{paths['testsem']}/{folder_ext}/emb_{file}.elf"])
+            subprocess.run(['cp', f"{paths['emres']}/{folder}/{file}", f"{args.builddir}/{folder_ext}/emb_{file}.elf"])
           except:
-            logger.fatal(f"Copying file {file} to {paths['emres']}/{folder_ext}/ failed")
+            logger.fatal(f"Copying file {file} to {args.builddir}/{folder_ext}/ failed")
             sys.exit(1)
 
           break
@@ -219,14 +267,24 @@ def main():
   logger.info(f"Starting benchmarking of {args.type}")
 
   if args.type == 'speed':
-    arglist = ['benchmark_speed.py', '--target-module=run_corev32',
-               f'--cpu-mhz={args.cpu_mhz}', f'--make-path={paths["make"]}',
+    arglist = [f"{paths['embench']}/benchmark_speed.py",
+               f'--target-module=run_corev32',
+               f'-cfg={args.cfg}',
+               f'--cpu-mhz={args.cpu_mhz}',
+               f'--make-path={paths["make"]}',
+               f'--builddir={args.builddir}',
+               f'--logdir={args.logdir}',
                f'--timeout={args.timeout}',
                f'--simulator={args.simulator}']
     if parallel:
-        arglist.append(f'--sim-parallel')
+      arglist.append(f'--sim-parallel')
   else:
-    arglist = ['benchmark_size.py']
+    arglist = [f"{paths['embench']}/benchmark_size.py",
+               f'--builddir={args.builddir}',
+               f'--logdir={args.logdir}']
+
+  if absolute:
+    arglist.append(f'--absolute')
 
   try:
     logger.info(f"Running: {' '.join(arglist)}")
@@ -280,10 +338,25 @@ def build_parser():
   )
 
   parser.add_argument(
+    '-cfg',
+    default='default',
+    help='Core configuration to benchmark'
+  )
+
+  parser.add_argument(
     '-cc',
     '--ccomp',
     default='notset',
     help='C compiler for benchmark'
+  )
+
+  parser.add_argument(
+    '--absolute',
+    default='NO',
+    help=(
+      'Set this option to "YES" to report absolute numbers\n'+
+      'makefile alias: EMB_ABSOLUTE'
+    )
   )
 
   parser.add_argument(
@@ -305,6 +378,20 @@ def build_parser():
       'NOTE: type affects build configuration!\n'+
       'makefile alias: EMB_TYPE'
     )
+  )
+
+  parser.add_argument(
+      '--builddir',
+      type=str,
+      default='bd',
+      help='Directory holding all the binaries',
+  )
+
+  parser.add_argument(
+      '--logdir',
+      type=str,
+      default='logs',
+      help='Directory in which to store logs',
   )
 
   parser.add_argument(
@@ -373,21 +460,21 @@ def build_parser():
 
   return parser
 
-def build_paths(core):
+def build_paths(core, core_config, logdir, builddir):
   """map out necessary paths"""
   paths = dict()
   paths['cver'] = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
   paths['core'] = paths['cver'] + '/' + core
-  paths['libcfg'] = paths['core'] + '/tests/embench/config/corev32'
+  paths['libcfg'] = paths['core'] + '/tests/embench/config/' + core_config
   paths['libpy'] = paths['core'] + '/tests/embench/pylib'
   paths['vlib'] = paths['core'] + '/vendor_lib'
-  paths['emb_logs'] = paths['core'] + '/vendor_lib/embench/logs'
+  paths['emb_logs'] = logdir
   paths['make'] = paths['core'] + '/sim/uvmt'
   paths['embench'] = paths['vlib'] + '/embench'
-  paths['emcfg'] = paths['embench'] + '/config/corev32'
+  paths['emcfg'] = paths['embench'] + '/config/' + core_config
   paths['empy'] = paths['embench'] + '/pylib'
-  paths['embrd'] = paths['emcfg'] + '/boards/corev32'
-  paths['emres'] = paths['embench'] + '/bd/src'
+  paths['embrd'] = paths['emcfg'] + '/boards/' + core_config
+  paths['emres'] = builddir + '/src'
   paths['bsp'] = paths['core'] + '/bsp'
   paths['testsem'] = paths['core'] + '/tests/programs/embench'
 

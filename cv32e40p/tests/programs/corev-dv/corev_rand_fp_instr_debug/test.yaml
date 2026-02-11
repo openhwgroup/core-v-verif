@@ -1,0 +1,13 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for random pulp instr test
+name: corev_rand_fp_instr_debug
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Random debug in fp instruction stream
+plusargs: >
+    +gen_reduced_rand_dbg_req 
+    +num_debug_req=1000 
+    # +gen_reduced_rand_dbg_req -> produce not many dbg_req, use num_debug_req to indicate intended repetitive number
+    # +gen_random_debug -> produce many dbg_req 

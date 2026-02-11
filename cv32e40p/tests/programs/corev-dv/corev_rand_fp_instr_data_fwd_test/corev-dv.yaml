@@ -1,0 +1,30 @@
+#
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Test definition YAML for corev-dv test generator
+
+name: corev_rand_fp_instr_data_fwd_test
+uvm_test: $(CV_CORE_LC)_instr_base_test
+description: >
+    RISCV-DV generated random fp with specific streams
+plusargs: >
+    +instr_cnt=1000
+    +num_of_sub_program=0
+    +test_override_riscv_instr_stream=1
+    +no_branch_jump=1
+    +directed_instr_0=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,2
+    +directed_instr_1=cv32e40p_fp_op_fwd_instr_stream,4
+    +directed_instr_2=cv32e40p_fp_op_fwd_instr_w_loadstore_stream,4

@@ -21,6 +21,7 @@
 */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 volatile int glb_hart_status  = 0; // Written by main code only, read by debug code

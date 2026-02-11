@@ -56,6 +56,13 @@ def get_target_args(remnant):
     parser = argparse.ArgumentParser(description='Get target specific args')
 
     parser.add_argument(
+        '-cfg',
+        type=str,
+        required=True,
+        help='Core configuration to benchmark'
+    )
+
+    parser.add_argument(
         '--cpu-mhz',
         type=int,
         default=1,
@@ -76,6 +83,12 @@ def get_target_args(remnant):
         help='Simulator to run the benchmarks'
     )
 
+    parser.add_argument(
+        '--sim-parallel',
+        action='store_true',
+        default=False,
+        help='Launch all benchmarks in parallel'
+    )
     return parser.parse_args(remnant)
 
 
@@ -88,7 +101,10 @@ def build_benchmark_cmd(bench, args):
     cpu_per = float(1/(args.cpu_mhz*1_000_000))
     
     #Utilize "make test" environment in core-v-verif
-    return ['make', '-C', args.make_path, 'test', f"TEST=emb_{bench}", f"SIMULATOR={args.simulator}", 'USE_ISS=NO']
+    if args.sim_parallel == 'YES':
+      return ['make', '-C', args.make_path, 'test', f"TEST=emb_{bench}", f"SIMULATOR={args.simulator}", 'USE_ISS=NO', f"CFG={args.cfg}", 'COMP=NO']
+    else:
+      return ['make', '-C', args.make_path, 'test', f"TEST=emb_{bench}", f"SIMULATOR={args.simulator}", 'USE_ISS=NO', f"CFG={args.cfg}"]
 
 
 def decode_results(stdout_str, stderr_str):

@@ -35,7 +35,7 @@ The original text of these guidlines is extracted, with permission, from *Advanc
 
 1. **General Conventions**
 
-This document uses specific verbs to have specific meaning that is similar, but not identical to, that which is used by the [IEEE Standards Style Manaul](https://mentor.ieee.org/myproject/Public/mytools/draft/styleman.pdf) (section 9).<br>
+This document uses specific verbs to have specific meaning that is similar, but not identical to, that which is used by the [IEEE Standards Style Manual](https://mentor.ieee.org/myproject/Public/mytools/draft/styleman.pdf) (section 9).<br>
 * **Shall** indicates a mandatory requirement.
 * **Should** indicates a recommendation may be used interchangibly with the verb **Recommended**.
 * **May** indicates a permissible action, and is sometimes used to suggest ways to fulfill a recommendation.

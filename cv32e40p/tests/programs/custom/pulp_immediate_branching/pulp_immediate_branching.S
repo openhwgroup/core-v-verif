@@ -60,12 +60,12 @@ main:
     li x30, 0x5
     li x31, 0x5912efde
     li x4, 0x40001104
-#tests1-6 test the p.beqimm instruction. values loaded in and compared to are expected output values
-#p.beqimm is of form "p.beqimm rs1, Imm5, Imm12". Branches to PC + (Imm12 << 1) if rs1==Imm5.
+#tests1-6 test the cv.beqimm instruction. values loaded in and compared to are expected output values
+#cv.beqimm is of form "cv.beqimm rs1, Imm5, Imm12". Branches to PC + (Imm12 << 1) if rs1==Imm5.
 #Imm5 is signed for this instruction
 test1:
     li x17, 0x00000005
-    p.beqimm x17, 0x05, check1
+    cv.beqimm x17, 0x05, check1
     c.addi x15, 0x1
     nop
     nop
@@ -74,7 +74,7 @@ check1:
     c.addi x16, 0x1
 test2:
     li x17, -10
-    p.beqimm x17, -10, check2
+    cv.beqimm x17, -10, check2
     c.addi x15, 0x1
     nop
     nop
@@ -82,7 +82,7 @@ check2:
     c.addi x16, 0x1
 test3:
     li x17, -3
-    p.beqimm x17, -3, check3
+    cv.beqimm x17, -3, check3
     c.addi x15, 0x1
     nop
     nop
@@ -94,24 +94,24 @@ check3:
     c.addi x16, 0x1
 test4:
     li x17, 0x00000007
-    p.beqimm x17, 0x07, check4
+    cv.beqimm x17, 0x07, check4
     c.addi x15, 0x1
 check4:
     c.addi x16, 0x1
 test5:
     li x17, 0x00000000
-    p.beqimm x17, 0x01, exit
+    cv.beqimm x17, 0x01, exit
     c.addi x16, 0x1
 test6:
     li x17, -7
-    p.beqimm x17, -6, exit
+    cv.beqimm x17, -6, exit
     c.addi x16, 0x1
-#tests7-12 test the p.bneimm instruction. values loaded in and compared to are expected output values
-#p.bneimm is of form "p.bneimm, rs1, Imm5, Imm 12". Branched to PC + (Imm12 << 1) if rs1==Imm5.
+#tests7-12 test the cv.bneimm instruction. values loaded in and compared to are expected output values
+#cv.bneimm is of form "cv.bneimm, rs1, Imm5, Imm 12". Branched to PC + (Imm12 << 1) if rs1==Imm5.
 #Imm5 is signed for this instruction
 test7: #114
     li x17, 0xffffffff
-    p.bneimm x17, 0xe, check7
+    cv.bneimm x17, 0xe, check7
     c.addi x15, 0x1
     nop
     nop
@@ -120,7 +120,7 @@ check7:
     c.addi x16, 0x1
 test8:
     li x17, -10
-    p.bneimm x17, -8, check8
+    cv.bneimm x17, -8, check8
     c.addi x15, 0x1
     nop
     nop
@@ -128,7 +128,7 @@ check8:
     c.addi x16, 0x1
 test9:
     li x17, -3
-    p.bneimm x17, 5, check9
+    cv.bneimm x17, 5, check9
     c.addi x15, 0x1
     nop
     nop
@@ -140,17 +140,17 @@ check9:
     c.addi x16, 0x1
 test10:
     li x17, 0x00000008
-    p.bneimm x17, 0x06, check10
+    cv.bneimm x17, 0x06, check10
     c.addi x15, 0x1
 check10:
     c.addi x16, 0x1
 test11:
     li x17, 0x00000000
-    p.bneimm x17, 0x00, exit
+    cv.bneimm x17, 0x00, exit
     c.addi x16, 0x1
 test12:
     li x17, -7
-    p.bneimm x17, -7, exit_check
+    cv.bneimm x17, -7, exit_check
     c.addi x16, 0x1
 exit_check:
     lw x18, test_results /* report result */

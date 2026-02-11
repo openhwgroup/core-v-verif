@@ -1,0 +1,38 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for corev-dv test generator
+# corev-dv generator test
+name: corev_rand_pulp_hwloop_test
+uvm_test: $(CV_CORE_LC)_instr_base_test
+description: >
+    RISCV-DV generated random hwloop test
+plusargs: >
+    +instr_cnt=1000
+    +num_of_sub_program=0
+    +insert_rand_directed_instr_stream=1
+    +test_rand_directed_instr_stream_num=11
+    +rand_directed_instr_0=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_1=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_2=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_3=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_4=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_5=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_6=cv32e40p_xpulp_short_hwloop_stream,1
+    +rand_directed_instr_7=cv32e40p_xpulp_short_hwloop_stream,1
+    +rand_directed_instr_8=cv32e40p_xpulp_long_hwloop_stream,1
+    +rand_directed_instr_9=cv32e40p_xpulp_hwloop_isa_stress_stream,1
+    +rand_directed_instr_10=cv32e40p_xpulp_hwloop_isa_stress_stream,1
+    +no_fence=0
+    +no_data_page=0
+    +randomize_csr=1
+    +no_branch_jump=1
+    +boot_mode=m
+    +no_csr_instr=0
+    +no_wfi=1
+    +no_ebreak=1
+    +no_dret=1
+    +enable_misaligned_instr=0
+    +set_dcsr_ebreak=0
+    +test_override_riscv_instr_stream=1
+    +test_override_riscv_instr_sequence=1

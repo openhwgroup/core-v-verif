@@ -1,0 +1,6 @@
+name: floating_point_zfinx_instr_enable
+description: >
+    Enable Floating point instruction with ZFINX
+plusargs: >
+    +enable_fp_in_x_regs=1
+

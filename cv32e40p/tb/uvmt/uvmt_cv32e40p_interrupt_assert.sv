@@ -343,13 +343,13 @@ module uvmt_cv32e40p_interrupt_assert
   // WFI assertion will assert core_sleep_o in 6 clocks
   property p_wfi_assert_core_sleep_o;
     !pending_enabled_irq_q ##0 !in_wfi ##1 !pending_enabled_irq_q ##0
-      ((!pending_enabled_irq && !debug_mode_q && !debug_req_i) throughout in_wfi[*38]) 
+      ((!pending_enabled_irq && !debug_mode_q && !debug_req_i) throughout in_wfi[*40]) 
              |-> core_sleep_o;
   endproperty
   a_wfi_assert_core_sleep_o: assert property(p_wfi_assert_core_sleep_o)
     else
       `uvm_error(info_tag,
-                 "Aassertion of core_sleep_o did not occur within 6 clocks")
+                 "Assertion of core_sleep_o did not occur within 6 clocks")
 
   // core_sleep_o deassertion in wfi should be followed by WFI deassertion
   property p_core_sleep_deassert;

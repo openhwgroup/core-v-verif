@@ -1,0 +1,12 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for random pulp hwloop count range test
+name: corev_rand_pulp_hwloop_count_range_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Random hwloop stream with large lpcount
+plusargs: >
+    +enable_interrupt=1
+    +enable_fast_interrupt_handler=0
+    +gen_irq_noise

@@ -263,7 +263,7 @@ if not (prcmd):
         print ('This will delete your previously cloned RTL repo plus all previously generated files')
         ask_user()
         os.chdir(os.path.abspath(os.path.join(topdir, args.core.lower(), 'sim/uvmt')))
-        os.system('make clean_all')
+        os.system('make clean_all SIMULATOR={}'.format(args.simulator))
         os.chdir(os.path.join(topdir, '{}/sim/core'.format(args.core.lower())))
         os.system('make clean_all')
         os.chdir(os.path.join(topdir, 'bin'))

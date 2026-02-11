@@ -31,8 +31,12 @@
 
 #define TEST_PASS                      123456789
 #define TEST_FAIL                              1
-#define VIRT_PERIPH_STATUS_FLAG_ADDR  0x20000000 
+#define VIRT_PERIPH_STATUS_FLAG_ADDR  0x20000000
+#if defined(PULP)
+#define EXPECTED_ILLEGAL_INSTRUCTIONS         78
+#else
 #define EXPECTED_ILLEGAL_INSTRUCTIONS         80
+#endif
 
 main:
     li        t0, (0x1 << 3)
@@ -133,7 +137,11 @@ main:
 	csrrwi x0,  3859, 0x0a   # illegal instruction: attempt to write RO CSR
 
 	csrrc  x5,  3859, x0     # not illegal
+#if defined(FPU) || defined(PULP) || defined(CLUSTER)
+	li     x30, 0x00000001
+#else
 	li     x30, 0x00000000
+#endif
 	bne    x5,  x30, fail
 
     # mhartid
@@ -151,7 +159,7 @@ main:
 
     ##
     ## Access the User Custom CSRs.   These are all illegal instructions when
-    ## PULP_XPULP = 0 (which is the default for CV32E40P).
+    ## COREV_PULP = 0 (which is the default for CV32E40P).
     ##
 
     # lpstart0
@@ -291,7 +299,7 @@ u_sw_irq_handler:
     csrrw x0, mepc, x27
     c.addi x31, 1
     mret
-    
+
 _exit:
     j _exit
 

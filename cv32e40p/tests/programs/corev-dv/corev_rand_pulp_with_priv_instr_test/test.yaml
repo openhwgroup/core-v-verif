@@ -1,0 +1,12 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for random pulp instr test with priv instr
+name: corev_rand_pulp_with_priv_instr_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Random test with xpulp and priv instructions
+plusargs: >
+    +enable_interrupt=1
+    +enable_fast_interrupt_handler=1
+    +gen_irq_noise

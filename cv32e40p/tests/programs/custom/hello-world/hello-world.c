@@ -31,15 +31,19 @@
 //       compile-time, so we set a default MISA to NO_PULP value.  This
 //       needs to be fixed, but for now does not affect UVM env.
 #define EXP_MISA 0x40001104
+#define EXP_MIMPID 0x0
 
-#ifdef NO_PULP
-#define EXP_MISA 0x40001104
-#endif
-
-#ifdef PULP
+#if defined(PULP) || defined(CLUSTER)
+#if defined(FPU) && !defined(ZFINX)
+#define EXP_MISA 0x40801124
+#else
 #define EXP_MISA 0x40801104
 #endif
+#endif
 
+#if defined(PULP) || defined(CLUSTER) || defined(FPU)
+#define EXP_MIMPID 0x1
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -73,8 +77,8 @@ int main(int argc, char *argv[])
     }
 
     /* Check MIMPID CSR: 0x0 is the value assigned by the OpenHW Group to the first release of CV32E40P */
-    if (mimpid_rval != 0x00000000) {
-      printf("\tERROR: CSR MIMPID reads as 0x%x - should be 0x00000000 for this release of CV32E40P.\n\n", mimpid_rval);
+    if (mimpid_rval != EXP_MIMPID) {
+      printf("\tERROR: CSR MIMPID reads as 0x%x - should be 0x%x for this release of CV32E40P.\n\n", mimpid_rval, EXP_MIMPID);
       return EXIT_FAILURE;
     }
 
@@ -131,7 +135,14 @@ int main(int argc, char *argv[])
     if ((misa_rval >>  2) & 0x00000001) printf("C");
     if ((misa_rval >>  1) & 0x00000001) printf("B");
     if ((misa_rval      ) & 0x00000001) printf("A");
+
+#if defined(PULP) && defined(FPU) && defined(ZFINX)
+    unsigned int zfinx_rval;
+    __asm__ volatile("csrr %0, 0xCD2" : "=r"(zfinx_rval)); // Zfinx CSR
+    if (zfinx_rval & 0x00000001) printf("Zfinx");
+#endif
     printf("\n");
+
     if (super) {
       printf("\tThis machine supports SUPERVISOR mode.\n");
     }

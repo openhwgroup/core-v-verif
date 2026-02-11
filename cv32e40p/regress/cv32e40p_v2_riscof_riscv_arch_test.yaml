@@ -1,0 +1,78 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# YAML file to specify a regression testlist
+---
+# Header
+name: cv32e40p_v2_riscof_riscv_arch_test_regression
+description: RISCOF RISCV_ARCH_TEST for CV32E40P V2 ISA RV32IMFCZicsr_Zifencei
+
+# List of builds
+builds:
+  riscof_setup_cv32e40p:
+    cmd: make setup_riscof_sim USE_ISS=no
+    cfg: pulp_fpu
+    dir: cv32e40p/sim/riscof
+    iss: 0
+
+  riscof_cv32e40p_pulp:
+    cmd: make comp_dut_rtl_riscof_sim USE_ISS=no
+    cfg: pulp
+    dir: cv32e40p/sim/riscof
+    iss: 0
+
+  riscof_cv32e40p_pulp_fpu:
+    cmd: make comp_dut_rtl_riscof_sim USE_ISS=no
+    cfg: pulp_fpu
+    dir: cv32e40p/sim/riscof
+    iss: 0
+
+  riscof_cv32e40p_pulp_fpu_1cyclat:
+    cmd: make comp_dut_rtl_riscof_sim USE_ISS=no
+    cfg: pulp_fpu_1cyclat
+    dir: cv32e40p/sim/riscof
+    iss: 0
+
+  riscof_cv32e40p_pulp_fpu_2cyclat:
+    cmd: make comp_dut_rtl_riscof_sim USE_ISS=no
+    cfg: pulp_fpu_2cyclat
+    dir: cv32e40p/sim/riscof
+    iss: 0
+
+# List of tests
+tests:
+  hello-world:
+    description: riscv-arch-test suite with riscof for cv32e40p v2 with fpu, test name is dummy here for regression script
+    builds:
+      - riscof_cv32e40p_pulp_fpu
+    dir: cv32e40p/sim/riscof
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_cv32e40p_v2_ForIssDebugOnly.ini
+    num: 1
+    iss: 0
+
+  csr_instructions:
+    description: riscv-arch-test suite with riscof for cv32e40p v2 with fpu 1 cyclat, test name is dummy here for regression script
+    builds:
+      - riscof_cv32e40p_pulp_fpu_1cyclat
+    dir: cv32e40p/sim/riscof
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_cv32e40p_v2_pulp_fpu_1cyclat.ini
+    num: 1
+    iss: 0
+
+  cv32e40p_csr_access_test:
+    description: riscv-arch-test suite with riscof for cv32e40p v2 with fpu 2 cyclat, test name is dummy here for regression script
+    builds:
+      - riscof_cv32e40p_pulp_fpu_2cyclat
+    dir: cv32e40p/sim/riscof
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_cv32e40p_v2_pulp_fpu_2cyclat.ini
+    num: 1
+    iss: 0
+
+  pulp_general_alu:
+    description: riscv-arch-test suite with riscof for cv32e40p v2 without fpu, test name is dummy here for regression script
+    builds:
+      - riscof_cv32e40p_pulp
+    dir: cv32e40p/sim/riscof
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_ForIssDebugOnly.ini
+    num: 1
+    iss: 0

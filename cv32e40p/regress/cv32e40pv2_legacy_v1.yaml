@@ -1,0 +1,243 @@
+name: cv32e40pv2_legacy_v1
+description: regression for CV32E40Pv2, containing all tests not in any of other v2 files, which focus mainly on legacy
+
+# List of builds
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
+    dir: cv32e40p/sim/uvmt
+  uvmt_cv32e40p:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp
+
+# List of tests
+tests:
+###################################################################################################
+############ START List of tests that are not in any of the 4 files mentionned above
+
+  hello-world:
+    build: uvmt_cv32e40p
+    description: world
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=hello-world CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  corev_rand_arithmetic_base_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_arithmetic_base_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_arithmetic_base_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  corev_rand_illegal_instr_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_illegal_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_illegal_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  corev_rand_instr_long_stall:
+    build: uvmt_cv32e40p
+    description: corev_rand_instr_long_stall
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_long_stall CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  corev_rand_instr_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  corev_rand_jump_stress_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_jump_stress_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_jump_stress_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  all_csr_por:
+    build: uvmt_cv32e40p
+    description: all_csr_por
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=all_csr_por CFG_PLUSARGS="+UVM_TIMEOUT=300000000"
+
+  branch_zero:
+    build: uvmt_cv32e40p
+    description: branch_zero
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=branch_zero CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  csr_instr_asm:
+    build: uvmt_cv32e40p
+    description: csr_instr_asm
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=csr_instr_asm CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  coremark:
+    build: uvmt_cv32e40p
+    description: coremark
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=coremark CFG_PLUSARGS="+UVM_TIMEOUT=3000000000"
+
+  cv32e40p_readonly_csr_access_test:
+    build: uvmt_cv32e40p
+    description: cv32e40p_readonly_csr_access_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=cv32e40p_readonly_csr_access_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  debug_test_trigger:
+    build: uvmt_cv32e40p
+    description: debug_test_trigger
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=debug_test_trigger CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  dhrystone:
+    build: uvmt_cv32e40p
+    description: dhrystone
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=dhrystone CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  fibonacci:
+    build: uvmt_cv32e40p
+    description: fibonacci
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=fibonacci CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  generic_exception_test:
+    build: uvmt_cv32e40p
+    description: generic_exception_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=generic_exception_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  hpmcounter_basic_test:
+    build: uvmt_cv32e40p
+    description: hpmcounter_basic_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=hpmcounter_basic_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  hpmcounter_hazard_test:
+    build: uvmt_cv32e40p
+    description: hpmcounter_hazard_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=hpmcounter_hazard_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  illegal:
+    build: uvmt_cv32e40p
+    description: illegal
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=illegal CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  illegal_instr_test:
+    build: uvmt_cv32e40p
+    description: illegal_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=illegal_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=3000000000"
+
+  isa_fcov_holes:
+    build: uvmt_cv32e40p
+    description: isa_fcov_holes
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=isa_fcov_holes CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  load_store_rs1_zero:
+    build: uvmt_cv32e40p
+    description: load_store_rs1_zero
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=load_store_rs1_zero CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  matmul_32b_float:
+    build: uvmt_cv32e40p
+    description: matmul_32b_float
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=matmul_32b_float CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  matmul_32b_int:
+    build: uvmt_cv32e40p
+    description: matmul_32b_int
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=matmul_32b_int CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  # Can only run with num_mhpmcounter_29 configuration
+  mhpmcounter29_csr_access_test_1:
+    build: uvmt_cv32e40p_num_mhpmcounter_29
+    description: mhpmcounter29_csr_access_test_1
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=mhpmcounter29_csr_access_test_1 CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    skip_sim: default
+              no_pulp
+              pulp
+              pulp_fpu
+              pulp_fpu_1cyclat
+              pulp_fpu_2cyclat
+              pulp_fpu_zfinx
+              pulp_fpu_zfinx_1cyclat
+              pulp_fpu_zfinx_2cyclat
+              pulp_cluster
+              pulp_cluster_fpu
+              pulp_cluster_fpu_1cyclat
+              pulp_cluster_fpu_2cyclat
+              pulp_cluster_fpu_zfinx
+              pulp_cluster_fpu_zfinx_1cyclat
+              pulp_cluster_fpu_zfinx_2cyclat
+
+  # Can only run with num_mhpmcounter_29 configuration
+  mhpmcounter29_csr_access_test_2:
+    build: uvmt_cv32e40p_num_mhpmcounter_29
+    description: mhpmcounter29_csr_access_test_2
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=mhpmcounter29_csr_access_test_2 CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    skip_sim: default
+              no_pulp
+              pulp
+              pulp_fpu
+              pulp_fpu_1cyclat
+              pulp_fpu_2cyclat
+              pulp_fpu_zfinx
+              pulp_fpu_zfinx_1cyclat
+              pulp_fpu_zfinx_2cyclat
+              pulp_cluster
+              pulp_cluster_fpu
+              pulp_cluster_fpu_1cyclat
+              pulp_cluster_fpu_2cyclat
+              pulp_cluster_fpu_zfinx
+              pulp_cluster_fpu_zfinx_1cyclat
+              pulp_cluster_fpu_zfinx_2cyclat
+
+  misalign:
+    build: uvmt_cv32e40p
+    description: misalign
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=misalign CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  modeled_csr_por:
+    build: uvmt_cv32e40p
+    description: modeled_csr_por
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=modeled_csr_por CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  perf_counters_instructions:
+    build: uvmt_cv32e40p
+    description: perf_counters_instructions
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=perf_counters_instructions CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  requested_csr_por:
+    build: uvmt_cv32e40p
+    description: requested_csr_por
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=requested_csr_por CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  riscv_arithmetic_basic_test_0:
+    build: uvmt_cv32e40p
+    description: riscv_arithmetic_basic_test_0
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=riscv_arithmetic_basic_test_0 CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+  riscv_arithmetic_basic_test_1:
+    build: uvmt_cv32e40p
+    description: riscv_arithmetic_basic_test_1
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=riscv_arithmetic_basic_test_1 CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+
+############ END List of tests that are not in any of the v2 regress list
+###################################################################################################

@@ -23,10 +23,11 @@ import re
 import sys
 import logging
 from collections import OrderedDict
+from logging import StreamHandler
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_ISS = 'YES'
+DEFAULT_ISS = 'NO'
 DEFAULT_COV = 'NO'
 DEFAULT_CFG = 'default'
 DEFAULT_SIMULATION_PASSED = 'SIMULATION PASSED'
@@ -76,7 +77,8 @@ class Test:
         self.simulation_passed = DEFAULT_SIMULATION_PASSED
         self.simulation_failed = DEFAULT_SIMULATION_FAILED
         self.iss = DEFAULT_ISS
-        self.num = 1
+        # value is handled in main cv_regress script
+        self.num = None
         self.builds = []
 
         for k, v in kwargs.items():
@@ -84,6 +86,9 @@ class Test:
 
         # Absolutize a directory if exists
         self.abs_dir = os.path.abspath(os.path.join(get_proj_root(), self.dir))
+
+        if not hasattr(self, 'testname'):
+            self.testname = self.name
 
         # Log equals the test name if does not exist
         if not hasattr(self, 'log'):
@@ -169,3 +174,20 @@ class Regression:
 
         tests = [t for t in self.tests.values() if build in t.builds]
         return tests
+
+
+class InfoDebugStreamHandler(StreamHandler):
+    def __init__(self, stream=None):
+        StreamHandler.__init__(self, stream)
+
+    def emit(self, record):
+        if record.levelno <= logging.INFO:
+            StreamHandler.emit(self, record)
+
+class WarningErrorStreamHandler(StreamHandler):
+    def __init__(self, stream=None):
+        StreamHandler.__init__(self, stream)
+
+    def emit(self, record):
+        if record.levelno > logging.INFO:
+            StreamHandler.emit(self, record)

@@ -1,18 +1,18 @@
 #
 # Copyright (C) 2020 by EM Microelectronic US Inc.
-# 
+#
 # Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://solderpad.org/licenses/
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 #
 ###############################################################################
@@ -24,10 +24,10 @@
 #
 # The pass/fail criteria is determined by checking x26 against MAGIC_NUMBER,
 # the value of which is determined by summing the following:
-#    - Exception code  2 (Illegal Instruction Exceptions (IIE)): 0x1 
-#    - Exception code  3 (Breakpoint):                           0x10
-#    - Exception code 11 (Environment call):                     0x100
-# If the test has one of each exception code, MAGIC_NUMBER is 0x111
+#    - Exception code  2 (Illegal Instruction Exceptions (IIE)): 0x1
+#    - Exception code  3 (Breakpoint):                           0x100
+#    - Exception code 11 (Environment call):                     0x1000
+# If the test has one of each exception code, MAGIC_NUMBER is 0x11001. It allows up to 255 IIE
 #
 ###############################################################################
 
@@ -39,14 +39,26 @@
 .global test_results
 .global u_sw_irq_handler
 
-    #define MAGIC_NUMBER 0x2f3
+# there are 2 env calls in the code
+# there are 5 breakpoints in the code
+# there are 129 unknown encodings (minus 2 because of 2 last instructions unused fields in fence), 2 unimp corresponding to .word 00000000, 1 (uret), 29 illegal CSR access = 9d
+# For FPU-enabled configuration, letting mstatus_FS at default value lead to the same number of illegal instructions.
+# Pascal Gouedo comment: Last sentence not true anymore as in Zfinx extension, mstatus_FS does not exist and FCSRs accesses don't lead to IIE.
+#                        So removed 3 to illegal CSR access giving 9a for magic number in ZFINX configurations.
+
+
+#ifndef ZFINX
+#define MAGIC_NUMBER 0x259d
+#else
+#define MAGIC_NUMBER 0x259a
+#endif
 
 test_results:
 	.word 123456789
 # main test
 main:
     li x15, 0x00001800
-    csrrw x0, mstatus, x15  # redundant in cv32e40p: hardwired PoR value
+    csrrw x0, mstatus, x15
     li x0, 0xf21ee7dc
     li x1, 0x80000000
     li x3, 0xccda4374
@@ -208,15 +220,15 @@ main:
     csrrc x14, mstatus, x0
     nop
     nop
- 
+
 added_by_mike:
 ###############################################################################
-# Randomly generated illegal instructions.  Each one adds 0x1 to MAGIC_NUMBER
+# Randomly generated illegal instructions.  Each one adds 0x1 to MAGIC_NUMBER (except for v2 and the one mentionned below that are legal encodings)
     .word(0x3bc6f92f)
     .word(0x5dd26da7)
     .word(0xe5607a57)
     .word(0x958e4a67)
-    .word(0x6159607b)
+    .word(0x6159607b) # for v2 it corresponds to cv.xor.sci.h	zero,s2,-22 (not illegal anymore)
     .word(0x6c6b7433)
     .word(0x1a6a2b33)
     .word(0xd9067c3b)
@@ -231,7 +243,7 @@ added_by_mike:
     .word(0x5dd26da7)
     .word(0xe5607a57)
     .word(0x958e4a67)
-    .word(0x6159607b)
+    .word(0x6159607b) # for v2 it corresponds to cv.xor.sci.h	zero,s2,-22 (not illegal anymore)
     .word(0x6c6b7433)
     .word(0x1a6a2b33)
     .word(0xd9067c3b)
@@ -240,7 +252,7 @@ added_by_mike:
     .word(0x6fcbc273)
     .word(0x395dd7e7)
     .word(0x079f0c07)
-#
+
     .word(0x57f0f043)
     .word(0xc06d0abb)
     .word(0x75d8b2fb)
@@ -257,7 +269,7 @@ added_by_mike:
     .word(0x1d4d43ab)
     .word(0xb7aecccf)
     .word(0x1ac1e077)
-#
+
     .word(0x25ffc977)
     .word(0xceb61647)
     .word(0x4284de0f)
@@ -274,21 +286,21 @@ added_by_mike:
     .word(0xc964b70f)
     .word(0x58ff393b)
     .word(0xaf9ac3a7)
-#
+
     .word(0x70f6bf03)
     .word(0x9da18a53)
     .word(0x6738ef8f)
-    .word(0xf4f4ba5b)
+    .word(0xf4f4ba5b) # for v2 it corresponds to cv.suburn	s4,s1,a5,26 (not illegal anymore)
     .word(0xb4208057)
     .word(0x72857967)
     .word(0x64599d9b)
     .word(0x7328b2bb)
     .word(0x9fddb933)
-    .word(0x60628efb)
+    .word(0x60628efb) # for v2 it corresponds to cv.xor.h	t4,t0,t1 (not illegal anymore)
     .word(0xaec951bb)
     .word(0xc56f4a27)
     .word(0x2e266467)
-    .word(0xa847620b)
+    .word(0xa847620b) # for v2 it corresponds to cv.beqimm	a4,4,fffff5b0 <debug+0xfffff044> (not illegal anymore)
     .word(0x5dd26c27)
     .word(0xb8ba7523)
 #
@@ -307,7 +319,7 @@ added_by_mike:
     .word(0x427706f7)
     .word(0xbcd64e2f)
     .word(0x17f9256b)
-    .word(0x4c9cb05b)
+    .word(0x4c9cb05b) # for v2 it corresponds to cv.subun	zero,s9,s1,6 (not illegal anymore)
 #
     .word(0x2ec14d9b)
     .word(0x974ffc9b)
@@ -369,24 +381,24 @@ added_by_mike:
     csrrw x0, 0x040, x0 #USCRATCH
     csrrw x0, 0x043, x0 #UTVAL
     csrrw x0, 0x044, x0 #UIP
-# p.elw
-    .word(0x00006003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x00106003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x00206003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x00406003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x00806003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x01006003)   # add 0x1 to MAGIC_NUMBER
+# cv.elw
+    .word(0x0000300B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0000308B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0000310B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0000320B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0000340B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0000380B)   # add 0x1 to MAGIC_NUMBER
 # uret
     uret                # add 0x1 to MAGIC_NUMBER
-# p.elw
-    .word(0x02006003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x04006003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x08006003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x10006003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x20006003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x40006003)   # add 0x1 to MAGIC_NUMBER
-    .word(0x80006003)   # add 0x1 to MAGIC_NUMBER
-# unused fields in fence (these should _not_ add to MAGIC_NUMBER
+# cv.elw
+    .word(0x0000B00B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0000300B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0001300B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0002300B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0004300B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0008300B)   # add 0x1 to MAGIC_NUMBER
+    .word(0x0010300B)   # add 0x1 to MAGIC_NUMBER
+# unused fields in fence (these should _not_ add to MAGIC_NUMBER)
     .word(0x00000F8F)   # rd/imm5  =0b11111
     .word(0x000F800F)   # rs1 =0b11111
 exit:
@@ -449,7 +461,8 @@ continue_check:
 _check_3:
     li t4, 3
     bne t6, t4, _check_11
-    addi x26, x26, 0x10 # ebreak: add 0x10 to x26
+    li x29, 0x100
+    add x26, x26, x29 # ebreak: add 0x100 to x26
     csrrc s0, mepc, x0
     c.addi s0, 2
     csrrw x0, mepc, s0
@@ -457,7 +470,8 @@ _check_3:
 _check_11:
     li t4, 11
     bne t6, t4, _end_trap_Generic_Handler_ASM
-    addi x26, x26, 0x100 # ecall: add 0x100 to x26
+    li x29, 0x1000
+    add x26, x26, x29 # ecall: add 0x1000 to x26
     csrrc s0, mepc, x0
     c.addi s0, 4
     csrrw x0, mepc, s0
@@ -493,7 +507,7 @@ _end_trap_Generic_Handler_ASM:
     lw      x31,4(sp)
     addi    sp,sp,120
     mret
-    
+
 _exit:
     j _exit
 

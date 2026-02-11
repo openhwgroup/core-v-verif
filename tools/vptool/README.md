@@ -14,7 +14,7 @@ the information associated with the given Feature.
 
 The user interface of VPTOOL provides a means of entering all information mentioned in the CORE-V
 "How to Write a Verification Plan" document available at
-https://github.com/openhwgroup/core-v-verif/blob/master/docs/VerifPlans/VerificationPlanning101.md.
+https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/docs/VerifPlans/VerificationPlanning101.md.
 
 When creating new Feature Test descriptions, text fields provide the user with cues about the kind
 of information to enter in each field.  All text fields support an "Undo" feature that allows to

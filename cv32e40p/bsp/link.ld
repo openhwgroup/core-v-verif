@@ -34,7 +34,7 @@ SECTIONS
   {
     KEEP(*(.debugger));
   } >dbg
-  .debugger_exception (0x1A111000):
+  .debugger_exception (0x1A111600):
   {
     KEEP(*(.debugger_exception));
   } >dbg
@@ -242,8 +242,23 @@ SECTIONS
   . = SEGMENT_START("ldata-segment", .);
   . = ALIGN(32 / 8);
   __bss_end = .;
+  /* In toolchain, x3 is the gp global pointer register and gp relaxation occurs.
+     When GP relaxation is enabled, gp should be initialized at startup to __global_pointer$ and
+     the rest of the code should not modify gp.
+     If you want to disable GP relaxation, then set __global_pointer$ to linker file or remove it completely.
+     In corev-dv random generator test, gp (x3) is used as any register and can be written many times.
+     And it is using la pseudo-instruction which is replaced by auipc/addi which can be gp relaxed,
+     meaning auipc will be omitted after being executed once in crt0.S. Then final binary is not functional.
+
+     https://github.com/openhwgroup/corev-gcc/issues/92
+
+     Following lines will be kept in a new linker file (link_gp_relax.ld) used for benchmarks and applications
+     as gp relaxation generally improves code size and performances.
+
     __global_pointer$ = MIN(__SDATA_BEGIN__ + 0x800,
 		            MAX(__DATA_BEGIN__ + 0x800, __bss_end - 0x800));
+  */
+  __global_pointer$ = 0;
   _end = .; PROVIDE (end = .);
   . = DATA_SEGMENT_END (.);
 

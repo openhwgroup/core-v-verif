@@ -1,0 +1,25 @@
+name: pulp_cluster_fpu_zfinx_1cyclat
+description: Sets PULP and CLUSTER instructions and FPU and Zfinx parameters to 1
+compile_flags:
+    +define+PULP +define+CLUSTER +define+FPU +define+ZFINX +define+FPU_ADDMUL_LAT=1 +define+FPU_OTHERS_LAT=1
+ovpsim: >
+    --override cpu/misa_Extensions=0x001104
+    --override cpu/compress_version=1.0.0-RC5.7
+    --override cpu/show_c_prefix=T
+    --override cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/marchid=4
+    --override cpu/mimpid=1
+    --override cpu/dexc_address=0x1a111600
+    --override cpu/extension_CVE4P/CORE_VERSION=2
+    --override cpu/extension_CVE4P/COREV_PULP=T
+    --override cpu/extension_CVE4P/COREV_CLUSTER=T
+    --override cpu/extension_CVE4P/hwloop_severity=Warning
+    --override cpu/add_Extensions=XF
+    --override cpu/Zcf=T
+    --override cpu/Zfinx_version=0.41
+    -showinstanceparams cpu
+# Debug options (add to ovpsim section as needed)
+#    --trace --tracechange --traceshowicount --tracemode --monitornets
+cv_sw_march: rv32imc_zfinx_zicsr_zifencei_xcvhwlp_xcvmem_xcvmac_xcvbi_xcvalu_xcvsimd_xcvbitmanip_xcvelw
+cflags: >
+    -DPULP -DCLUSTER -DFPU -DZFINX

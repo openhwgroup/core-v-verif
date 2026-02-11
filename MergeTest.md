@@ -1,7 +1,7 @@
 # Merge Test
 Use this file to exercise the GitHub portions of the OpenHW Group workflow.
 
-Parts of the [OpenHW Group workflow](https://github.com/openhwgroup/core-v-docs/blob/master/verif/Common/OpenHWGroup_WorkFlow.pdf)
+Parts of the [OpenHW Group workflow](https://github.com/openhwgroup/programs/blob/cv32e40p_v1.8.3/TGs/verification-task-group/documents/presentations/OpenHWGroup_WorkFlow.pdf)
 are modeled after Vincent Driessen's [git branching model](https://nvie.com/posts/a-successful-git-branching-model/).  When
 you first register as a member of OpenHW, you can use this file to safely test whether you have the appropriate GitHub contributor priviledges for this repo.   Try this:
 * Fork the repository: https://help.github.com/en/github/getting-started-with-github/fork-a-repo
@@ -13,7 +13,7 @@ you first register as a member of OpenHW, you can use this file to safely test w
 
 When all of that works, you are ready to make contributions to the OpenHW Group CORE-V projects.
 
-If you are new to git, or unfamiliar with using branches and pull-requests, have a look at our [Git Cheat Sheet](https://github.com/openhwgroup/core-v-verif/blob/master/GitCheats.txt).
+If you are new to git, or unfamiliar with using branches and pull-requests, have a look at our [Git Cheat Sheet](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/GitCheats.md).
 
 ## Make your changes below this line.
 Extra marks for creativity and wit.
@@ -46,39 +46,39 @@ Extra marks for creativity and wit.
       >_<          >_<
      || ||        || ||
      || ||        || ||
-     || ||        || ||    -- Jay Thaler 
+     || ||        || ||    -- Jay Thaler
    __|\_/|__    __|\_/|__     -- David Poulin
   /___n_n___\  /___n_n___\
   ```
 
 ### Gecko
 ```
-                                                         ## ##                  
-                                                       ##### *                  
-                                                        ###/                    
-                                                     #####                      
-                             *#########        ########.                        
-                           ########################                             
-                       ###############################                          
-                     #####&@&&&&&&&&%################(((/                       
-                                      %%%##########((((((((                     
-            (                            %######((((((((((((                    
-           (                              ###((((((((((((((((.                  
-          (                               ((((   (((((((((((((                  
-         (                         *#   ((((      (((((((((((((                 
-        ((                       ###((((           (((((((((((((                
-        ((                      *  ((               ((((((((((((                
-        /(                                    (((((  (((((((((((                
-        /((                                (( (((((((((((((((((((((((((         
-         /((                            ,((((((((((((((((//((((((((((((         
-          //(                               (.(    ((((((////////((((((  ((     
-          ,////                         (((   ((    (((((//////     /////////   
-            /////                                   ((((/////       /   /*      
-             ///////                             (((((/////        //    //     
-               ////////.                     /((((((/////                       
-                  **///////////,     *((((((((((//////                          
-                     ****//////////((((((((////////                             
-                          /*******************                               
+                                                         ## ##
+                                                       ##### *
+                                                        ###/
+                                                     #####
+                             *#########        ########.
+                           ########################
+                       ###############################
+                     #####&@&&&&&&&&%################(((/
+                                      %%%##########((((((((
+            (                            %######((((((((((((
+           (                              ###((((((((((((((((.
+          (                               ((((   (((((((((((((
+         (                         *#   ((((      (((((((((((((
+        ((                       ###((((           (((((((((((((
+        ((                      *  ((               ((((((((((((
+        /(                                    (((((  (((((((((((
+        /((                                (( (((((((((((((((((((((((((
+         /((                            ,((((((((((((((((//((((((((((((
+          //(                               (.(    ((((((////////((((((  ((
+          ,////                         (((   ((    (((((//////     /////////
+            /////                                   ((((/////       /   /*
+             ///////                             (((((/////        //    //
+               ////////.                     /((((((/////
+                  **///////////,     *((((((((((//////
+                     ****//////////((((((((////////
+                          /*******************
 
 ```
 {signal: [

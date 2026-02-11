@@ -1,0 +1,10 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for random hwloop debug test
+name: corev_rand_pulp_hwloop_debug
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Random debug in xpulp hwloop stream
+plusargs: >
+    +gen_reduced_rand_dbg_req

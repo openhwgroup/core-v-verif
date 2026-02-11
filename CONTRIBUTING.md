@@ -31,11 +31,11 @@ In the above header, "organization" should either be your employer, your institu
 - Otherwise, you may assign the copyright to yourself.  You may use your full name or email address as you see fit.
 
 ## Branches
-The core-v-verif repository provides testbenches for multiple OpenHW cores.  As such the core-v-verif repository uses branches for maintaining stability between 
-the different core testbenches as well as recognizing independent development streams.  An adapted form of the Git Flow is used in this repository.  
+The core-v-verif repository provides testbenches for multiple OpenHW cores.  As such the core-v-verif repository uses branches for maintaining stability between
+the different core testbenches as well as recognizing independent development streams.  An adapted form of the Git Flow is used in this repository.
 
 The following are the official branches for core-v-verif
- Branch                | Example (if applicable) | Usage               
+ Branch                | Example (if applicable) | Usage
  --------------------- | ----------------------- | -----------------------
 _\<core>_/dev          | cv32e40p/dev            | Main line of development for a core testbench.  Most contributinos should target a dev branch.
 _\<core>_/release      | cv32e40p/release        | Staging branch for merge dev branches into master (and vice versa).  In general only OpenHW Committers will utilize these branches
@@ -45,6 +45,8 @@ In most cases a contribution should be made on a _dev_ branch.<br>
 Common infrastructure fixes and updates may target the _master_ branch using the hotfix flow to directly address issues requiring timely fixes.<br>
 
 More information on core-v-verif branch usage can be found [here](https://github.com/openhwgroup/programs/blob/master/TGs/verification-task-group/documents/presentations/20210311-Branches_and_CIs_for_core-v-verif.pptx).
+More information on core-v-verif branch usage can be found here:
+https://github.com/openhwgroup/core-v-docs/blob/cv32e40p_v1.8.3/TGs/verification-task-group/documents/presentations/20210311-Branches_and_CIs_for_core-v-verif.pptx
 
 ## The Mechanics
 1. [Fork](https://help.github.com/articles/fork-a-repo/) the [core-v-verif](https://github.com/openhwgroup/core-v-verif) repository
@@ -56,3 +58,9 @@ More information on core-v-verif branch usage can be found [here](https://github
 7. Push feature branch: `git push origin <my_branch>`
 8. Submit a [pull request](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork).
 9. If known, it is advisable to select one or more appropriate reviewers for your PR.
+4. Create your feature branch: `git checkout -b <my_branch>.`<br> Please uniquify your branch name.  See the [Git Cheats](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/GitCheats.md) for a useful nominclature.
+5. Test your changes with the [ci_check](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/bin/ci_check) script.
+6. Commit your changes: `git commit -m 'Add some feature' --signoff`<br>...take note of that **--signoff**, it's important!
+7. Push feature branch: `git push origin <my_branch>`
+8. Submit a [pull request](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork).
+9. If known, it is advisable to select one or more appropriate reviewers for your PR.  For hotfix PRs, request either Steve Richmond or Mike Thompson for proper review.

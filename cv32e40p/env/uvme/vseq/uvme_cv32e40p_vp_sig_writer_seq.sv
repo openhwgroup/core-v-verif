@@ -58,6 +58,9 @@ task uvme_cv32e40p_vp_sig_writer_seq_c::body();
    if (cv32e40p_cntxt == null) begin
       `uvm_fatal("E40PVPSTATUS", "Must initialize cv32e40p_cntxt in virtual peripheral")
    end
+   else begin
+      `uvm_info("E40PVPSTATUS", "cv32e40p_cntxt initialized in virtual peripheral", UVM_NONE)
+   end
 
    super.body();
 

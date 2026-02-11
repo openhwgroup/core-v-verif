@@ -1,0 +1,39 @@
+#
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Test definition YAML for corev-dv test generator
+
+name: corev_fp_mstatus_fs_test
+uvm_test: $(CV_CORE_LC)_instr_base_test
+description: >
+    RISCV-DV generated to test on mstatus fs
+plusargs: >
+    +instr_cnt=1000
+    +num_of_sub_program=0
+    +test_override_riscv_instr_stream=1
+    +no_branch_jump=1
+    +directed_instr_0=cv32e40p_mstatus_fs_stream,1
+
+# note:
+  # 1) example yaml template for fp test with f_extension
+  # 2) above setting running <n> streams with <m> rand instrs; +directed_instr_<idx>=<stream class>,<n>
+  # 3) runcmd: make gen_corev-dv test TEST=corev_sanity_fp_instr_test USE_ISS=no CFG=pulp_fpu CFG_PLUSARGS="+UVM_VERBOSITY=UVM_DEBUG"
+  # 4) [Must have plusarg]  enable_floating_point for extension f
+  # 5) [Must have plusarg]  test_override_riscv_instr_stream=1
+  #   - <value>==1: is to tune the streams not to overlap with other streams during streams placement
+  # 6) [recomendation] for single directed_instr_<num==0>, try not to use apply too many streams else it might lead to placement issue
+  # 7) [recomendation] no branch/jump for non-directed streams
+  # 8) Must use together with test_cfg = floating_pt_instr_en OR floating_pt_zfinx_instr_en

@@ -75,10 +75,6 @@ ifndef EMBENCH_REPO
 $(warning Must define a EMBENCH_REPO to use the common makefile)
 endif
 
-ifndef COMPLIANCE_REPO
-$(error Must define a COMPLIANCE_REPO to use the common makefile)
-endif
-
 ifndef DPI_DASM_SPIKE_REPO
 $(warning Must define a DPI_DASM_SPIKE_REPO to use the common makefile)
 endif
@@ -120,21 +116,6 @@ else
   CLONE_RISCVDV_CMD = $(TMP3); cd $(RISCVDV_PKG); git checkout $(RISCVDV_HASH)
 endif
 # RISCV-DV repo var end
-
-###############################################################################
-# Generate command to clone the RISCV Compliance Test-suite
-ifeq ($(COMPLIANCE_BRANCH), master)
-  TMP4 = git clone $(COMPLIANCE_REPO) --recurse $(COMPLIANCE_PKG)
-else
-  TMP4 = git clone -b $(COMPLIANCE_BRANCH) --single-branch $(COMPLIANCE_REPO) --recurse $(COMPLIANCE_PKG)
-endif
-
-ifeq ($(COMPLIANCE_HASH), head)
-  CLONE_COMPLIANCE_CMD = $(TMP4)
-else
-  CLONE_COMPLIANCE_CMD = $(TMP4); cd $(COMPLIANCE_PKG); sleep 2; git checkout $(COMPLIANCE_HASH)
-endif
-# RISCV Compliance repo var end
 
 ###############################################################################
 # Generate command to clone EMBench (Embedded Benchmarking suite)
@@ -191,6 +172,11 @@ OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
 #OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
 
 ###############################################################################
+# Imperas OVPsim Instruction Set Simulator
+#IMPERAS_DV_MODEL = $(CORE_V_VERIF)/vendor_lib/ImperasDV/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model.so
+IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
+
+###############################################################################
 # Run the yaml2make scripts
 
 ifeq ($(VERBOSE),1)
@@ -222,13 +208,16 @@ TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))
 endif
+ifeq (,$(findstring "emb_",$(TEST)))
+  $(shell sed -i "s?TEST_TEST_DIR.*emb_?TEST_TEST_DIR=$(SIM_CFG_RESULTS)/bd/emb_?" $(TEST_FLAGS_MAKE))
+endif
 include $(TEST_FLAGS_MAKE)
 endif
 
 ###############################################################################
 # cfg
 CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
-CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp
+CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp riscof_sim_run
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
 CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
@@ -236,6 +225,52 @@ ifeq ($(CFG_FLAGS_MAKE),)
 $(error ERROR Error finding or parsing configuration: $(CFG).yaml)
 endif
 include $(CFG_FLAGS_MAKE)
+endif
+endif
+
+# test_cfg
+CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
+CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp riscof_sim_run
+ifneq ($(TEST_CFG_FILE),)
+TEST_CFG_FILE_PLUSARGS =
+SPACE_CHAR := $(subst ,, )
+COMMA_CHAR := ,
+PLUS_CHAR := +
+TEST_CFG_FILE_TEMP_NAME := $(patsubst  , ,$(TEST_CFG_FILE))
+ifneq (,$(findstring $(COMMA_CHAR),$(TEST_CFG_FILE_TEMP_NAME)))
+    TEST_CFG_FILE_LIST_TEMP := $(subst $(COMMA_CHAR), ,$(TEST_CFG_FILE_TEMP_NAME))
+else
+  ifneq (,$(findstring $(PLUS_CHAR),$(TEST_CFG_FILE_TEMP_NAME)))
+    TEST_CFG_FILE_LIST_TEMP := $(subst $(PLUS_CHAR), ,$(TEST_CFG_FILE_TEMP_NAME))
+  else
+    TEST_CFG_FILE_LIST_TEMP := $(TEST_CFG_FILE_TEMP_NAME)
+  endif
+endif
+
+TEST_CFG_FILE_LIST := $(sort $(TEST_CFG_FILE_LIST_TEMP))
+TEST_CFG_FILE_NAME = $(subst $(SPACE_CHAR),__,$(TEST_CFG_FILE_LIST))
+
+ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
+ifneq ($(TEST_CFG_FILE_LIST),)
+
+define GET_TEST_CONFIG_LIST =
+TEST_CFG_LIST_FLAGS_MAKE_$(1) := $$(shell $(CFGYAML2MAKE) --yaml=$(1).yaml $(YAML2MAKE_DEBUG) --prefix=TEST_CFG_FILE_LIST_$(1) --core=$(CV_CORE) --debug)
+ifeq ($$(TEST_CFG_LIST_FLAGS_MAKE_$(1)),)
+  $$(error ERROR Error finding or parsing configuration: $(1).yaml)
+endif
+include $$(TEST_CFG_LIST_FLAGS_MAKE_$(1))
+TEST_CFG_FILE_PLUSARGS += $$(TEST_CFG_FILE_LIST_$(2)_PLUSARGS)
+endef
+
+$(foreach TEST_CFG_FILE_IN_LIST,$(TEST_CFG_FILE_LIST), $(eval $(call GET_TEST_CONFIG_LIST,$(TEST_CFG_FILE_IN_LIST),$(shell echo $(TEST_CFG_FILE_IN_LIST) | tr  '[:lower:]' '[:upper:]'))))
+
+$(info $(BANNER))
+$(info [INFO] Using TEST_CFG_FILE_LIST $(TEST_CFG_FILE_LIST))
+$(info [INFO] TEST_CFG dir name $(TEST_CFG_FILE_NAME))
+$(info [INFO] TEST_CFG_FILE plusargs $(TEST_CFG_FILE_PLUSARGS))
+$(info $(BANNER))
+
+endif
 endif
 endif
 
@@ -274,7 +309,7 @@ else
 ifdef  CFG_CV_SW_MARCH
 CV_SW_MARCH = $(CFG_CV_SW_MARCH)
 else
-CV_SW_MARCH = rv32imc
+CV_SW_MARCH = rv32imc_zicsr_zifencei
 $(warning CV_SW_MARCH not defined in either the shell environment, test.yaml or cfg.yaml)
 endif
 endif
@@ -497,6 +532,7 @@ else
 		-nostartfiles \
 		$(TEST_FILES) \
 		-T $(LD_FILE) \
+		-Xlinker -Map=$*.map \
 		$(LD_LIBRARY) \
 		-lcv-verif
 endif
@@ -520,6 +556,7 @@ bsp:
 		RISCV_MARCH=$(RISCV_MARCH) \
 		RISCV_CC=$(RISCV_CC) \
 		RISCV_CFLAGS="$(RISCV_CFLAGS)" \
+		CFG_CFLAGS="$(CFG_CFLAGS)" \
 		all
 
 vars_bsp:
@@ -725,5 +762,3 @@ firmware-unit-test-clean:
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
 
 #endend
-
-

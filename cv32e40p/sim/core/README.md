@@ -8,36 +8,27 @@ To run the core testbench you will need a SystemVerilog simulator and RISC-V GCC
 
 Supported SystemVerilog Simulators
 ----------------------------------
-The core testbench and associated test-programs can be run using **_Verilator_**, the Metrics
-**_dsim_**, Mentor's **_Questa_**, Cadence **_Xcelium_**, Synopsys **_vcs_** and Aldec **_Riviera-PRO_**
-simulators. Note that **_Icarus_** verilog cannot compile the RTL and there are no plans
-to support Icarus in the future.
+The core testbench and associated test-programs can be run using **_Verilator_**, Metrics
+**_DSim_**, Siemens **_Questasim_**, Cadence **_Xcelium_**, Synopsys **_vcs_** and Aldec **_Riviera-PRO_** simulators.
+Note:
+- The following has been recently tested with both Verilator and DSim, but it has been some time since other simulators have been used.  Bit-rot may have set in.
+- **_Icarus_** verilog cannot compile the RTL and there are no plans to support Icarus in the future.
 
 RISC-V GCC Compiler "Toolchain"
 -------------------------------
 Pointers to the recommended toolchain for CV32E40P are in `../TOOLCHAIN`.
 
-Running your own C programs
----------------------
-A hello world program is available and you can run it in the CV32E40P Core testbench.
-Invoke the `dsim-hello_world` or `hello-world-veri-run` makefile rules to run it with
-`dsim` or `verilator` respectively.
-
-The hello world program is located in the `custom` folder. The relevant sections
-in the Makefile on how to compile and link this program can be found under `Running
-custom programs`.  Make sure you have a working C compiler (see above) and keep in
-mind that you are running on a very basic machine.
-
 Running the testbench with [verilator](https://www.veripool.org/wiki/verilator)
 ----------------------
-Point your environment variable `RISCV` to your RISC-V toolchain. Call `make`
-to run the default test (hello_world).
+Point your environment variable `RISCV` to your RISC-V toolchain.
+Call `make` to run the default test with Verilator.
 
-Running your own Assembler programs
+Running your own C and/or RISC-V Assembler programs
 -----------------------------
-If you have a C or assembly program in `../../tests/core/custom`
+If you have a C or assembly program in `../../tests/programs/custom`
 then the following will work with Verilator:<br>
 ```
+make veri-test TEST=hello-world
 make veri-test TEST=dhrystone
 make veri-test TEST=misalign
 make veri-test TEST=fibonacci
@@ -51,6 +42,7 @@ Point your environment variable `RISCV` to your RISC-V toolchain. Call
 `make dsim-sanity` to build and run the testbench with the hello_world
 test in the custom directory. Other test targets of interest:<br>
 ```
+make dsim-test TEST=hello-world
 make dsim-test TEST=dhrystone
 make dsim-test TEST=misalign
 make dsim-test TEST=fibonacci
@@ -129,11 +121,13 @@ Options
 A few plusarg options are supported:
 * `+verbose` to show all memory read and writes and other miscellaneous information.
 
-* `+vcd` to produce a vcd file called `riscy_tb.vcd`. Verilator always produces
-  a vcd file called `verilator_tb.vcd`.
+Waveform Tracing
+----------------
+Verilator supports both FST and VCD formats:
+* `make WAVES=1 veri-test TEST=hello-world` — FST format (default)
+* `make WAVES=1 TRACE_FORMAT=vcd veri-test TEST=hello-world` — VCD format
 
 Examples
 --------
-Run all riscv_tests to completion with **dsim**:  
+Run all riscv_tests to completion with **dsim**:
 `make dsim-cv32_riscv_tests`
-

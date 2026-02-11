@@ -19,13 +19,18 @@ CV_CORE_HASH   ?= fcd5968
 CV_CORE_TAG    ?= none
 # The CV_CORE_HASH above points to version of the RTL that is newer, but
 # logically equivalent RTL with respect to v1.0.0 RTL freeze version.
+CV_CORE_HASH   ?= head
+CV_CORE_TAG    ?= cv32e40p_v1.8.3
+
+# The CV_CORE_HASH above points to version of the RTL that is newer.
+# It is logically equivalent with respect to v1.0.0 RTL freeze version with all parameters disabled.
 # There are some implementation and testbench updates in the above hash.
 # Set CV_CORE_TAG as below to point to the exact cv32e40p repo as that used at RTL freeze
 #CV_CORE_TAG    ?= cv32e40p_v1.0.0
 
 RISCVDV_REPO    ?= https://github.com/google/riscv-dv
 RISCVDV_BRANCH  ?= master
-RISCVDV_HASH    ?= 0b625258549e733082c12e5dc749f05aefb07d5a
+RISCVDV_HASH    ?= 96c1ee6f371f2754c45b4831fcab95f6671689d9
 
 EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
@@ -47,3 +52,8 @@ DPI_DASM_SPIKE_HASH   ?= 8faa928819fb551325e76b463fc0c978e22f5be3
 SVLIB_REPO       ?= https://bitbucket.org/verilab/svlib/src/master/svlib
 SVLIB_BRANCH     ?= master
 SVLIB_HASH       ?= c25509a7e54a880fe8f58f3daa2f891d6ecf6428
+
+#riscv-arch-test suite with riscof
+RISCOF_ARCH_TEST_SUITE_REPO    ?= https://github.com/riscv/riscv-arch-test.git
+RISCOF_ARCH_TEST_SUITE_BRANCH  ?= main
+RISCOF_ARCH_TEST_SUITE_TAG     ?= latest

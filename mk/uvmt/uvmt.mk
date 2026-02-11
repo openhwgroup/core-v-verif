@@ -62,7 +62,7 @@ MKDIR_P = mkdir -p
 
 # Compile compile flags for all simulators (careful!)
 WAVES        ?= 0
-SV_CMP_FLAGS ?= "+define+$(CV_CORE_UC)_ASSERT_ON"
+SV_CMP_FLAGS ?= +define+$(CV_CORE_UC)_ASSERT_ON
 TIMESCALE    ?= -timescale 1ns/1ps
 UVM_PLUSARGS ?=
 
@@ -73,21 +73,53 @@ SIMULATOR    ?= $(CV_SIMULATOR)
 # Optionally exclude the OVPsim (not recommended)
 USE_ISS      ?= YES
 ISS          ?= IMPERAS
+# If USE_ISS is not specified, it will decide by default to enable the ISS if imperas_home is defined
+ifndef USE_ISS
+ifneq ($(IMPERAS_HOME),)
+USE_ISS = YES
+else
+USE_ISS = NO
+endif
+$(info Info: USE_ISS is not specified when invoking make command, defaulting USE_ISS to $(USE_ISS) (check for IMPERAS_HOME in your environment))
+endif
 
 # Common configuration variables
-CFG             ?= default
+CFG          ?= default
+
+# FPU variable for manifest
+CFG_LC = $(shell echo $(CFG) | tr A-Z a-z)
+ifneq (,$(findstring fpu,$(CFG_LC)))
+# Configuration with FPU
+FPU = YES
+FPU_MANIFEST = _fpu
+else
+# Configuration without FPU
+FPU = NO
+FPU_MANIFEST =
+endif
 
 # Common Generation variables
 GEN_START_INDEX ?= 0
 GEN_NUM_TESTS   ?= 1
 export RUN_INDEX       ?= 0
 
+# Generate Core Trace logs
+ENABLE_TRACE_LOG  ?= YES
+
+# Common test runtime plusargs from external file, used as test-configuration
+# Test Name with test-configuration
+TEST_RUN_NAME =  $(if $(TEST_CFG_FILE_NAME),$(TEST)_$(TEST_CFG_FILE_NAME),$(TEST))
+# Build unique _suffix based on TEST_CFG_FILE_NAME, for unique test log files and ucdb file names
+ifneq ($(TEST_CFG_FILE_NAME),)
+export TEST_CFG_FILE_SUFFIX=_$(TEST_CFG_FILE_NAME)
+endif
+
 # Common output directories
 SIM_RESULTS             ?= $(if $(CV_RESULTS),$(abspath $(CV_RESULTS))/$(SIMULATOR)_results,$(MAKE_PATH)/$(SIMULATOR)_results)
 SIM_CFG_RESULTS          = $(SIM_RESULTS)/$(CFG)
 SIM_COREVDV_RESULTS      = $(SIM_CFG_RESULTS)/corev-dv
 SIM_LDGEN_RESULTS        = $(SIM_CFG_RESULTS)/$(LDGEN)
-SIM_TEST_RESULTS         = $(SIM_CFG_RESULTS)/$(TEST)
+SIM_TEST_RESULTS         = $(if $(TEST_CFG_FILE_NAME),$(SIM_CFG_RESULTS)/$(TEST)/$(TEST_CFG_FILE_NAME),$(SIM_CFG_RESULTS)/$(TEST))
 SIM_RUN_RESULTS          = $(SIM_TEST_RESULTS)/$(RUN_INDEX)
 SIM_TEST_PROGRAM_RESULTS = $(SIM_RUN_RESULTS)/test_program
 SIM_BSP_RESULTS          = $(SIM_TEST_PROGRAM_RESULTS)/bsp
@@ -98,18 +130,18 @@ EMB_TARGET         ?= 0
 EMB_CPU_MHZ        ?= 1
 EMB_TIMEOUT        ?= 3600
 EMB_PARALLEL_ARG    = $(if $(filter $(YES_VALS),$(EMB_PARALLEL)),YES,NO)
+EMB_ABSOLUTE_ARG    = $(if $(filter $(YES_VALS),$(EMB_ABSOLUTE)),YES,NO)
 EMB_BUILD_ONLY_ARG  = $(if $(filter $(YES_VALS),$(EMB_BUILD_ONLY)),YES,NO)
 EMB_DEBUG_ARG       = $(if $(filter $(YES_VALS),$(EMB_DEBUG)),YES,NO)
 
 # UVM Environment
 export DV_UVMT_PATH             = $(CORE_V_VERIF)/$(CV_CORE_LC)/tb/uvmt
+export DV_UVM_TESTCASE_PATH     = $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/uvmt
 export DV_UVME_PATH             = $(CORE_V_VERIF)/$(CV_CORE_LC)/env/uvme
 export DV_UVML_HRTBT_PATH       = $(CORE_V_VERIF)/lib/uvm_libs/uvml_hrtbt
 export DV_UVMA_CORE_CNTRL_PATH  = $(CORE_V_VERIF)/lib/uvm_agents/uvma_core_cntrl
 export DV_UVMA_ISACOV_PATH      = $(CORE_V_VERIF)/lib/uvm_agents/uvma_isacov
 export DV_UVMA_RVFI_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvfi
-export DV_UVMA_RVVI_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvvi
-export DV_UVMA_RVVI_OVPSIM_PATH = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvvi_ovpsim
 export DV_UVMA_CLKNRST_PATH     = $(CORE_V_VERIF)/lib/uvm_agents/uvma_clknrst
 export DV_UVMA_INTERRUPT_PATH   = $(CORE_V_VERIF)/lib/uvm_agents/uvma_interrupt
 export DV_UVMA_DEBUG_PATH       = $(CORE_V_VERIF)/lib/uvm_agents/uvma_debug
@@ -128,7 +160,10 @@ export DV_OVPM_HOME             = $(CORE_V_VERIF)/vendor_lib/imperas
 export DV_OVPM_MODEL            = $(DV_OVPM_HOME)/imperas_DV_COREV
 
 export DV_OVPM_DESIGN           = $(DV_OVPM_HOME)/design
+# ImperasDV
+export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
 
+# Verilab SVlib
 export DV_SVLIB_PATH            = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab
 
 DV_UVMT_SRCS                  = $(wildcard $(DV_UVMT_PATH)/*.sv))
@@ -139,14 +174,17 @@ UVM_TESTNAME ?= uvmt_$(CV_CORE_LC)_firmware_test_c
 
 # Google's random instruction generator
 RISCVDV_PKG         := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/google/riscv-dv
+RISCVDV_SRC         := $(RISCVDV_PKG)/src/
+
 COREVDV_PKG         := $(CORE_V_VERIF)/lib/corev-dv
 CV_CORE_COREVDV_PKG := $(CORE_V_VERIF)/$(CV_CORE_LC)/env/corev-dv
+CV_CORE_COREVDV_CUSTOM := $(CV_CORE_COREVDV_PKG)/custom
+
+COREDV_CUSTOM_INSTR_FILES := $(wildcard $(CV_CORE_COREVDV_CUSTOM)/*)
+
 export RISCV_DV_ROOT         = $(RISCVDV_PKG)
 export COREV_DV_ROOT         = $(COREVDV_PKG)
 export CV_CORE_COREV_DV_ROOT = $(CV_CORE_COREVDV_PKG)
-
-# RISC-V Foundation's RISC-V Compliance Test-suite
-COMPLIANCE_PKG   := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance
 
 # EMBench benchmarking suite
 EMBENCH_PKG	:= $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/embench
@@ -165,13 +203,14 @@ export TBSRC_HOME = $(CORE_V_VERIF)/$(CV_CORE_LC)/tb
 
 SIM_LIBS    := $(CORE_V_VERIF)/lib/sim_libs
 
+RTLSRC_VLOG_CORE_TOP := $(CV_CORE_LC)_top
 RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
 # RTL source files for the CV32E core
 # DESIGN_RTL_DIR is used by CV32E40P_MANIFEST file
 CV_CORE_PKG          := $(CORE_V_VERIF)/core-v-cores/$(CV_CORE_LC)
-CV_CORE_MANIFEST     := $(CV_CORE_PKG)/$(CV_CORE_LC)_manifest.flist
+CV_CORE_MANIFEST     := $(CV_CORE_PKG)/$(CV_CORE_LC)$(FPU_MANIFEST)_manifest.flist
 export DESIGN_RTL_DIR = $(CV_CORE_PKG)/rtl
 
 RTLSRC_HOME   := $(CV_CORE_PKG)/rtl
@@ -202,14 +241,25 @@ endif
 #    - Variables for RTL dependencies
 include $(CORE_V_VERIF)/mk/Common.mk
 ###############################################################################
+
+###############################################################################
+# RISCOF Makefile:
+#    - RISCOF Compliance Test Suite and Variables for build and simulations
+include $(CORE_V_VERIF)/mk/riscof.mk
+###############################################################################
+
+# adjust commands if needed
+ifneq ($(COREDV_CUSTOM_INSTR_FILES),)
+$(info Custom files for riscv-dv generator found here $(CV_CORE_COREVDV_CUSTOM). These files will be copied to $(RISCVDV_SRC) after cloning riscv-dv repo, and will override existing files)
+CLONE_RISCVDV_CMD := $(CLONE_RISCVDV_CMD) ; cp --verbose -rf $(CV_CORE_COREVDV_CUSTOM)/* $(RISCVDV_SRC)/.
+endif
+
 # Clone core RTL and DV dependencies
 clone_cv_core_rtl: $(CV_CORE_PKG)
 
 clone_riscv-dv: $(RISCVDV_PKG)
 
 clone_embench: $(EMBENCH_PKG)
-
-clone_compliance: $(COMPLIANCE_PKG)
 
 clone_dpi_dasm_spike:
 	$(CLONE_DPI_DASM_SPIKE_CMD)
@@ -222,9 +272,6 @@ $(CV_CORE_PKG):
 $(RISCVDV_PKG):
 	$(CLONE_RISCVDV_CMD)
 
-$(COMPLIANCE_PKG):
-	$(CLONE_COMPLIANCE_CMD)
-
 $(EMBENCH_PKG):
 	$(CLONE_EMBENCH_CMD)
 
@@ -235,73 +282,6 @@ $(SVLIB_PKG):
 	$(CLONE_SVLIB_CMD)
 
 ###############################################################################
-# RISC-V Compliance Test-suite
-#     As much as possible, the test suite is used "out-of-the-box".  The
-#     "build_compliance" target below uses the Makefile supplied by the suite
-#     to compile all the individual test-programs in the suite to generate the
-#     elf and hex files used in simulation.  Each <sim>.mk is assumed to have a
-#     target to run the compiled test-program.
-
-# RISCV_ISA='rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei'
-RISCV_ISA    ?= rv32i
-RISCV_TARGET ?= OpenHW
-RISCV_DEVICE ?= $(CV_CORE_LC)
-
-clone_compliance:
-	$(CLONE_COMPLIANCE_CMD)
-
-clr_compliance:
-	make clean -C $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance
-
-build_compliance: $(COMPLIANCE_PKG)
-	make simulate -i -C $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance \
-		RISCV_TARGET=${RISCV_TARGET} \
-		RISCV_DEVICE=${RISCV_DEVICE} \
-		PATH=$(RISCV)/bin:$(PATH) \
-		RISCV_PREFIX=$(RISCV_PREFIX) \
-		NOTRAPS=1 \
-		RISCV_ISA=$(RISCV_ISA)
-#		VERBOSE=1
-
-all_compliance: $(COMPLIANCE_PKG)
-	make build_compliance RISCV_ISA=rv32i        && \
-	make build_compliance RISCV_ISA=rv32im       && \
-	make build_compliance RISCV_ISA=rv32imc      && \
-	make build_compliance RISCV_ISA=rv32Zicsr    && \
-	make build_compliance RISCV_ISA=rv32Zifencei
-
-# "compliance" is a simulator-specific target defined in <sim>.mk
-COMPLIANCE_RESULTS = $(SIM_RESULTS)
-
-compliance_check_sig: compliance
-	@echo "Checking Compliance Signature for $(RISCV_ISA)/$(COMPLIANCE_PROG)"
-	@echo "Reference: $(REF)"
-	@echo "Signature: $(SIG)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
-	export REF=$(REF) && export SIG=$(SIG) && export COMPL_PROG=$(COMPLIANCE_PROG) && \
-	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
-	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
-	$(CORE_V_VERIF)/bin/diff_signatures.sh | tee $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)/diff_signatures.log
-
-compliance_check_all_sigs:
-	@$(MKDIR_P) $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)
-	@echo "Checking Compliance Signature for all tests in $(CFG)/$(RISCV_ISA)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
-	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
-	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
-	$(CORE_V_VERIF)/bin/diff_signatures.sh $(RISCV_ISA) | tee $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)/diff_signatures.log
-
-compliance_regression:
-	make build_compliance RISCV_ISA=$(RISCV_ISA)
-	@export SIM_DIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/sim/uvmt && \
-	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_ISA)
-	make compliance_check_all_sigs RISCV_ISA=$(RISCV_ISA)
-
-dah:
-	@export SIM_DIR=$(CORE_V_VERIF)/cv32/sim/uvmt && \
-	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_ISA)
-
-###############################################################################
 # EMBench benchmark
 # 	target to check out and run the EMBench suite for code size and speed
 #
@@ -309,11 +289,15 @@ dah:
 embench: $(EMBENCH_PKG)
 	$(CORE_V_VERIF)/bin/run_embench.py \
 		-c $(CV_CORE) \
+		-cfg $(CFG) \
 		-cc $(RISCV_EXE_PREFIX)$(RISCV_CC) \
 		-sim $(SIMULATOR) \
 		-t $(EMB_TYPE) \
 		--timeout $(EMB_TIMEOUT) \
 		--parallel $(EMB_PARALLEL_ARG) \
+		--absolute $(EMB_ABSOLUTE_ARG) \
+		--builddir $(SIM_CFG_RESULTS)/bd \
+		--logdir $(SIM_CFG_RESULTS)/logs \
 		-b $(EMB_BUILD_ONLY_ARG) \
 		-tgt $(EMB_TARGET) \
 		-f $(EMB_CPU_MHZ) \
@@ -404,23 +388,20 @@ clean_hex:
 	rm -rf $(SIM_TEST_PROGRAM_RESULTS)
 
 clean_test_programs: clean_bsp
-	if [ -d "$(SIM_RESULTS)" ]; then \
-		find $(SIM_RESULTS) -depth -type d -name test_program | xargs rm -rf; \
+	if [ -d "$(SIM_CFG_RESULTS)" ]; then \
+		find $(SIM_CFG_RESULTS) -depth -type d -name test_program | xargs rm -rf; \
 	fi
 
 clean_riscv-dv:
 	rm -rf $(RISCVDV_PKG)
 	rm -rf $(COREVDV_PKG)/out_*
 
-clean_compliance:
-	rm -rf $(COMPLIANCE_PKG)
-
 clean_embench:
 	rm -rf $(EMBENCH_PKG)
 	cd $(EMBENCH_TESTS) && \
 		find . ! -path . ! -path ./README.md -delete
-	if [ -d "$(SIM_RESULTS)" ]; then \
-		cd $(SIM_RESULTS) && find . -depth -type d -name "emb_*" | xargs rm -rf; \
+	if [ -d "$(SIM_CFG_RESULTS)" ]; then \
+		cd $(SIM_CFG_RESULTS) && find . -depth -type d -name "emb_*" | xargs rm -rf; \
 	fi
 
 clean_dpi_dasm_spike:

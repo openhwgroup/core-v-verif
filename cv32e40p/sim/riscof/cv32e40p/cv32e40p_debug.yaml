@@ -1,0 +1,5 @@
+hart_ids: [0]
+hart0: &hart0
+  Debug_Spec_Version: '0.13.2'
+  supported_xlen: [32]
+  debug_mode: true

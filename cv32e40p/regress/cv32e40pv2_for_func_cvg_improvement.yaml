@@ -1,0 +1,100 @@
+# Copyright 2024 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Header
+name: cv32e40pv2_for_func_cvg_improvement
+description: regression for CV32E40Pv2, focus on improving the functional coverage holes
+
+# List of builds
+# cfg is set to pulp by default but can be overriden by arg command to any cfg.
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
+    dir: cv32e40p/sim/uvmt
+  uvmt_cv32e40p:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp
+
+  # List of tests (todo: all below tests have not run with Imperas ISS reference model)
+tests:
+  corev_directed_for_interrupt_covg_test:
+    build: uvmt_cv32e40p
+    description: This test is to improve func coverage holes in uvme_interrupt_covg_v2
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_directed_for_interrupt_covg_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    skip_sim: pulp
+    num: 5
+
+  corev_directed_for_hwloop_covg_test:
+    description: This test is to improve func coverage holes in uvme_rv32x_hwloop_covg
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_directed_for_hwloop_covg_test CFG_PLUSARGS="+UVM_TIMEOUT=60000000"
+    num: 5
+ 
+  corev_directed_fp_mulcyc_interleave_illegal_test_with_int_and_debug:
+    testname: corev_rand_fp_instr_debug
+    description: This test is to improve func coverage holes in uvme_debug_covg
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=40000000" VSIM_USER_FLAGS=+add_b2b_illegal_insn
+    test_cfg: gen_rand_int
+    skip_sim: pulp
+    num: 1
+
+  corev_directed_fp_mulcyc_test_with_int_and_debug:
+    testname: corev_rand_fp_instr_debug
+    description: This test is to improve func coverage holes in uvme_debug_covg
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
+    test_cfg: gen_rand_int
+    skip_sim: pulp
+    num: 5
+
+  debug_test_trigger:
+    build: uvmt_cv32e40p
+    description: This custom legacy test is needed to improve func coverage holes in uvme_debug_covg
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=debug_test_trigger
+    num: 1
+
+  fpu_func_cov_improve_test:
+    build: uvmt_cv32e40p
+    description: directed custom test to improve missing coverage in cfg pulp_fpu
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=fpu_func_cov_improve_test CFG_PLUSARGS="+UVM_TIMEOUT=100000000"
+    num: 1
+    skip_sim:
+      - pulp
+      - pulp_fpu_zfinx
+      - pulp_fpu_zfinx_1cyclat
+      - pulp_fpu_zfinx_2cyclat
+      - pulp_cluster
+      - pulp_cluster_fpu
+      - pulp_cluster_fpu_1cyclat
+      - pulp_cluster_fpu_2cyclat
+      - default
+      - no_pulp
+
+  zfinx_func_cov_improve_test:
+    build: uvmt_cv32e40p
+    description: directed custom test to improve missing coverage in cfg pulp_zfinx
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=zfinx_func_cov_improve_test CFG_PLUSARGS="+UVM_TIMEOUT=100000000"
+    num: 1
+    skip_sim:
+      - pulp
+      - pulp_fpu
+      - pulp_fpu_1cyclat
+      - pulp_fpu_2cyclat
+      - pulp_cluster
+      - pulp_cluster_fpu
+      - pulp_cluster_fpu_1cyclat
+      - pulp_cluster_fpu_2cyclat
+      - default
+      - no_pulp

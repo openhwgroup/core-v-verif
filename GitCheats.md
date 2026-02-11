@@ -1,6 +1,6 @@
 # Git cheat-sheet.
 A few examples to illustrate use of `git` on the command-line.<br><br>
-PLEASE READ CAREFULLY the [CONTRIBUTING.md](https://github.com/openhwgroup/core-v-verif/blob/master/CONTRIBUTING.md)
+PLEASE READ CAREFULLY the [CONTRIBUTING.md](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/CONTRIBUTING.md)
 file in this directory.  You must follow the specified flow to contribute to this repository.
 
 If you have a suggestion to improve this document please either submit a pull-request, open an issue or email mike@openhwgroup.org.
@@ -114,18 +114,12 @@ $ git push origin master --force
 \# git remote set-url origin git@github.com:username/your-repository.git<br>
 $ git clone git@github.com:openhwgroup/core-v-verif.git master<br>
 
-### Metrics CI Cheat Sheet
-#### Add GitLab Metrics remote
-$ git remote add metrics git@gitlab.openhwgroup.metrics.ca:cv32e40p_verif/cv32e40p_verif.git
+## Force your fork/branch to match the origin
+$ git fetch upstream
+$ git reset --hard upstream/<branch>
+$ git push origin <branch> --force
 
-#### Check to see if you have the Metrics remote added
-$ git remote -v<br>
-  \> metrics	git@gitlab.openhwgroup.metrics.ca:cv32e40p_verif/cv32e40p_verif.git (fetch)<br>
-  \> metrics	git@gitlab.openhwgroup.metrics.ca:cv32e40p_verif/cv32e40p_verif.git (push)<br>
-  \> origin	https://github.com/openhwgroup/core-v-verif (fetch)<br>
-  \> origin	https://github.com/openhwgroup/core-v-verif (push)<br>
-
-### Rebasing a previous commit
+## Rebasing a previous commit
 \# https://stackoverflow.com/questions/3042437/how-to-change-the-commit-author-for-one-specific-commit<br>
 \# https://docs.github.com/en/github/getting-started-with-github/about-git-rebase#an-example-of-using-git-rebase<br>
 $ cd \<working_dir\><br>
@@ -139,3 +133,15 @@ $ git commit --amend --author="Jean-Roch Coulon <jean-roch.coulon@invia.fr>" --n
 $ git rebase --continue<br>
 $ git remote -v<br>
 $ git push -f<br>
+
+
+### Metrics CI Cheat Sheet
+#### Add GitLab Metrics remote
+$ git remote add metrics git@gitlab.openhwgroup.metrics.ca:cv32e40p_verif/cv32e40p_verif.git
+
+#### Check to see if you have the Metrics remote added
+$ git remote -v<br>
+  \> metrics git@gitlab.openhwgroup.metrics.ca:cv32e40p_verif/cv32e40p_verif.git (fetch)<br>
+  \> metrics git@gitlab.openhwgroup.metrics.ca:cv32e40p_verif/cv32e40p_verif.git (push)<br>
+  \> origin  https://github.com/openhwgroup/core-v-verif (fetch)<br>
+  \> origin  https://github.com/openhwgroup/core-v-verif (push)<br>

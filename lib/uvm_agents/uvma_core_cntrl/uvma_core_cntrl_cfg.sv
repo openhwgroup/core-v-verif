@@ -123,6 +123,9 @@
    rand bit [MAX_XLEN-1:0]       mimpid;
    bit                           mimpid_plusarg_valid;
 
+   rand bit [MAX_XLEN-1:0]       mimpid_patch;
+   bit                           mimpid_patch_plusarg_valid;
+
    rand bit [MAX_XLEN-1:0]       boot_addr;
    rand bit                      boot_addr_valid;
    bit                           boot_addr_plusarg_valid;
@@ -198,6 +201,7 @@
       `uvm_field_int(                          marchid                        , UVM_DEFAULT          )
       `uvm_field_int(                          mvendorid                      , UVM_DEFAULT          )
       `uvm_field_int(                          mimpid                         , UVM_DEFAULT          )
+      `uvm_field_int(                          mimpid_patch                   , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr                      , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr_valid                , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr_plusarg_valid        , UVM_DEFAULT          )
@@ -343,6 +347,9 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    if (read_cfg_plusarg_xlen("mvendorid", mvendorid)) begin
       mvendorid_plusarg_valid = 1;
       mvendorid.rand_mode(0);
+   if (read_cfg_plusarg_xlen("mimpid_patch", mimpid_patch)) begin
+      mimpid_patch_plusarg_valid = 1;
+      mimpid_patch.rand_mode(0);
    end
 
    if (read_cfg_plusarg_xlen("mimpid", mimpid)) begin

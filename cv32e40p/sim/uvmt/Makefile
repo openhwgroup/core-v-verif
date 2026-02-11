@@ -49,8 +49,6 @@ export CORE_V_VERIF   = $(abspath $(MAKE_PATH)/../../..)
 export CV_CORE       ?= cv32e40p
 
 DPI_DASM_SPIKE_REPO  ?= https://github.com/riscv/riscv-isa-sim.git
-CV_SW_TOOLCHAIN      ?= /opt/riscv
-CV_SW_PREFIX         ?= " "
 
 include ../ExternalRepos.mk
 include $(CORE_V_VERIF)/mk/uvmt/uvmt.mk

@@ -35,16 +35,43 @@
  */
 class uvmt_cv32e40p_firmware_test_c extends uvmt_cv32e40p_base_test_c;
 
+   bit disable_all_trn_logs;
+
+   constraint env_cfg_cons {
+      env_cfg.enabled         == 1;
+      env_cfg.is_active       == UVM_ACTIVE;
+      if (disable_all_trn_logs) {
+       env_cfg.trn_log_enabled                       == 0;
+       env_cfg.clknrst_cfg.trn_log_enabled           == 0;
+       env_cfg.interrupt_cfg.trn_log_enabled         == 0;
+       env_cfg.debug_cfg.trn_log_enabled             == 0;
+       env_cfg.obi_memory_instr_cfg.trn_log_enabled  == 0;
+       env_cfg.obi_memory_data_cfg.trn_log_enabled   == 0;
+       env_cfg.rvfi_cfg.trn_log_enabled              == 0;
+      } else {
+       env_cfg.trn_log_enabled == 1;
+      }
+   }
+   `uvm_component_utils_begin(uvmt_cv32e40p_firmware_test_c)
+   `uvm_object_utils_end
+
    constraint test_type_cons {
      test_cfg.tpt == PREEXISTING_SELFCHECKING;
    }
 
-   `uvm_component_utils_begin(uvmt_cv32e40p_firmware_test_c)
-   `uvm_object_utils_end
-
    /**
     */
    extern function new(string name="uvmt_cv32e40p_firmware_test", uvm_component parent=null);
+
+   /**
+    * Runs reset_vseq.
+    */
+   extern virtual task reset_phase(uvm_phase phase);
+
+   /**
+    * Loads the test program (the "firmware") into memory.
+    */
+   extern virtual task configure_phase(uvm_phase phase);
 
    /**
     *  Enable program execution, wait for completion.
@@ -64,27 +91,43 @@ class uvmt_cv32e40p_firmware_test_c extends uvmt_cv32e40p_base_test_c;
     */
    extern virtual task irq_noise();
 
-   /**
-    *  Randomly assert/deassert fetch_enable_i
-    */
-   extern virtual task random_fetch_toggle();
-
 endclass : uvmt_cv32e40p_firmware_test_c
 
 
 function uvmt_cv32e40p_firmware_test_c::new(string name="uvmt_cv32e40p_firmware_test", uvm_component parent=null);
 
    super.new(name, parent);
+   if ($test$plusargs("gen_reduced_rand_dbg_req")) begin
+    uvme_cv32e40p_random_debug_c::type_id::set_type_override(uvme_cv32e40p_reduced_rand_debug_req_c::get_type());
+   end
+   disable_all_trn_logs = 0;
+   if ($test$plusargs("disable_all_trn_logs")) begin
+    disable_all_trn_logs = 1;
+   end
    `uvm_info("TEST", "This is the FIRMWARE TEST", UVM_NONE)
 
 endfunction : new
+
+
+task uvmt_cv32e40p_firmware_test_c::reset_phase(uvm_phase phase);
+   super.reset_phase(phase);
+
+endtask : reset_phase
+
+
+task uvmt_cv32e40p_firmware_test_c::configure_phase(uvm_phase phase);
+
+   super.configure_phase(phase);
+
+endtask : configure_phase
+
 
 task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
 
    // start_clk() and watchdog_timer() are called in the base_test
    super.run_phase(phase);
 
-   if ($test$plusargs("gen_random_debug")) begin
+   if ($test$plusargs("gen_random_debug") || $test$plusargs("gen_reduced_rand_dbg_req")) begin
     fork
       random_debug();
     join_none
@@ -94,12 +137,6 @@ task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
     fork
       irq_noise();
     join_none
-   end
-
-   if ($test$plusargs("random_fetch_toggle")) begin
-     fork
-       random_fetch_toggle();
-     join_none
    end
 
    if ($test$plusargs("reset_debug")) begin
@@ -116,7 +153,6 @@ task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
    phase.raise_objection(this);
    @(posedge env_cntxt.clknrst_cntxt.vif.reset_n);
    repeat (33) @(posedge env_cntxt.clknrst_cntxt.vif.clk);
-   core_cntrl_vif.go_fetch(); // Assert the Core's fetch_en
    `uvm_info("TEST", "Started RUN", UVM_NONE)
    // The firmware is expected to write exit status and pass/fail indication to the Virtual Peripheral
    wait (
@@ -191,37 +227,5 @@ task uvmt_cv32e40p_firmware_test_c::irq_noise();
     break;
   end
 endtask : irq_noise
-
-task uvmt_cv32e40p_firmware_test_c::random_fetch_toggle();
-  `uvm_info("TEST", "Starting random_fetch_toggle thread in UVM test", UVM_NONE);
-  while (1) begin
-    int unsigned fetch_assert_cycles;
-    int unsigned fetch_deassert_cycles;
-
-    // SVTB.29.1.3.1 - Banned random number system functions and methods calls
-    // Waive for performance reasons.
-    //@DVT_LINTER_WAIVER_START "MT20211214_4" disable SVTB.29.1.3.1
-
-    // Randomly assert for a random number of cycles
-    randcase
-      9: fetch_assert_cycles = $urandom_range(100_000, 100);
-      1: fetch_assert_cycles = $urandom_range(100, 1);
-      1: fetch_assert_cycles = $urandom_range(3, 1);
-    endcase
-    repeat (fetch_assert_cycles) @(core_cntrl_vif.drv_cb);
-    core_cntrl_vif.stop_fetch();
-
-    // Randomly dessert for a random number of cycles
-    randcase
-      3: fetch_deassert_cycles = $urandom_range(100, 1);
-      1: fetch_deassert_cycles = $urandom_range(3, 1);
-    endcase
-    //@DVT_LINTER_WAIVER_END "MT20211214_4"
-
-    repeat (fetch_deassert_cycles) @(core_cntrl_vif.drv_cb);
-    core_cntrl_vif.go_fetch();
-  end
-
-endtask : random_fetch_toggle
 
 `endif // __UVMT_CV32E40P_FIRMWARE_TEST_SV__

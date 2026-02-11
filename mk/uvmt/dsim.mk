@@ -26,7 +26,7 @@
 DSIM                    = dsim
 DSIM_HOME              ?= /tools/Metrics/dsim
 DSIM_CMP_FLAGS         ?= $(TIMESCALE) $(SV_CMP_FLAGS) -top uvmt_$(CV_CORE_LC)_tb
-DSIM_ERR_SUPPRESS      ?= MultiBlockWrite:ReadingOutputModport
+DSIM_ERR_SUPPRESS      ?= MultiBlockWrite:ReadingOutputModport:IneffectiveDynamicCast:LatchInferred
 DSIM_UVM_ARGS          ?= +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 DSIM_WORK              ?= $(SIM_CFG_RESULTS)/dsim_work
 DSIM_IMAGE             ?= dsim.out
@@ -35,8 +35,8 @@ DSIM_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/dsim/ccov_scopes.txt
 DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
-DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+#DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
+DSIM_COMPILE_ARGS      += +define+DSIM+$(CV_CORE_UC)_TRACE_EXECUTION+CV32E40P_RVFI
 
 DSIM_USER_COMPILE_ARGS ?=
 ifeq ($(USE_ISS),YES)
@@ -77,6 +77,16 @@ endif
 
 DSIM_RUN_FLAGS         += $(USER_RUN_FLAGS)
 DSIM_RUN_FLAGS         += -sv_seed $(DSIM_RNDSEED)
+
+
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/dsim-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
 
 # Variables to control wave dumping from command the line
 # Humans _always_ forget the "S", so you can have it both ways...
@@ -129,7 +139,8 @@ mk_results:
 
 ################################################################################
 # DSIM compile target
-comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
+#comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
+comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG)
 	$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
 		-suppress $(DSIM_ERR_SUPPRESS) \
@@ -168,6 +179,8 @@ ifneq ($(call IS_NO,$(COMP)),NO)
 DSIM_SIM_PREREQ = comp
 endif
 
+#			-sv_lib $(OVP_MODEL_DPI) \
+
 test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
 	mkdir -p $(SIM_RUN_RESULTS) && \
 	cd $(SIM_RUN_RESULTS) && \
@@ -182,11 +195,11 @@ test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
 			-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 			-sv_lib $(DPI_DASM_LIB) \
 			-sv_lib $(abspath $(SVLIB_LIB)) \
-			-sv_lib $(OVP_MODEL_DPI) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 			+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
+	$(POST_TEST)
 
 # Similar to above, but for the ASM directory.
 asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
@@ -291,6 +304,7 @@ comp_corev-dv: $(CV_CORE_PKG)
 		+incdir+$(CV_CORE_COREVDV_PKG) \
 		$(DSIM_PMA_INC) \
 		$(CFG_COMPILE_FLAGS) \
+		$(GEN_COMPILE_FLAGS) \
 		-f $(COREVDV_PKG)/manifest.f \
 		-l $(SIM_COREVDV_RESULTS)/compile.log
 
@@ -349,6 +363,5 @@ clean:
 	rm -rf $(SIM_RESULTS)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_embench clean_dpi_dasm_spike clean_svlib
 	rm -rf $(CV_CORE_PKG)
-

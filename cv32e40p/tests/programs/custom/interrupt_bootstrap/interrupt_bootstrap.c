@@ -168,8 +168,28 @@ int test_mtvec() {
     return EXIT_SUCCESS;
 }
 
+#ifdef FPU
+#define MSTATUS_FS_INITIAL 0x00002000
+
+void fp_enable ()
+{
+  unsigned int fs = MSTATUS_FS_INITIAL;
+
+  asm volatile("csrs mstatus, %0;"
+               "csrwi fcsr, 0;"
+               "csrs mstatus, %0;"
+               : : "r"(fs)
+              );
+}
+#endif
+
 int main(int argc, char *argv[]) {
     int retval;
+
+#ifdef FPU
+    // Floating Point enable
+    fp_enable();
+#endif
 
     // Trash the "default" 0 table
     for (int i = 0; i < 32; i++) {

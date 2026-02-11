@@ -16,6 +16,7 @@ These TCL scripts can be passed to Xcelium by the core-v-verif Makefiles when us
 These XML files should be created using coverage tools such as IMC or Vmanager.  These are used to generate coverage reports that focus on necessary coverage while removing exceptions that are unhittable or not significant for the design being verified.
 
 *Note that some files are automatically generated and some are manually maintained.  This is indicated in the table.*
+*Note the files in the Table below were automatically generated for CV32E40P v1.0.0.  These files are not expected to work for any other version of CV32E40P.*
 
 | File | Maintenance | Description |
 |------|-------------|-------------|

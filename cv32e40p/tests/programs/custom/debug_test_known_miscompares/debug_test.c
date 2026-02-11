@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
       .fields.rand_pulse_width = 0,
       .fields.pulse_width      = 5,// FIXME: BUG: one clock pulse cause core to lock up
       .fields.rand_start_delay = 0,
-      .fields.start_delay      = 0
+      .fields.start_delay      = 1
     };
     DEBUG_REQ_CONTROL_REG = debug_req_control.bits;
     asm volatile("dret");

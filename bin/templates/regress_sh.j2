@@ -39,13 +39,23 @@ check_log () {
     log=$1
     simulation_passed="$2"
     test_name=$3
+    pass_cond=0
+    failed=0
 
+    if grep -qi "Errors:\s\+0" ${log}; then
     if grep -q "${simulation_passed}" ${log}; then
-        echo "{{session}}: Test PASSED: ${test_name} Log: ${log}"
-    else
-        echo "{{session}}: Test FAILED: ${test_name} Log: ${log}"
-        failed=1
+      ((pass_cond+=1))
     fi
+    fi
+
+    if [[ ${pass_cond} == 1 ]]; then
+      echo "{{session}}: Test PASSED: ${test_name} Log: ${log}"
+      return 0
+    else
+      echo "{{session}}: Test FAILED: ${test_name} Log: ${log}"
+      failed=1
+    fi
+
 }
 
 incr_test_counts () {
@@ -62,7 +72,7 @@ incr_test_counts () {
 
 {% for b in unique_builds.values() %}
 # Build:{{b.name}} {{b.description}}
-{% set cmd = b.cmd + ' CV_CORE=' + project + ' CFG=' + b.cfg + ' SIMULATOR=' + b.simulator + ' COV=' + regress_macros.yesorno(b.cov) + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
+{% set cmd = b.cmd + ' CV_CORE=' + project + ' CFG=' + b.cfg + ' SIMULATOR=' + b.simulator + ' USE_ISS=' + regress_macros.yesorno(b.iss) + ' COV=' + regress_macros.yesorno(b.cov) + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
 echo "{{session}}: Running build: [cd {{b.abs_dir}} && {{cmd}}]"
 pushd {{b.abs_dir}} > /dev/null
 {{cmd}}
@@ -89,9 +99,18 @@ popd > /dev/null
 {% endif %}
 {% for run_index in range(t.num|int) %}
 {% set test_cmd = t.cmd %}
-{% set test_log = t.log %}
+{% set test_log = t.testname %}
+{% if t.test_cfg is defined %}
+  {% set test_cfg = t.test_cfg %}
+{% else %}
+  {% set test_cfg = "" %}
+{% endif %}
+{% set test_cfg_list = test_cfg|replace(" ",",")|replace("+",",") %}
+{% set test_cfg_list = test_cfg_list.split(",")|unique|sort %}
+{% set test_cfg_path = test_cfg_list|join("__") %}
+
 # --> Test (Index: {{run_index}}): {{t.cmd}} : {{t.description}}
-{% set cmd = test_cmd + ' CV_CORE=' + project + ' CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1' + ' SIMULATOR=' + t.simulator + ' COMP=0 USE_ISS=' + regress_macros.yesorno(t.iss) + ' COV=' + regress_macros.yesorno(t.cov) + ' SEED=random GEN_START_INDEX=' + run_index|string + ' RUN_INDEX=' + run_index|string + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
+{% set cmd = test_cmd + ' CV_CORE=' + project + ' CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1 SIMULATOR=' + t.simulator + ' COMP=0 USE_ISS=' + regress_macros.yesorno(t.iss) + ' COV=' + regress_macros.yesorno(t.cov) + ' SEED=random GEN_START_INDEX=' + run_index|string + ' RUN_INDEX=' + run_index|string + ' TEST_CFG_FILE=\"' + test_cfg + '\" ' + regress_macros.cv_results(results) + ' ' + makeargs %}
 echo "{{session}}: Running test [cd {{t.abs_dir}} && {{cmd}}]"
 pushd {{t.abs_dir}} > /dev/null
 {{cmd}} >& /dev/null;
@@ -103,12 +122,13 @@ popd > /dev/null
 {% else %}
 {% set results_dir = t.simulator + '_results' %}
 {% endif %}
+{% set sim_log = t.simulator + '-' + test_log + '.log' %}
 
 {# Determine log location #}
 {% if t.results %}
-log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{t.results}}/{{run_index}}/{{t.simulator}}-{{test_log}}.log
+  log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{t.results}}/{{test_cfg_path}}/{{run_index}}/{{sim_log}}
 {% else %}
-log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{test_log}}/{{run_index}}/{{t.simulator}}-{{test_log}}.log
+  log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{test_log}}/{{test_cfg_path}}/{{run_index}}/{{sim_log}}
 {% endif %}
 
 {# Compliance signature check #}
@@ -120,7 +140,7 @@ compliance_diff_log={{t.abs_dir}}/{{results_dir}}/{{cfg}}/{{test_log}}_{{run_ind
 {% endif %}
 {% endif %}
 
-failed=0
+# failed=0
 check_log ${log} "{{t.simulation_passed}}" {{test_log}}
 {% if 'compliance' in t.cmd %}
 check_log ${compliance_diff_log} "All signatures passed" {{test_log}}

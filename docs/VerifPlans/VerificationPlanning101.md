@@ -22,6 +22,7 @@
 Verification plans are documents that defines _what_ is to be verified.  They go by many names including Testplan, DV plan or just Vplan.  A complete, high quality verification plan can be the most valuable item produced by a verification project.
 ## Format of a Verificaton Plan
 Most CORE-V verification projects use spreadsheets to capture Testplans, and a template is provided. The template for the spreadsheet is simple enough that you can use either Microsoft Office Excel or LibreOffice Calc.  The Verification Plan [template](https://github.com/openhwgroup/core-v-verif/blob/master/docs/VerifPlans/templates/CORE-V_Simulation_VerifPlan_Template.xlsx) for CORE-V-VERIF is located at the root of the [VerificationPlan](https://github.com/openhwgroup/core-v-verif/tree/master/docs/VerifPlans) directory. Note that at OpenHW is also exploring the use of in-house tooling for Verification Planning, but the remainder of this document assumes the use of a spreadsheet.
+CORE-V projects use spreadsheets to capture Testplans<sup>1</sup>. The template for the spreadsheet is simple enough that you can use either Microsoft Office Excel or LibreOffice Calc.  The Verification Plan [template](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/docs/VerifPlans/templates/CORE-V_Simulation_VerifPlan_Template.xlsx) for the CORE-V-VERIF is located at the root of the [VerificationPlan](https://github.com/openhwgroup/core-v-verif/tree/cv32e40p_v1.8.3/docs/VerifPlans) directory.
 ## Verification Planning
 A key activity of any verification effort is to capture a Verification Plan.  The purpose of a verification plan is to identify what features need to be verified; the success criteria of the feature and the coverage metrics for testing the feature.  Testplans also allow us to reason about the capabilities of the verification environment.
 
@@ -49,13 +50,13 @@ The key point is that taking the time to specify a Testplan for each feature in 
 
 The template used for this project attempts to provide an easy-to-use format to capture and review this information for every feature in the design.
 ## HOWTO: The CORE-V Simulation Verification Plan Template
-The following sub-sections explain each of the columns in the [simulation verification template spreadsheet](https://github.com/openhwgroup/core-v-verif/blob/master/docs/VerifPlans/templates/CORE-V_Simulation_VerifPlan_Template.xlsx).
+The following sub-sections explain each of the columns in the [simulation verification template spreadsheet](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/docs/VerifPlans/templates/CORE-V_Simulation_VerifPlan_Template.xlsx).
 ### Requirement Location
 This is a pointer to the source Requirements document of the Features in question.  It can be a standards document, such as the RISC-V ISA, or a micro-architecture specification.   The CV32E40P [User Manual](https://cv32e40p.readthedocs.io/en/latest/intro/) lists sources of documentation relevant to the CV32E40P.  _Every item in a Verification Plan must be attributed to one or more of these sources_.  Please also include a chapter or section number.  Note that if you are using the [CV32E40P User Manual](https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/) as a reference, you **must** provide a release/version number as well since this document is currently in active development.
 ### Feature
 The high-level feature you are trying to verify.  For example, RV32I Register-Immediate Instructions.  In some cases, it may be natural to use the section header name of the reference document.
 ### Sub-Feature
-This is an optional, but often used column.  Using our previous examples, ADDI is a sub-feature of RV32I Register-Immediate Instructions.  If it makes sense to decompose the Feature into two or more sub-features, use this columnn for that.  If required, add a column for sub-sub-features. 
+This is an optional, but often used column.  Using our previous examples, ADDI is a sub-feature of RV32I Register-Immediate Instructions.  If it makes sense to decompose the Feature into two or more sub-features, use this columnn for that.  If required, add a column for sub-sub-features.
 ### Feature Description
 A summary of what the features does.  It should be a _summary_, not a verbatium copy-n-paste from the Requirements Document.
 ### Verification Goals
@@ -92,7 +93,7 @@ This field is used to link the Feature to coverage data generated in Regression.
 <br><br><br>
 
 ## HOWTO: The CORE-V Formal Verification Plan Template
-The following sub-sections explain each of the columns in the [formal verification template spreadsheet](https://github.com/openhwgroup/core-v-verif/blob/master/docs/VerifPlans/templates/CORE-V_Formal_VerifPlan_Template.xlsx).
+The following sub-sections explain each of the columns in the [formal verification template spreadsheet](https://github.com/openhwgroup/core-v-verif/blob/cv32e40p_v1.8.3/docs/VerifPlans/templates/CORE-V_Formal_VerifPlan_Template.xlsx).
 For obvious reasons, the **Requirement Location**, **Feature**, **Sub-Feature**, **Feature Description** and **Verification Goals** are the same as as the simulation verification template.
 ### Property or Checker
 This is the name of the SystemVerilog _property_ or _checker_ that is used to verify the Feature in question.

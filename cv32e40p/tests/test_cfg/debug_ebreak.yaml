@@ -1,0 +1,8 @@
+name: debug_ebreak
+description: >
+    Config to gen ebreak instructions and set dcsr ebreakm
+plusargs: >
+    +no_ebreak=0
+    +set_dcsr_ebreak=1
+    +enable_interrupt=1
+    +enable_fast_interrupt_handler=1

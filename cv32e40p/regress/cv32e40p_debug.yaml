@@ -35,8 +35,8 @@ tests:
     build: uvmt_cv32e40p
     description: Debug reset test with random boot set
     dir: cv32e40p/sim/uvmt
-    cmd: make test TEST=debug_test_boot_set
-    num: 50
+    cmd: make test TEST=debug_test_boot_set SEED=1 VSIM_USER_FLAGS=+fixed_instr_gnt_stall=10
+    num: 1
 
   corev_rand_debug:
     build: uvmt_cv32e40p

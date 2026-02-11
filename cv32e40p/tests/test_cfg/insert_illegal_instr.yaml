@@ -1,0 +1,5 @@
+name: insert_illegal_instr
+description: >
+    Insert Illegal Instructions
+plusargs: >
+    +illegal_instr_ratio=5

@@ -160,7 +160,6 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // Boot strap pins
    // -------------------------------------------------------------------------------------
    $fwrite(fh, $sformatf("--override root/cpu/mhartid=%0d\n", cfg.core_cfg.mhartid));
-   $fwrite(fh, $sformatf("--override root/cpu/mimpid=%0d\n", cfg.core_cfg.mimpid));
    $fwrite(fh, $sformatf("--override root/cpu/startaddress=0x%08x\n", cfg.core_cfg.boot_addr));
    // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
    $fwrite(fh, $sformatf("--override root/cpu/mtvec=0x%08x\n", cfg.core_cfg.mtvec_addr| 32'h1));
@@ -175,15 +174,17 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // NUM_MHPMCOUNTERS - Set zero in the noinhibit_mask to enable a counter, starting from index 3
    $fwrite(fh, $sformatf("--override root/cpu/noinhibit_mask=0x%08x\n", cfg.core_cfg.get_noinhibit_mask()));
 
-   // PMA Regions
-   $fwrite(fh, $sformatf("--override root/cpu/extension/PMA_NUM_REGIONS=%0d\n", cfg.core_cfg.pma_regions.size()));
-   foreach (cfg.core_cfg.pma_regions[i]) begin
-      $fwrite(fh, $sformatf("--override root/cpu/extension/word_addr_low%0d=0x%08x\n", i, cfg.core_cfg.pma_regions[i].word_addr_low));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/word_addr_high%0d=0x%08x\n", i, cfg.core_cfg.pma_regions[i].word_addr_high));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/main%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].main));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/bufferable%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].bufferable));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/cacheable%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].cacheable));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/atomic%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].atomic));
+   // PMA Regsions
+   if(cfg.core_cfg.core_name != "CV32E40P") begin
+     $fwrite(fh, $sformatf("--override root/cpu/extension/PMA_NUM_REGIONS=%0d\n", cfg.core_cfg.pma_regions.size()));
+     foreach (cfg.core_cfg.pma_regions[i]) begin
+        $fwrite(fh, $sformatf("--override root/cpu/extension/word_addr_low%0d=0x%08x\n", i, cfg.core_cfg.pma_regions[i].word_addr_low));
+        $fwrite(fh, $sformatf("--override root/cpu/extension/word_addr_high%0d=0x%08x\n", i, cfg.core_cfg.pma_regions[i].word_addr_high));
+        $fwrite(fh, $sformatf("--override root/cpu/extension/main%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].main));
+        $fwrite(fh, $sformatf("--override root/cpu/extension/bufferable%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].bufferable));
+        $fwrite(fh, $sformatf("--override root/cpu/extension/cacheable%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].cacheable));
+        $fwrite(fh, $sformatf("--override root/cpu/extension/atomic%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].atomic));
+     end
    end
 
    $fclose(fh);

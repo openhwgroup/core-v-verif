@@ -1,0 +1,101 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Header
+name: cv32e40pv2_fpu_instr
+description: regression for CV32E40Pv2, focused on FP instructions
+
+# List of builds
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
+    dir: cv32e40p/sim/uvmt
+  uvmt_cv32e40p:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp_fpu
+
+# List of tests
+tests:
+  corev_rand_fp_instr_data_fwd_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_data_fwd_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_fp_instr_mlt_cyc_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_mlt_cyc_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_fp_instr_sanity_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_fp_instr_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_fp_instr_w_special_ops_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_w_special_ops_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_fp_mstatus_fs_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_fp_mstatus_fs_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
+
+  fpu_bugs_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=fpu_bugs_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
+
+  illegal_fp_instr_test:
+    build: uvmt_cv32e40p
+    description: directed test for illegal fpu instructions
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=illegal_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=100000000"
+    num: 1
+
+  fpu_func_cov_improve_test:
+    build: uvmt_cv32e40p
+    description: directed custom test to improve missing coverage in cfg pulp_fpu
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=fpu_func_cov_improve_test CFG_PLUSARGS="+UVM_TIMEOUT=100000000"
+    num: 1
+    skip_sim:
+      - pulp
+      - pulp_fpu_zfinx
+      - pulp_fpu_zfinx_1cyclat
+      - pulp_fpu_zfinx_2cyclat
+      - pulp_cluster
+      - pulp_cluster_fpu
+      - pulp_cluster_fpu_1cyclat
+      - pulp_cluster_fpu_2cyclat
+      - default
+      - no_pulp
+
+  zfinx_func_cov_improve_test:
+    build: uvmt_cv32e40p
+    description: directed custom test to improve missing coverage in cfg pulp_zfinx
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=zfinx_func_cov_improve_test CFG_PLUSARGS="+UVM_TIMEOUT=100000000"
+    num: 1
+    skip_sim:
+      - pulp
+      - pulp_fpu
+      - pulp_fpu_1cyclat
+      - pulp_fpu_2cyclat
+      - pulp_cluster
+      - pulp_cluster_fpu
+      - pulp_cluster_fpu_1cyclat
+      - pulp_cluster_fpu_2cyclat
+      - default
+      - no_pulp

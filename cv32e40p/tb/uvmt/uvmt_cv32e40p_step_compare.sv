@@ -53,8 +53,8 @@
 import uvm_pkg::*;      // needed for the UVM messaging service (`uvm_info(), etc.)
 
 `include "uvm_macros.svh"
-`define CV32E40P_CORE   $root.uvmt_cv32e40p_tb.dut_wrap.cv32e40p_wrapper_i.core_i
-`define CV32E40P_TRACER $root.uvmt_cv32e40p_tb.dut_wrap.cv32e40p_wrapper_i.tracer_i
+`define CV32E40P_CORE   $root.uvmt_cv32e40p_tb.dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i
+`define CV32E40P_TRACER $root.uvmt_cv32e40p_tb.dut_wrap.cv32e40p_tb_wrapper_i.tracer_i
 
 // TODO change names
 `define CV32E40P_RM              $root.uvmt_cv32e40p_tb.iss_wrap.cpu
@@ -207,6 +207,7 @@ module uvmt_cv32e40p_step_compare
                                               `CV32E40P_CORE.cs_registers_i.mcause_q[4:0]};
           //  "mip"           : if (step_compare_if.deferint_prime == 0 || iss_wrap.io.deferint == 0) ignore = 1;
           //                    else csr_val = `CV32E40P_CORE.cs_registers_i.mip;
+            "mtval"         : ignore = 1;
             "mip"           : ignore = 1;
             "mhartid"       : csr_val = `CV32E40P_CORE.cs_registers_i.hart_id_i;
 
@@ -366,6 +367,10 @@ module uvmt_cv32e40p_step_compare
             "mhpmcounterh29": ignore  = 1;
             "mhpmcounterh30": ignore  = 1;
             "mhpmcounterh31": ignore  = 1;
+
+            "fcsr"          : csr_val = {24'b0, `CV32E40P_CORE.cs_registers_i.frm_q, `CV32E40P_CORE.cs_registers_i.fflags_q};
+            "frm"           : csr_val = {29'b0, `CV32E40P_CORE.cs_registers_i.frm_q};
+            "fflags"        : csr_val = {27'b0, `CV32E40P_CORE.cs_registers_i.fflags_q};
 
             default: begin
               `uvm_error("STEP_COMPARE", $sformatf("index=%s does not match a CSR name", index))

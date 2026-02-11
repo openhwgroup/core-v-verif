@@ -1,0 +1,5 @@
+name: Fixed zero latency for both obi buses
+description: >
+    Obi bus latency config - Zero delay
+plusargs: >
+    +rand_stall_obi_disable
