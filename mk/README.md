@@ -366,7 +366,13 @@ ovpsim: >
     --override root/cpu0/misa_Extensions=0x1104
     --showoverrides
 ```
-To facilitate multiple simultaneous runs with different configurations, simulation databases and output files are located in the <i>&lt;simulator</i>_results/<i>&lt;CFG></i>-subdirectories, where CFG is the name of the current yaml configuration. If not overriden, the default configuration is chosen and the subdirectory named accordingly.
+To facilitate multiple simultaneous runs with different configurations,
+simulation databases and output files are located in the
+<i>&lt;simulator</i>\_results/<i>&lt;CFG></i>/TEST/RUN_INDEX-subdirectories,
+where CFG is the name of the current yaml configuration,
+TEST is the name of the test-program and RUN_INDEX is an optional unique identifer.
+If not overriden, the default configuration is chosen and RUN_INDEX is '0'.
+The subdirectory is named accordingly.
 
 Common Makefile Flags
 ---------------
