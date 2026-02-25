@@ -506,5 +506,5 @@ clean_eclipse:
 	rm  -rf workspace
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_temp_files
+clean_all: clean clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
 	rm -rf $(CV_CORE_PKG)

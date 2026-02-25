@@ -144,10 +144,10 @@ These are then used to set the appropriate parameters for generating the test-pr
 
 For cores that use the UVMT environment (for example, `cv32e40s`), these
 helper scripts no longer leave anonymous temporary files in `/tmp`. The
-generated makefile fragments are written under a project-local directory
-below the simulator results directory (via `PROJECT_TMP_DIR` and
-`YAML2MAKE_TMP_DIR` in `Common.mk`), and are removed again by the normal
-`make clean_all` / `clean_temp_files` flows.
+generated makefile fragments are written under a project-local directory,
+preferring the simulator run-results directory (i.e. `$(SIM_RUN_RESULTS)/.tmp`;
+see `PROJECT_TMP_DIR` and `YAML2MAKE_TMP_DIR` in `Common.mk`). They are
+removed by the normal simulator clean targets (e.g. `make clean` / `clean_all`).
 
 ### Toolchain Parameter Example
 

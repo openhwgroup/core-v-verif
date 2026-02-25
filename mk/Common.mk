@@ -63,8 +63,8 @@ BANNER=*************************************************************************
 
 # Project-local directory for generated make include fragments (yaml2make/cfgyaml2make)
 # This avoids polluting /tmp with anonymous files. See mk/TOOLCHAIN.md.
-# Prefer to keep these under the simulator results directory when available.
-PROJECT_TMP_DIR ?= $(if $(SIM_RESULTS),$(SIM_RESULTS)/.tmp,$(CORE_V_VERIF)/.tmp)
+# Prefer per-run location $(SIM_RUN_RESULTS)/.tmp when available (uvmt flows).
+PROJECT_TMP_DIR ?= $(if $(SIM_RUN_RESULTS),$(SIM_RUN_RESULTS)/.tmp,$(if $(SIM_RESULTS),$(SIM_RESULTS)/.tmp,$(CORE_V_VERIF)/.tmp))
 YAML2MAKE_TMP_DIR := $(PROJECT_TMP_DIR)/meta
 
 ###############################################################################
@@ -747,19 +747,3 @@ firmware-clean:
 firmware-unit-test-clean:
 	rm -vrf $(addprefix $(FIRMWARE)/firmware_unit_test., elf bin hex map) \
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
-
-###############################################################################
-# Cleanup project-local temporary files created by yaml2make and cfgyaml2make
-# See: mk/TOOLCHAIN.md and https://github.com/openhwgroup/core-v-verif/issues/2270
-.PHONY: clean_tmp clean_temp_files
-clean_tmp:
-	@if [ -n "$(PROJECT_TMP_DIR)" ] && [ -d "$(PROJECT_TMP_DIR)" ]; then \
-		echo "Cleaning project-local temporary files under $(PROJECT_TMP_DIR)..."; \
-		rm -rf "$(PROJECT_TMP_DIR)"; \
-	else \
-		echo "No project-local temporary directory found (PROJECT_TMP_DIR is unset or missing)."; \
-	fi
-
-# Backwards-compatible alias used by simulator-specific clean_all targets
-clean_temp_files: clean_tmp
-
