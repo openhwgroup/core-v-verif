@@ -4,7 +4,8 @@ This is the directory in which you should run all tests of the UVM environment.
 All results (compile logs, waveforms, run logs, simulation databases, etc.)
 will be placed in this directory under $(SIMULATOR)\_results in a directory tree that follows this structure:
 <br><br>
-$(SIMULATR)\_results/
+```
+$(SIMULATOR)\_results/
 └── $(CFG)
     ├── $(SIMULATOR)\_work
     │   └── $(SIMULATOR)\_specific_objs_etc
@@ -26,6 +27,7 @@ $(SIMULATR)\_results/
             │   ├── $(TEST).objdump
             │   └── $(TEST).readelf
             └── <UVM_Agent_Logs>.log
+```
 <br><br>
 All the variables above (e.g. $(TEST)), can be set as shell environment variables or on the `make` command-line.
 If these variables are not specified, defaults will be used.
