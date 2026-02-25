@@ -61,6 +61,11 @@ RESOLVE_FLAG2=$(if $(1),$(1),$(2))
 # Common variables
 BANNER=*******************************************************************************************
 
+# Project-local directory for generated make include fragments (yaml2make/cfgyaml2make)
+# This avoids polluting /tmp with anonymous files. See docs/TmpFileCleanup.md.
+PROJECT_TMP_DIR ?= $(CORE_V_VERIF)/.tmp
+YAML2MAKE_TMP_DIR := $(PROJECT_TMP_DIR)/meta
+
 ###############################################################################
 # Fetch commands
 ifndef CV_CORE_REPO
@@ -205,11 +210,17 @@ ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
 $(error ERROR must specify a TEST variable with gen_corev-dv target)
 endif
+# Ensure project-local temp directory exists for cv32e40s before generating gen file
+ifeq ($(CV_CORE_LC),cv32e40s)
+$(shell mkdir -p $(YAML2MAKE_TMP_DIR) > /dev/null 2>&1)
+GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE) --out="$(YAML2MAKE_TMP_DIR)/gen-$(CV_CORE_LC)-$(TEST).mk")
+else
 GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE))
+endif
 ifeq ($(GEN_FLAGS_MAKE),)
 $(error ERROR Could not find corev-dv.yaml for test: $(TEST))
 endif
-include $(GEN_FLAGS_MAKE)
+-include $(GEN_FLAGS_MAKE)
 endif
 
 # If the test target is defined then read in a test defintions file
@@ -218,11 +229,17 @@ ifneq ($(filter $(TEST_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
 $(error ERROR! must specify a TEST variable)
 endif
+# Ensure project-local temp directory exists for cv32e40s before generating test file
+ifeq ($(CV_CORE_LC),cv32e40s)
+$(shell mkdir -p $(YAML2MAKE_TMP_DIR) > /dev/null 2>&1)
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE) --out="$(YAML2MAKE_TMP_DIR)/test-$(CV_CORE_LC)-$(TEST)-run$(u).mk")
+else
 TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE))
+endif
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))
 endif
-include $(TEST_FLAGS_MAKE)
+-include $(TEST_FLAGS_MAKE)
 endif
 
 ###############################################################################
@@ -231,11 +248,17 @@ CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
 CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
+# Ensure project-local temp directory exists for cv32e40s before generating cfg file
+ifeq ($(CV_CORE_LC),cv32e40s)
+$(shell mkdir -p $(YAML2MAKE_TMP_DIR) > /dev/null 2>&1)
+CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE) --out="$(YAML2MAKE_TMP_DIR)/cfg-$(CV_CORE_LC)-$(CFG).mk")
+else
 CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
+endif
 ifeq ($(CFG_FLAGS_MAKE),)
 $(error ERROR Error finding or parsing configuration: $(CFG).yaml)
 endif
-include $(CFG_FLAGS_MAKE)
+-include $(CFG_FLAGS_MAKE)
 endif
 endif
 
@@ -724,6 +747,18 @@ firmware-unit-test-clean:
 	rm -vrf $(addprefix $(FIRMWARE)/firmware_unit_test., elf bin hex map) \
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
 
-#endend
+###############################################################################
+# Cleanup project-local temporary files created by yaml2make and cfgyaml2make
+# See: docs/TmpFileCleanup.md and https://github.com/openhwgroup/core-v-verif/issues/2270
+.PHONY: clean_tmp clean_temp_files
+clean_tmp:
+	@if [ -n "$(CORE_V_VERIF)" ] && [ -d "$(CORE_V_VERIF)/.tmp" ]; then \
+		echo "Cleaning project-local .tmp directory..."; \
+		rm -rf "$(CORE_V_VERIF)/.tmp"; \
+	else \
+		echo "No .tmp directory found or CORE_V_VERIF not set."; \
+	fi
 
+# Backwards-compatible alias used by simulator-specific clean_all targets
+clean_temp_files: clean_tmp
 

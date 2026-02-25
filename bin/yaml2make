@@ -124,14 +124,43 @@ def read_file(test, type, run_index):
 
     return test_spec
 
-def emit_make(test_spec, prefix):
+def emit_make(test_spec, prefix, out_path=None):
     '''Emit a hash from the YAML test specification into a makefile that can be included'''
-    fh = tempfile.NamedTemporaryFile(mode='w', delete=False)
-    for k,v in sorted(test_spec.items()):
-        fh.write('{}{}={}\n'.format('' if not prefix else prefix.upper() + '_', k.upper(), v.rstrip()))
-    fh.close()
+    if out_path:
+        # Ensure parent directory exists for deterministic, project-local paths
+        out_dir = os.path.dirname(out_path)
+        if out_dir:
+            try:
+                os.makedirs(out_dir, exist_ok=True)
+            except OSError as e:
+                logger.fatal('Failed to create directory {}: {}'.format(out_dir, e))
+                os.sys.exit(1)
+        try:
+            fh = open(out_path, 'w')
+            temp_file_name = out_path
+        except IOError as e:
+            logger.fatal('Failed to open output file {}: {}'.format(out_path, e))
+            os.sys.exit(1)
+    else:
+        # Fallback to system temporary directory if no explicit path is provided
+        fh = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        temp_file_name = fh.name
+    try:
+        for k,v in sorted(test_spec.items()):
+            fh.write('{}{}={}\n'.format('' if not prefix else prefix.upper() + '_', k.upper(), v.rstrip()))
+    except IOError as e:
+        logger.fatal('Failed to write to file {}: {}'.format(temp_file_name, e))
+        fh.close()
+        if out_path and os.path.exists(out_path):
+            try:
+                os.unlink(out_path)
+            except:
+                pass
+        os.sys.exit(1)
+    finally:
+        fh.close()
 
-    return fh.name
+    return temp_file_name
 
 ################################################################################
 # Command-line arguments
@@ -142,6 +171,7 @@ parser.add_argument('--yaml', choices=VALID_YAMLS, help='Required: Name of YAML 
 parser.add_argument('--core', default=DEFAULT_CORE, help='Default core to test')
 parser.add_argument('--prefix', help='Prefix to add to make variables generated')
 parser.add_argument('--run-index', default='0', help='Add a run index to append to test specifications')
+parser.add_argument('--out', help='Explicit output makefile path; if omitted, a temporary file is used')
 parser.add_argument('-d', '--debug', action='store_true', help='Display debug messages')
 args = parser.parse_args()
 
@@ -166,7 +196,7 @@ CFG_PATH = [p.replace('<CV_CORE>', args.core.lower()) for p in CFG_PATH]
 TEST_PATHS = [p.replace('<CV_CORE>', args.core.lower()) for p in TEST_PATHS]
 
 test_spec = read_file(test=args.test, type=args.yaml, run_index=args.run_index)
-temp_file = emit_make(test_spec=test_spec, prefix=args.prefix)
+temp_file = emit_make(test_spec=test_spec, prefix=args.prefix, out_path=args.out)
 
 logger.debug('File written to {}'.format(temp_file))
 print(temp_file)
