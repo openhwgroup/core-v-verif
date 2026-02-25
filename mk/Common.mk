@@ -233,9 +233,9 @@ endif
 # Ensure project-local temp directory exists for cv32e40s before generating test file
 ifeq ($(CV_CORE_LC),cv32e40s)
 $(shell mkdir -p $(YAML2MAKE_TMP_DIR) > /dev/null 2>&1)
-TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE) --out="$(YAML2MAKE_TMP_DIR)/test-$(CV_CORE_LC)-$(TEST)-run$(u).mk")
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(RUN_INDEX) --prefix=TEST --core=$(CV_CORE) --out="$(YAML2MAKE_TMP_DIR)/test-$(CV_CORE_LC)-$(TEST)-run$(RUN_INDEX).mk")
 else
-TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE))
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(RUN_INDEX) --prefix=TEST --core=$(CV_CORE))
 endif
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))
@@ -747,3 +747,7 @@ firmware-clean:
 firmware-unit-test-clean:
 	rm -vrf $(addprefix $(FIRMWARE)/firmware_unit_test., elf bin hex map) \
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
+
+.PHONY: clean_project_tmp
+clean_project_tmp:
+	@[ -d "$(CORE_V_VERIF)/.tmp" ] && rm -rf "$(CORE_V_VERIF)/.tmp" || true

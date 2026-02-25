@@ -147,7 +147,7 @@ helper scripts no longer leave anonymous temporary files in `/tmp`. The
 generated makefile fragments are written under a project-local directory,
 preferring the simulator run-results directory (i.e. `$(SIM_RUN_RESULTS)/.tmp`;
 see `PROJECT_TMP_DIR` and `YAML2MAKE_TMP_DIR` in `Common.mk`). They are
-removed by the normal simulator clean targets (e.g. `make clean` / `clean_all`).
+removed by the normal simulator clean targets (e.g. `make clean` / `clean_all`). When the fallback `$(CORE_V_VERIF)/.tmp` is used (e.g. non-uvmt flows), `make clean_all` also removes it via the `clean_project_tmp` target.
 
 ### Toolchain Parameter Example
 
