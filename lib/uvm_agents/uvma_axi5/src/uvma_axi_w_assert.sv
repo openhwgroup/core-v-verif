@@ -16,8 +16,15 @@ module  uvma_axi_w_assert (uvma_axi_intf axi_assert);
 
 // *************************** Check if Write Signals are not equal to X or Z when WVALID is HIGH  (Section A3.2.2)************************** //
 
+   function automatic logic check_data_is_unknown();
+      foreach (axi_assert.psv_axi_cb.w_strb[i]) begin
+         if (axi_assert.psv_axi_cb.w_strb[i] && $isunknown(axi_assert.psv_axi_cb.w_data[8*i +: 8])) return 1'b0;
+      end
+      return 1'b1;
+   endfunction
+
    property AXI4_WDATA_X;
-      @(posedge axi_assert.clk && axi_assert.w_assertion_enabled) disable iff (!axi_assert.rst_n) axi_assert.psv_axi_cb.w_valid |-> (!$isunknown(axi_assert.psv_axi_cb.w_data));
+      @(posedge axi_assert.clk && axi_assert.w_assertion_enabled) disable iff (!axi_assert.rst_n) axi_assert.psv_axi_cb.w_valid |-> check_data_is_unknown();
    endproperty
 
    property AXI4_WSTRB_X;
