@@ -142,6 +142,13 @@ Note: if "CFG" is not defined, then `$(CORE_V_VERIF)/$(CORE_V_CORE)/tests/cfg/de
 The common Makefile, ([Common.mk](./Common.mk)), will launch the yaml2make and cfgyaml2make scripts to generate the TEST\*, GEN\* and CFG\* variables.
 These are then used to set the appropriate parameters for generating the test-program, compiling the test-program, compiling and simulating the SystemVerilog testbench.
 
+For cores that use the UVMT environment (for example, `cv32e40s`), these
+helper scripts no longer leave anonymous temporary files in `/tmp`. The
+generated makefile fragments are written under a project-local directory,
+preferring the simulator run-results directory (i.e. `$(SIM_RUN_RESULTS)/.tmp`;
+see `PROJECT_TMP_DIR` and `YAML2MAKE_TMP_DIR` in `Common.mk`). They are
+removed by the normal simulator clean targets (e.g. `make clean` / `clean_all`). When the fallback `$(CORE_V_VERIF)/.tmp` is used (e.g. non-uvmt flows), `make clean_all` also removes it via the `clean_project_tmp` target.
+
 ### Toolchain Parameter Example
 
 Let's take, as an example, setting of the `march` argument for gcc.

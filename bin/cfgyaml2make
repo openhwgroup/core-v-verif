@@ -102,19 +102,48 @@ def read_file(file):
 
     return cfg_spec
 
-def emit_make(cfg_spec, prefix):
-    '''Emit a hash from the YAML test specification into a makefile that can be included'''
-    fh = tempfile.NamedTemporaryFile(mode='w', delete=False)
-    for k,v in sorted(cfg_spec.items()):
-        # Handle empty value (allowed)
+def emit_make(cfg_spec, prefix, out_path=None):
+    '''Emit a hash from the YAML build specification into a makefile that can be included'''
+    if out_path:
+        # Ensure parent directory exists for deterministic, project-local paths
+        out_dir = os.path.dirname(out_path)
+        if out_dir:
+            try:
+                os.makedirs(out_dir, exist_ok=True)
+            except OSError as e:
+                logger.fatal('Failed to create directory {}: {}'.format(out_dir, e))
+                os.sys.exit(1)
         try:
-            v_rstrip = v.rstrip()
-        except AttributeError:
-            v_rstrip = ''
-        fh.write('{}{}={}\n'.format('' if not prefix else prefix.upper() + '_', k.upper(), v_rstrip))
-    fh.close()
+            fh = open(out_path, 'w')
+            temp_file_name = out_path
+        except IOError as e:
+            logger.fatal('Failed to open output file {}: {}'.format(out_path, e))
+            os.sys.exit(1)
+    else:
+        # Fallback to system temporary directory if no explicit path is provided
+        fh = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        temp_file_name = fh.name
+    try:
+        for k,v in sorted(cfg_spec.items()):
+            # Handle empty value (allowed)
+            try:
+                v_rstrip = v.rstrip()
+            except AttributeError:
+                v_rstrip = ''
+            fh.write('{}{}={}\n'.format('' if not prefix else prefix.upper() + '_', k.upper(), v_rstrip))
+    except IOError as e:
+        logger.fatal('Failed to write to file {}: {}'.format(temp_file_name, e))
+        fh.close()
+        if out_path and os.path.exists(out_path):
+            try:
+                os.unlink(out_path)
+            except:
+                pass
+        os.sys.exit(1)
+    finally:
+        fh.close()
 
-    return fh.name
+    return temp_file_name
 
 ################################################################################
 # Command-line arguments
@@ -124,6 +153,7 @@ parser.add_argument('-d', '--debug', action='store_true', help='Display debug me
 parser.add_argument('--yaml', help='Name of YAML build specification to find')
 parser.add_argument('--core', default=DEFAULT_CORE, help='Default core to test')
 parser.add_argument('--prefix', help='Prefix to add to make variables generated')
+parser.add_argument('--out', help='Explicit output makefile path; if omitted, a temporary file is used')
 args = parser.parse_args()
 
 if args.debug:
@@ -141,7 +171,7 @@ if not args.yaml:
 CFG_PATHS = [p.replace('<CV_CORE>', args.core.lower()) for p in CFG_PATHS]
 
 cfg_spec = read_file(file=args.yaml)
-temp_file = emit_make(cfg_spec=cfg_spec, prefix=args.prefix)
+temp_file = emit_make(cfg_spec=cfg_spec, prefix=args.prefix, out_path=args.out)
 
 logger.debug('File written to {}'.format(temp_file))
 print(temp_file)
