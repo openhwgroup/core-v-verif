@@ -88,7 +88,7 @@ class uvme_cv32e40p_env_c extends uvm_env;
    /**
     * Creates and starts the instruction and virtual peripheral sequences in active mode.
     */
-   extern virtual task run_phase(uvm_phase phase);
+   extern virtual task main_phase(uvm_phase phase);
 
    /**
     * Get virtual interface handles from UVM Configuration Database.
@@ -225,7 +225,7 @@ endfunction: connect_phase
 //   2. The calls to randomize() are on sequences that are only randomized
 //      once in this ENV.
 //
-task uvme_cv32e40p_env_c::run_phase(uvm_phase phase);
+task uvme_cv32e40p_env_c::main_phase(uvm_phase phase);
 
    uvma_obi_memory_fw_preload_seq_c fw_preload_seq;
    uvma_obi_memory_slv_seq_c        instr_slv_seq;
@@ -310,7 +310,7 @@ task uvme_cv32e40p_env_c::run_phase(uvm_phase phase);
       join_none
    end
 
-endtask : run_phase
+endtask : main_phase
 //@DVT_LINTER_WAIVER_END "MT20220302_01"
 
 
