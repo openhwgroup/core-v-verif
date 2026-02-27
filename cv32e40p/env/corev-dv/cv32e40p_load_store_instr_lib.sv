@@ -19,6 +19,7 @@
  class cv32e40p_multi_page_load_store_instr_stream extends riscv_multi_page_load_store_instr_stream;
     rand int          has_taken_avail_comp_reg[];
     riscv_reg_t       s0_a5_avail_regs[];
+    riscv_reg_t       s0_a5_avail_regs_q[$]; // a temp queue for using .find method
 
     constraint with_compress_instructions_c {
         has_taken_avail_comp_reg.size() == rs1_reg.size();
@@ -42,7 +43,16 @@
     function void pre_randomize();
       super.pre_randomize();
       s0_a5_avail_regs = {S0, S1, A0, A1, A2, A3, A4, A5};
-      s0_a5_avail_regs = s0_a5_avail_regs.find() with (!(item inside {cfg.reserved_regs, reserved_rd}));
+
+      s0_a5_avail_regs_q = s0_a5_avail_regs.find() with (!(item inside {cfg.reserved_regs, reserved_rd}));
+    
+      // resize the dynamic array to the temp queue
+      s0_a5_avail_regs = new[s0_a5_avail_regs_q.size()];
+
+      // copy content of temp queue to the dynamic array
+      for (int i = 0; i < s0_a5_avail_regs_q.size(); i++) begin
+        s0_a5_avail_regs[i] = s0_a5_avail_regs_q[i];
+      end
     endfunction
  endclass
 
@@ -50,6 +60,7 @@
  class cv32e40p_mem_region_stress_test extends riscv_mem_region_stress_test;
     rand int          has_taken_avail_comp_reg[];
     riscv_reg_t       s0_a5_avail_regs[];
+    riscv_reg_t       s0_a5_avail_regs_q[$]; // a temp queue for using .find method
 
     constraint with_compress_instructions_c {
         has_taken_avail_comp_reg.size() == rs1_reg.size();
@@ -74,6 +85,15 @@
     function void pre_randomize();
       super.pre_randomize();
       s0_a5_avail_regs = {S0, S1, A0, A1, A2, A3, A4, A5};
-      s0_a5_avail_regs = s0_a5_avail_regs.find() with (!(item inside {cfg.reserved_regs, reserved_rd}));
+
+      s0_a5_avail_regs_q = s0_a5_avail_regs.find() with (!(item inside {cfg.reserved_regs, reserved_rd}));
+    
+      // resize the dynamic array to the temp queue
+      s0_a5_avail_regs = new[s0_a5_avail_regs_q.size()];
+
+      // copy content of temp queue to the dynamic array
+      for (int i = 0; i < s0_a5_avail_regs_q.size(); i++) begin
+        s0_a5_avail_regs[i] = s0_a5_avail_regs_q[i];
+      end
     endfunction
  endclass
