@@ -1,0 +1,8 @@
+name: mscratch_csr_access_test_32bit  
+uvm_test: mscratch_csr_access_test_32bit
+description: Test 32-bit write/read of mscratch CSR
+sim_top: top
+CV_SW_MARCH: rv32imc_zicsr
+CV_SW_CC: gcc
+CV_SW_CFLAGS: "-O2"
+
