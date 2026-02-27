@@ -1,0 +1,4 @@
+name: mscratch_csr_readwrite_access
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    test full 32-bit write/read access to mscratch csr
