@@ -112,13 +112,29 @@ A typical UVM test for CORE-V will extend three time consuming tasks:
    core’s CSRs do not require any configuration before execution begins.
    Any test that requires pre-compiled programs to be loaded into
    instruction memory should do that here.
-3. **run_phase():** for most tests, this is where the procedural code
-   for the test will reside. A typical example of the run-flow here
-   would be:
-   -  Raise an objection;
-   -  Assert the core’s fetch\_en input;
-   -  Wait for the core and/or environment(s) to signal completion;
-   -  Drop the objection.
+3. **run_phase():** The ``run_phase(uvm_phase phase)`` is the primary
+   time-consuming runtime phase in the base test. All components'
+   ``run_phase`` tasks execute concurrently and share the same phase
+   object. In the CORE-V environments, the base test uses this phase
+   to coordinate core execution and test lifetime via the UVM objection
+   mechanism. A typical run-flow is:
+
+   -  At the start of the test, the base test raises an objection on
+      the current phase (e.g. ``phase.raise_objection(this, "start test")``)
+      so that ``run_phase`` does not complete while the test is active.
+   -  After reset has completed, the base test asserts the core's
+      ``fetch_en`` input, allowing the core to begin fetching and
+      executing instructions from the loaded test program.
+   -  The base test then waits for a well-defined end-of-test
+      condition: either the test program indicates completion (for
+      self-checking tests) or the environment determines that the test
+      has finished (for non-self-checking tests, e.g. via quiescence
+      detection, scoreboards, or a watchdog timeout).
+   -  Once all checking has completed, the base test drops its
+      objection on the phase (e.g. ``phase.drop_objection(this, "end test")``).
+      When all objections in the environment have been dropped, the
+      ``run_phase`` is allowed to terminate and the UVM phase schedule
+      proceeds to the extract/report phases.
 
 Workarounds
 ~~~~~~~~~~~
@@ -144,7 +160,7 @@ aware of the test program and to respond accordingly as part of the
 run-flow.
 
 The UVM Testcases chapter of this document discusses how the configure_phase() and run_phase() manage the interaction between the UVM environment and the test program.
-This interaction is depends on the type of test program.
+This interaction depends on the type of test program.
 Illustration 8 shows how the CORE-V UVM base test supports a type 1 test program.
 
 .. figure:: ../images/type1.png
@@ -162,18 +178,24 @@ from the command-line. During the configuration phase the test signals
 the TB to load the memory. The TB assumes the test file already exists
 and will terminate the simulation if it does not.
 
-In the run phase the base test will assert the fetch_en input to the
-core which signals it to start running. The timing of this is randomized
-but keep in mind that it will always happen after reset is de-asserted
-(because resets are done in the reset phase, which always executes
-before the run phase).
+In the run phase the base test raises its objection on the phase, then
+asserts the ``fetch_en`` input to the core, which signals it to start
+running. The timing of this is randomized but it will always happen
+after reset is de-asserted (because resets are done in the ``reset_phase``,
+which always executes before the ``run_phase`` in the UVM phase schedule).
 
-At this point the run flow will simply wait for the test program to flag
-that it is done via the status flags virtual peripheral. The test
-program is also expected to properly assert the test pass or test fail
-flags. Note that the environment will wait for the test flags to asserts
-or until the environment’s watch dog timer fires. A watch-dog firing
-will terminate the simulation and is, by definition, a failure.
+At this point the run-flow waits for the test program (for self-checking
+tests) or the environment (for non-self-checking tests) to indicate
+completion. For self-checking tests this is done via the status flags
+virtual peripheral: the test program is expected to assert the test-pass
+or test-fail flags. For non-self-checking tests, completion is detected
+by the environment when its agents and monitors observe that the core
+and interfaces have become quiescent or when a watchdog timer expires.
+In all cases, once the appropriate completion condition has been observed
+and all checking is finished, the base test drops its objection to allow
+``run_phase`` to complete. The environment waits for completion or until
+the environment's watchdog timer fires; a watchdog firing will terminate
+the simulation and is, by definition, a failure.
 
 .. figure:: ../images/type4.png
    :name: TYPE4_Test_Program
