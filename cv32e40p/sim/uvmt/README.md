@@ -13,6 +13,9 @@ $(SIMULATOR)\_results/
         └── $(RUN_INDEX)
             ├── $(TEST).log
             ├── <optional_coverage_files>
+            ├── meta
+            │   ├── cfg-$(TEST)-$(CFG).mk
+            │   └── test-$(TEST)-$(RUN).mk
             ├── test_program
             │   ├── bsp
             │   │   ├── crt0.o
