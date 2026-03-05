@@ -66,6 +66,26 @@ Many CORE-V cores verified in CORE-V-VERIF use a reference model from [Imperas](
 Earlier generations of CORE-V-VERIF used the **_OVPsim Instruction Set Simulator_**, and as of March, 2023 we have transitioned to **_ImperasDV_**.
 To purchase a run-time license for ImperasDV, please contact Imperas at the link above.
 
+IMPERAS_HOME environment variable
+---------------------------------
+
+When you run with the Imperas reference model enabled (the default
+`USE_ISS=YES`, `ISS=IMPERAS`), the Imperas tools expect the environment
+variable `IMPERAS_HOME` to point to your ImperasDV installation root.
+
+Example setup in your shell:
+
+```bash
+export IMPERAS_HOME=/path/to/ImperasDV
+ls "$IMPERAS_HOME"/bin   # should list Imperas/OVPsim binaries
+```
+
+If `IMPERAS_HOME` is not defined and `USE_ISS` remains enabled, the
+Imperas tools are likely to fail with licensing or path errors.
+
+To run CORE-V-VERIF without the reference model, the Imperas tools (and
+thus `IMPERAS_HOME`) are not required; see below for `USE_ISS=NO`.
+
 To run CORE-V-VERIF without the reference model, set the `USE_ISS` make variable to "NO":
 ```
 $ make test TEST=hello-world SIMULATOR=<your-simulator> USE_ISS=NO
