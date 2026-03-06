@@ -10,14 +10,25 @@
 
 // *************************** WRITE DATA CHANNEL ************************** //
 
-module  uvma_axi_w_assert (uvma_axi_intf axi_assert);
+module  uvma_axi_w_assert #(parameter bit CHECK_STROBE = 0) (uvma_axi_intf axi_assert);
 
    import uvm_pkg::*;
 
 // *************************** Check if Write Signals are not equal to X or Z when WVALID is HIGH  (Section A3.2.2)************************** //
 
+   function automatic logic check_data_is_not_unknown(bit check_strb=0);
+      if (check_strb) begin
+         foreach (axi_assert.psv_axi_cb.w_strb[i]) begin
+            if (axi_assert.psv_axi_cb.w_strb[i] && $isunknown(axi_assert.psv_axi_cb.w_data[8*i +: 8])) return 1'b0;
+         end
+         return 1'b1;
+      end else begin
+         return !$isunknown(axi_assert.psv_axi_cb.w_data);
+      end
+   endfunction
+
    property AXI4_WDATA_X;
-      @(posedge axi_assert.clk && axi_assert.w_assertion_enabled) disable iff (!axi_assert.rst_n) axi_assert.psv_axi_cb.w_valid |-> (!$isunknown(axi_assert.psv_axi_cb.w_data));
+      @(posedge axi_assert.clk && axi_assert.w_assertion_enabled) disable iff (!axi_assert.rst_n) axi_assert.psv_axi_cb.w_valid |-> check_data_is_not_unknown(CHECK_STROBE);
    endproperty
 
    property AXI4_WSTRB_X;
