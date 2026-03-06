@@ -46,6 +46,7 @@ class uvma_rvfi_instr_mon_c#(int ILEN=DEFAULT_ILEN,
 
    `uvm_component_utils_begin(uvma_rvfi_instr_mon_c)
       `uvm_field_int(last_dcsr_nmip, UVM_DEFAULT)
+      `uvm_field_int(dcsr_ret_data,  UVM_DEFAULT)
       `uvm_field_object(cfg,         UVM_DEFAULT | UVM_REFERENCE)
       `uvm_field_object(cntxt,       UVM_DEFAULT | UVM_REFERENCE)
    `uvm_component_utils_end
