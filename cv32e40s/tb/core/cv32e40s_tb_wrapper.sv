@@ -54,6 +54,9 @@ module cv32e40s_tb_wrapper
     // signals to debug unit
     logic                         debug_req;
 
+    // core sleep (unused in simple tb)
+    logic                         core_sleep_o;
+
     // irq signals (not used)
     logic [0:31]                  irq;
     logic [0:4]                   irq_id_in;
