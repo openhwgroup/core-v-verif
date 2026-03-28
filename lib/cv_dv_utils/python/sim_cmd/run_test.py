@@ -32,8 +32,12 @@ parser.add_argument('--dump'     , dest='dump',      type=int, help='1: all sign
 parser.add_argument('--cover'    , dest='cover',     type=int, help='1: generate coverage file, 0: nothing is done, cover option are passed from yaml file ') #FIXME
 parser.add_argument('--stdout'   , dest='stdout', type=int, help='1: stdout 0: nostdout')
 parser.add_argument('--outdir'   , dest='outdir', type=str, help='output dirctory default "output"')
+parser.add_argument('--verbose'  , dest='verbose', action='store_true', help='print info messages, default False')
+parser.add_argument('--run_time' , dest='run_time', type=str, help='simulation run time ex: 100ns, default -all')
 
 args = parser.parse_args()
+verbose = args.verbose
+run_time = args.run_time if args.run_time is not None else "-all"
 
 
 option_ok = 1
@@ -53,37 +57,39 @@ else:
 
 #set default values if seed, debug, batch, dump, stdout and outdir are not defined
 if args.seed == None:
-   print("[INFO] Setting default seed = 1")
+   if verbose: print("[INFO] Setting default seed = 1")
    seed = 1
 else:
    seed = args.seed
 
 if args.debug == None:
-   print("[INFO] Setting default UVM debug = UVM LOW")
+   if verbose: print("[INFO] Setting default UVM debug = UVM LOW")
    debug = "UVM_LOW"
 else:
    debug = args.debug
 
 if args.batch == None:
-   print("[INFO] Setting default mode = batch mode")
+   if verbose: print("[INFO] Setting default mode = batch mode")
    batch = 1
 else:
    batch = args.batch
 
 if args.dump == None:
-   print("[INFO] Setting default dump = 0")
+   if verbose: print("[INFO] Setting default dump = 0")
    dump = 0
 else:
    dump = args.dump
 
+cover = args.cover if args.cover is not None else 0
+
 if args.stdout == None:
-   print("[INFO] Setting default output (-l)")
+   if verbose: print("[INFO] Setting default output (-l)")
    stdout = 1
 else:
    stdout = args.stdout
 
 if args.outdir == None:
-   print("[INFO] Setting default output directory = output")
+   if verbose: print("[INFO] Setting default output directory = output")
    outdir = "output"
 else:
    outdir = args.outdir
@@ -131,19 +137,26 @@ if option_ok == 1:
          dbg_dir = os.path.join(outdir, "questa_db")
          if os.path.isdir("{}".format(dbg_dir)) == False:
             os.system("mkdir {}".format(dbg_dir))
-         
+
          #Full path to output dbg
          db_file = os.path.join(dbg_dir, f"{test_name}_{seed}.db")
+
+         #directory that stores coverage UCDB files
+         if cover == 1:
+            cov_dir = os.path.join(outdir, "coverage")
+            if os.path.isdir("{}".format(cov_dir)) == False:
+               os.system("mkdir {}".format(cov_dir))
+            ucdb_file = os.path.join(cov_dir, f"{test_name}_{seed}.ucdb")
          
          #DO
          do_file = "questa_run.do"
          if os.path.isfile("{}".format(do_file)) == False:
-            print("[INFO]: creating new questa_run.do file...")
+            if verbose: print("[INFO]: creating new questa_run.do file...")
             os.system("touch {}".format(do_file))
          else:
-            print("[INFO]: removing old questa_run.do file...")
+            if verbose: print("[INFO]: removing old questa_run.do file...")
             os.system("rm {}".format(do_file))
-            print("[INFO]: creating new questa_run.do file...")
+            if verbose: print("[INFO]: creating new questa_run.do file...")
             os.system("touch {}".format(do_file))
          
          if batch == 1:
@@ -154,17 +167,21 @@ if option_ok == 1:
          if dump == 1:
             with open(do_file, "w") as do:
                if batch == 1:
-                  do.write("run -all\n")
+                  if cover == 1:
+                     do.write(f"coverage save -onexit {ucdb_file}\n")
+                  do.write(f"run {run_time}\n")
                   do.write("quit -f\n")
                else:
                   do.write("add log -r /*\n")
 
             dumpstr = f"-qwavedb=+wavefile={db_file}+signal+memory=4096+class+assertion -do {do_file}"
-            
+
          else:
             with open(do_file, "w") as do:
                if batch == 1:
-                  do.write("run -all\n")
+                  if cover == 1:
+                     do.write(f"coverage save -onexit {ucdb_file}\n")
+                  do.write(f"run {run_time}\n")
                   do.write("quit\n")
                else:
                   do.write("add log -r /*\n")
@@ -176,9 +193,11 @@ if option_ok == 1:
          else:
             stdoutstr = "-l"
 
-         print("[INFO]: Starting simulation with Questasim...")
-         sim_cmd = f"vsim -lib {worklib} {sim_opt} {batchstr} {dumpstr} -sv_seed {seed} +UVM_VERBOSITY={debug} +UVM_TESTNAME={test_name} {stdoutstr} {outdir}/{test_name}_{seed}.log"
-         print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
+         coverstr = "-coverage" if cover == 1 else ""
+
+         if verbose: print("[INFO]: Starting simulation with Questasim...")
+         sim_cmd = f"vsim -lib {worklib} {sim_opt} {batchstr} {coverstr} {dumpstr} -sv_seed {seed} +UVM_VERBOSITY={debug} +UVM_TESTNAME={test_name} {stdoutstr} {outdir}/{test_name}_{seed}.log"
+         if verbose: print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
          os.system(sim_cmd)
 
       elif entry['tool'] == "xcelium":
@@ -193,12 +212,12 @@ if option_ok == 1:
          #TCL
          tcl_file = "xlm_run.tcl"
          if os.path.isfile("{}".format(tcl_file)) == False:
-            print("[INFO]: creating new xlm_run.tcl file...")
+            if verbose: print("[INFO]: creating new xlm_run.tcl file...")
             os.system("touch {}".format(tcl_file))
          else:
-            print("[INFO]: removing old xlm_run.tcl file...")
+            if verbose: print("[INFO]: removing old xlm_run.tcl file...")
             os.system("rm {}".format(tcl_file))
-            print("[INFO]: creating new xlm_run.tcl file...")
+            if verbose: print("[INFO]: creating new xlm_run.tcl file...")
             os.system("touch {}".format(tcl_file))
          
 
@@ -232,9 +251,9 @@ if option_ok == 1:
          else:
             stdoutstr = "-l"
             
-         print("[INFO]: Starting simulation with Xcelium...")
+         if verbose: print("[INFO]: Starting simulation with Xcelium...")
          sim_cmd = f"xrun -r {sim_opt} {batchstr} {dumpstr} -seed {seed} +UVM_VERBOSITY={debug} +UVM_TESTNAME={test_name} {stdoutstr} {outdir}/{test_name}_{seed}.log"
-         print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
+         if verbose: print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
          os.system(sim_cmd)
 
 
@@ -250,12 +269,12 @@ if option_ok == 1:
          #TCL
          tcl_file = "vcs_run.tcl"
          if os.path.isfile("{}".format(tcl_file)) == False:
-            print("[INFO]: creating new vcs_run.tcl file...")
+            if verbose: print("[INFO]: creating new vcs_run.tcl file...")
             os.system("touch {}".format(tcl_file))
          else:
-            print("[INFO]: removing old vcs_run.tcl file...")
+            if verbose: print("[INFO]: removing old vcs_run.tcl file...")
             os.system("rm {}".format(tcl_file))
-            print("[INFO]: creating new vcs_run.tcl file...")
+            if verbose: print("[INFO]: creating new vcs_run.tcl file...")
             os.system("touch {}".format(tcl_file))
 
 
@@ -290,9 +309,9 @@ if option_ok == 1:
          else:
             stdoutstr = "-l"
 
-         print("[INFO]: Starting simulation with VCS...")
+         if verbose: print("[INFO]: Starting simulation with VCS...")
          sim_cmd = f"./simv {sim_opt} {batchstr} {dumpstr} +ntb_random_seed={seed} +UVM_VERBOSITY={debug} +UVM_TESTNAME={test_name} {stdoutstr} {outdir}/{test_name}_{seed}.log"
-         print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
+         if verbose: print("[INFO] Simulation command:\n{}\n".format(sim_cmd))
          os.system(sim_cmd)
       else:
          print("[ERROR]: Not supported tool")

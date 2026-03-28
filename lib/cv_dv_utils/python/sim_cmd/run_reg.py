@@ -35,7 +35,10 @@ parser.add_argument('--reg_list'   ,dest='reglist'   , type=str, help='file that
 parser.add_argument('--nthreads'   ,dest='nthreads'  , type=int, help='Number of test run at the same time: default 2')
 parser.add_argument('--cover'    , dest='cover',     type=int, help='1: generate coverage file, 0: nothing is done, cover option are passed from yaml file ') #FIXME
 parser.add_argument('--outdir'     , dest='outdir'    , type=str, help='output directory: default regression')
+parser.add_argument('--verbose'    , dest='verbose'   , action='store_true', help='print info messages, default False')
 args = parser.parse_args()
+verbose = args.verbose
+cover = args.cover if args.cover is not None else 0
 
 #save the environment variables
 project_dir = os.environ["PROJECT_DIR"]
@@ -52,8 +55,8 @@ if args.nthreads == None:
 
 
 def rtest(yaml_file, test, seed):
-    run_cmd = f"python3 {scripts_dir}/run_test.py --yaml {yaml_file} --test_name {test} --seed {seed} --debug UVM_NONE --dump 0 --stdout 0 --outdir {outdir}"
-    print("[INFO] Simulation command:\n{}".format(run_cmd))
+    run_cmd = f"python3 {scripts_dir}/run_test.py --yaml {yaml_file} --test_name {test} --seed {seed} --debug UVM_NONE --dump 0 --stdout 0 --outdir {outdir} --cover {cover}"
+    if verbose: print("[INFO] Simulation command:\n{}".format(run_cmd))
     os.system(run_cmd)
     log = "{}/{}_{}.log".format(outdir, test, seed) 
     pattern = "{}/scripts/patterns/sim_patterns.pat".format(project_dir)
@@ -63,10 +66,10 @@ def rtest(yaml_file, test, seed):
     if ret == 0: 
         print ("passing", test, "seed", seed,  "end time", et.strftime("%Y-%m-%d %H:%M:%S"))
     else:
-        print(f"RET={ret}")
+        if verbose: print(f"RET={ret}")
         print ("failing", test, "seed", seed,  "end time", et.strftime("%Y-%m-%d %H:%M:%S"))
 
-print("[INFO] Starting compilation and elaboration...")
+print("Starting compilation and elaboration...")
 #check the insertion of the top yaml file
 if args.yaml_file == None: 
    print("[ERROR] Please provide a Top YAML file")
@@ -75,15 +78,15 @@ else:
      os.system("mkdir {}".format(outdir))
 
    #call the compilation and elaboration command
-   comp_el_cmd = f"python3 {scripts_dir}/compile.py --yaml {args.yaml_file}"
-   print("[INFO] Compilation and elaboration command:\n{}".format(comp_el_cmd))
+   comp_el_cmd = f"python3 {scripts_dir}/compile.py --yaml {args.yaml_file} --cover {cover}"
+   if verbose: print("[INFO] Compilation and elaboration command:\n{}".format(comp_el_cmd))
    #vopt_cmd = get_cmd.cmp_cmd(args.yaml_file, outdir, '', '', '')
    if comp_el_cmd != "":
      os.system(comp_el_cmd)
 
 #queues for test and seed
 if args.reglist == None:
-    print("Please provide a Regression List")
+    print("[ERROR] Please provide a Regression List")
 else:
   tq = queue.Queue()
   sq = queue.Queue()
