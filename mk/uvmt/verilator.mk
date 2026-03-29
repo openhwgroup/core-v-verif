@@ -1,24 +1,5 @@
-###############################################################################
-#
-# Copyright 2026 PlanV GmbH
-#
-# Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://solderpad.org/licenses/
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-###############################################################################
-#
-# Verilator-specific Makefile for the Core-V-Verif "uvmt" testbench.
-#
-###############################################################################
+# Copyright (c) 2026 PlanV GmbH
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # -------------------------------------
 # Testbench setup
@@ -106,8 +87,11 @@ verilate:
 	${SRC_ARGS} \
 	${WARNING_ARGS} > veri_results/verilate.log 2>&1
 
+NPROC_LIMIT ?= 6
+NPROC_USE := $(shell nproc=$$(nproc 2>/dev/null || echo $(NPROC_LIMIT)); [ $$nproc -gt $(NPROC_LIMIT) ] && echo $(NPROC_LIMIT) || echo $$nproc)
+
 comp: verilate
-	$(MAKE) -j${NPROC} -C $(SIM_DIR) $(BUILD_ARGS) -f $(SIM_NAME).mk
+	$(MAKE) -j$(NPROC_USE) -C $(SIM_DIR) $(BUILD_ARGS) -f $(SIM_NAME).mk
 
 run: comp
 	$(SIM_DIR)/$(SIM_NAME) +UVM_TESTNAME=$(UVM_TEST) $(VERI_SIM_FLAGS) +UVM_VERBOSITY=UVM_LOW
