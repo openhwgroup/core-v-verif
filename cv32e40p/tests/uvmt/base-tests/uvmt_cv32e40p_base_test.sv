@@ -376,8 +376,15 @@ endfunction : retrieve_vifs
 
 function void uvmt_cv32e40p_base_test_c::create_cfg();
 
-   test_cfg = uvmt_cv32e40p_test_cfg_c::type_id::create("test_cfg");
-   env_cfg  = uvme_cv32e40p_cfg_c     ::type_id::create("env_cfg" );
+   test_cfg      = uvmt_cv32e40p_test_cfg_c     ::type_id::create("test_cfg"     );
+   env_cfg       = uvme_cv32e40p_cfg_c          ::type_id::create("env_cfg"      );
+`ifdef VERILATOR_SIM
+   // VLT-workaround: these rand sub-objects must exist before randomize_test()
+   // is called, otherwise VLT's constraint solver null-dereferences them.
+   // env_cntxt is re-created later in create_cntxt() — this is just an early init.
+   test_randvars = uvmt_cv32e40p_test_randvars_c::type_id::create("test_randvars");
+   env_cntxt     = uvme_cv32e40p_cntxt_c        ::type_id::create("env_cntxt"    );
+`endif
    //ral      = env_cfg.ral;
 
 endfunction : create_cfg
