@@ -258,7 +258,7 @@ module uvmt_cv32e40p_tb;
                                 );
 
     /**
-    * Step-and-Compare logic
+    * Step-and-Compare logic 
     */
     uvmt_cv32e40p_step_compare step_compare (.clknrst_if(clknrst_if),
                                               .step_compare_if(step_compare_if) );
@@ -272,11 +272,11 @@ module uvmt_cv32e40p_tb;
     assign interrupt_if.deferint = iss_wrap.io.deferint;
     assign interrupt_if.ovp_cpu_state_stepi = step_compare_if.ovp_cpu_state_stepi;
 
-    // Interrupt modeling logic - used to time interrupt entry from RTL to the ISS
+    // Interrupt modeling logic - used to time interrupt entry from RTL to the ISS    
     wire [31:0] irq_enabled;
     reg [31:0] irq_deferint_ack;
     reg [31:0] irq_deferint_sleep;
-    reg        deferint_ack;
+    reg        deferint_ack;      
     reg [31:0] irq_mip;
     reg core_sleep_o_d;
 
@@ -332,7 +332,7 @@ module uvmt_cv32e40p_tb;
     end
 
     /**
-      * deferint deassertion logic, on negedge of ovp_cpu_state_stepi from the ISS the deferint has been consumed
+      * deferint deassertion logic, on negedge of ovp_cpu_state_stepi from the ISS the deferint has been consumed 
       */
     always @(negedge step_compare_if.ovp_cpu_state_stepi) begin
       if (iss_wrap.io.deferint == 0) begin
@@ -377,7 +377,7 @@ module uvmt_cv32e40p_tb;
         for (int irq_idx=0; irq_idx<32; irq_idx++) begin
 
           // Leave ISS side asserted as long as RTL interrupt line is asserted
-          if (dut_wrap.cv32e40p_wrapper_i.irq_i[irq_idx])
+          if (dut_wrap.cv32e40p_wrapper_i.irq_i[irq_idx]) 
             irq_mip[irq_idx] <= 1'b1;
           // If deferint is low and ovp_cpu_state_stepi is asserted, then interrupt was consumed by model
           // Clear it now to avoid mip miscompare
@@ -559,7 +559,13 @@ module uvmt_cv32e40p_tb;
       int                fatal_count;
       static bit         sim_finished = 0;
 
+`ifdef VERILATOR_SIM
+      // VLT-workaround: VLT cannot resolve uvm_top.get_report_server()
+      // through the inheritance chain. Use static method instead.
+      rs            = uvm_report_server::get_server();
+`else
       rs            = uvm_top.get_report_server();
+`endif
       err_count     = rs.get_severity_count(UVM_ERROR);
       warning_count = rs.get_severity_count(UVM_WARNING);
       fatal_count   = rs.get_severity_count(UVM_FATAL);
