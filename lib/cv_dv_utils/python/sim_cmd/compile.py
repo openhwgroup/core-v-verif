@@ -110,6 +110,9 @@ else:
         os.system(elab_cmd)
 
     elif entry['tool'] == "xcelium":
+        if cover == 1:
+            print("[ERROR]: --cover option is only supported with questa")
+            exit(1)
         print("[INFO]: Starting compilation with Xcelium...")
         comp_cmd = f"xrun -compile {comp_opt} -f {filelist} -work {work_lib} -logfile {outdir}/xcelium_compile.log"
         print("[INFO] Compilation command:\n{}".format(comp_cmd))
@@ -121,6 +124,9 @@ else:
         os.system(elab_cmd)
 
     elif entry['tool'] == "vcs":
+        if cover == 1:
+            print("[ERROR]: --cover option is only supported with questa")
+            exit(1)
         print("[INFO]: Starting compilation and elaboration with VCS...")
         #removing existing timestamp for recompilation
         if os.path.isfile("simv.daidir/.vcs.timestamp") == True:

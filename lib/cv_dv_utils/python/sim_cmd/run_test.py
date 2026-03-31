@@ -201,6 +201,9 @@ if option_ok == 1:
          os.system(sim_cmd)
 
       elif entry['tool'] == "xcelium":
+         if cover == 1:
+            print("[ERROR]: --cover option is only supported with questa")
+            exit(1)
          #directory that stores shm files
          shm_dir = os.path.join(outdir, "xlm_db")
          if os.path.isdir("{}".format(shm_dir)) == False:
@@ -258,6 +261,9 @@ if option_ok == 1:
 
 
       elif entry['tool'] == "vcs":
+         if cover == 1:
+            print("[ERROR]: --cover option is only supported with questa")
+            exit(1)
          #directory that stores fsbd files
          fsdb_dir = os.path.join(outdir, "vcs_db")
          if os.path.isdir("{}".format(fsdb_dir)) == False:

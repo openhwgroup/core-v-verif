@@ -35,7 +35,7 @@ python3 compile.py --yaml yaml_file.yaml [--outdir output_dir] [--cover 0/1]
 |--------|-------------|---------|
 | `--yaml` | Top YAML file with compile and simulation options | required |
 | `--outdir` | Directory for compilation logs | `output` |
-| `--cover` | `1`: To pass coverage option during elab; `0`: no coverage | `0` |
+| `--cover` | `1`: instrument for coverage during elaboration (Questasim only); `0`: no coverage | `0` |
 
 ## Running a single test
 
@@ -51,7 +51,7 @@ python3 run_test.py --yaml yaml_file.yaml --test_name name_of_the_test --seed n_
 | `--debug` | UVM verbosity: `UVM_NONE/LOW/MEDIUM/HIGH/DEBUG` | `UVM_LOW` |
 | `--batch` | `1`: batch mode; `0`: GUI mode | `1` |
 | `--dump` | `1`: log all signals to waveform database; `0`: no dump | `0` |
-| `--cover` | `1`: enable coverage collection; `0`: disabled | `0` |
+| `--cover` | `1`: enable coverage collection (Questasim only); `0`: disabled | `0` |
 | `--stdout` | `1`: print log to stdout; `0`: redirect to log file | `1` |
 | `--outdir` | Output directory for logs and databases | `output` |
 | `--run_time` | Simulation run time (e.g. `100ns`) | `-all` |
@@ -68,7 +68,7 @@ python3 run_reg.py --yaml yaml_file.yaml --reg_list reg_list_file [--nthreads n]
 | `--yaml` | Top YAML file with compile and simulation options | required |
 | `--reg_list` | File listing tests and number of seeds | required |
 | `--nthreads` | Number of parallel simulation instances | `1` |
-| `--cover` | `1`: enable coverage for all tests; `0`: disabled | `0` |
+| `--cover` | `1`: enable coverage for all tests (Questasim only); `0`: disabled | `0` |
 | `--outdir` | Output directory | `regression` |
 | `--verbose` | Print informational messages | `False` |
 

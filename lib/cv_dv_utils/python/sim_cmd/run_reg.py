@@ -69,11 +69,19 @@ def rtest(yaml_file, test, seed):
         if verbose: print(f"RET={ret}")
         print ("failing", test, "seed", seed,  "end time", et.strftime("%Y-%m-%d %H:%M:%S"))
 
-print("Starting compilation and elaboration...")
+print("[INFO] Starting compilation and elaboration...")
 #check the insertion of the top yaml file
 if args.yaml_file == None: 
    print("[ERROR] Please provide a Top YAML file")
 else:
+   if cover == 1:
+      with open(args.yaml_file, 'r') as yaml_top:
+         reg_yaml = yaml.safe_load(yaml_top)
+      for entry in reg_yaml:
+         if entry['tool'] != "questa":
+            print("[ERROR]: --cover option is only supported with questa")
+            exit(1)
+
    if os.path.isdir("{}".format(outdir)) == False:
      os.system("mkdir {}".format(outdir))
 
