@@ -96,15 +96,8 @@ endfunction : read
 function void uvml_mem_c::readmemh(const ref string mem_file_path);
    string error_desc;
    int file = $fopen(mem_file_path, "r");
-`ifdef VERILATOR_SIM
-   // VLT-workaround: VLT translates SV variable 'errno' to C++ unchanged,
-   // where it collides with the <errno.h> macro.
-   int ferr = $ferror(file, error_desc);
-   if (ferr != 0) begin
-`else
-   int errno = $ferror(file, error_desc);
-   if (errno != 0) begin
-`endif
+   int errnum = $ferror(file, error_desc);
+   if (errnum != 0) begin
       `uvm_fatal("MEMREADMEMH", $sformatf("Cannot open %s for reading (error description: %s)", mem_file_path, error_desc))
    end
    else begin

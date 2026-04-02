@@ -557,13 +557,7 @@ module uvmt_cv32e40p_tb;
       int                fatal_count;
       static bit         sim_finished = 0;
 
-`ifdef VERILATOR_SIM
-      // VLT-workaround: VLT cannot resolve uvm_top.get_report_server()
-      // through the inheritance chain. Use static method instead.
       rs            = uvm_report_server::get_server();
-`else
-      rs            = uvm_top.get_report_server();
-`endif
       err_count     = rs.get_severity_count(UVM_ERROR);
       warning_count = rs.get_severity_count(UVM_WARNING);
       fatal_count   = rs.get_severity_count(UVM_FATAL);
