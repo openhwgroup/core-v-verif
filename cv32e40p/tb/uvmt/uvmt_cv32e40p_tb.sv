@@ -71,9 +71,7 @@ module uvmt_cv32e40p_tb;
 
    // Agent interfaces
    uvma_clknrst_if     clknrst_if          (); // clock and resets from the clknrst agent
-`ifndef VERILATOR_SIM
    uvma_clknrst_if     clknrst_if_iss      ();
-`endif
    uvma_debug_if       debug_if            ();
    uvma_interrupt_if   interrupt_if        (); // Interrupts
    uvma_interrupt_if   vp_interrupt_if     (); // Interrupts

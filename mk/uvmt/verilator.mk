@@ -49,8 +49,7 @@ WARNING_ARGS += -Wno-lint \
 	-Wno-ZERODLY \
 	-Wno-COMBDLY \
 	-Wno-UNOPTFLAT \
-	-Wno-BADSTDPRAGMA \
-	-Wwarn-CONSTRAINTIGN
+	-Wno-BADSTDPRAGMA
 
 # -------------------------------------
 # Some Useful args for debugging
