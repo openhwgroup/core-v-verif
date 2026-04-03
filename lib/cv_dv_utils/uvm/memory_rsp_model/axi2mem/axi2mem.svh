@@ -283,6 +283,10 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
              default     : aw_req.addr  = start_addr; // FIXME: Add other options 
             endcase
 
+            // -------------------------------------
+            // To reconstruct the response
+            // -------------------------------------
+            if(cnt == 0) q_num_aw_chan_req[aw_req.id].push_back(aw_req); 
             cnt++;
             aw_w_req.aw_chan = aw_req; 
             aw_w_req.w_chan  = w_req;
@@ -290,10 +294,6 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
 
          end while(w_req.last == 0);
 
-         // -------------------------------------
-         // To reconstruct the response
-         // -------------------------------------
-         q_num_aw_chan_req[aw_req.id].push_back(aw_req); 
        end
     endtask
 
