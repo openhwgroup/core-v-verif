@@ -87,7 +87,7 @@ class generic_agent #(type req_t, type rsp_t) extends uvm_agent;
     is_active = UVM_ACTIVE;
   endfunction: set_is_active
   function void set_is_passive();
-    is_passive = UVM_PASSIVE;
+    is_active = UVM_PASSIVE;
   endfunction: set_is_passive
  
   virtual task reset_phase( uvm_phase phase );
