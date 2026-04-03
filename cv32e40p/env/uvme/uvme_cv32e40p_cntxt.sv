@@ -32,7 +32,9 @@ class uvme_cv32e40p_cntxt_c extends uvm_object;
    virtual uvma_debug_if                      debug_vif    ; ///< Virtual interface for debug 
 
    // Hack to support backdoor updating of memory for vitual peripherals until we properly port RVFI/RVVI
+`ifndef VERILATOR_SIM
    virtual RVVI_memory                        rvvi_memory_vif;
+`endif
 
    // Agent context handles
    uvma_clknrst_cntxt_c    clknrst_cntxt;
