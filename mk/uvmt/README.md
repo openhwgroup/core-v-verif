@@ -43,7 +43,7 @@ The following features are excluded from Verilator simulation (details below):
 - Functional coverage collection
 - ISS/RVVI instruction-level co-simulation
 
-All other UVM testbench functionality (scoreboard, sequences, virtual peripherals, OBI protocol agents) operates normally.
+All other UVM testbench functionality (sequences, virtual peripherals, OBI protocol agents) operates normally. Note that while the scoreboard is compiled, it has nothing to do without a reference model (ISS).
 
 ### Features Excluded from Verilator Simulation
 
