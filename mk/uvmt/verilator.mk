@@ -43,14 +43,10 @@ SRC_ARGS += $(addprefix -f , $(VERILOG_DEFINE_FILES))
 
 EXTRA_ARGS += --timescale 1ns/1ps --error-limit 10000 +define+VERILATOR_SIM --vpi
 WARNING_ARGS += -Wno-lint \
-	-Wno-style \
 	-Wno-SYMRSVDWORD \
-	-Wno-IGNOREDRETURN \
 	-Wno-COVERIGN \
-	-Wno-ZERODLY \
 	-Wno-COMBDLY \
-	-Wno-UNOPTFLAT \
-	-Wno-BADSTDPRAGMA
+	-Wno-UNOPTFLAT
 
 # -------------------------------------
 # Some Useful args for debugging
