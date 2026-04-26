@@ -30,17 +30,18 @@ VERILOG_INCLUDE_DIRS = ${UVM_ROOT}/src $(DV_UVME_PATH) $(DV_UVMT_PATH)
 # -------------------------------------
 SIM_NAME ?= $(RTLSRC_VLOG_TB_TOP)
 SIM_DIR := $(SIM_NAME)-sim
-COMPILE_ARGS += -DUVM_NO_DPI +define+UVM_ENABLE_DEPRECATED_API
+COMPILE_ARGS += +define+UVM_ENABLE_DEPRECATED_API
 COMPILE_ARGS += --prefix $(SIM_NAME) -o $(SIM_NAME)
 
 INC_ARGS += $(addprefix +incdir+, $(VERILOG_INCLUDE_DIRS))
 SRC_ARGS += $(UVM_FILES)
+SRC_ARGS += ${UVM_ROOT}/src/dpi/uvm_dpi.cc
 UVMT_FLIST     := $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 UVMT_FLIST_VLT := $(SIM_DIR)/uvmt_$(CV_CORE_LC)_verilator.flist
 SRC_ARGS +=  -F $(CV_CORE_MANIFEST) -F $(UVMT_FLIST_VLT)
 SRC_ARGS += $(addprefix -f , $(VERILOG_DEFINE_FILES))
 
-EXTRA_ARGS += --timescale 1ns/1ps --error-limit 10000 +define+VERILATOR_SIM
+EXTRA_ARGS += --timescale 1ns/1ps --error-limit 10000 +define+VERILATOR_SIM --vpi
 WARNING_ARGS += -Wno-lint \
 	-Wno-style \
 	-Wno-SYMRSVDWORD \
