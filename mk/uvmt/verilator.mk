@@ -38,15 +38,17 @@ SRC_ARGS += $(UVM_FILES)
 SRC_ARGS += ${UVM_ROOT}/src/dpi/uvm_dpi.cc
 UVMT_FLIST     := $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 UVMT_FLIST_VLT := $(SIM_DIR)/uvmt_$(CV_CORE_LC)_verilator.flist
-SRC_ARGS +=  -F $(CV_CORE_MANIFEST) -F $(UVMT_FLIST_VLT)
+ISS_STUBS_VLT  := $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_verilator_iss_stubs.sv
+SRC_ARGS +=  -F $(CV_CORE_MANIFEST) -F $(UVMT_FLIST_VLT) $(ISS_STUBS_VLT)
 SRC_ARGS += $(addprefix -f , $(VERILOG_DEFINE_FILES))
 
-EXTRA_ARGS += --timescale 1ns/1ps --error-limit 10000 +define+VERILATOR_SIM --vpi
+EXTRA_ARGS += --timescale 1ns/1ps --error-limit 10000 +define+VERILATOR_SIM +define+$(CV_CORE_UC)_TRACE_EXECUTION --vpi
 WARNING_ARGS += -Wno-lint \
 	-Wno-SYMRSVDWORD \
 	-Wno-COVERIGN \
 	-Wno-COMBDLY \
-	-Wno-UNOPTFLAT
+	-Wno-UNOPTFLAT \
+	-Wno-MULTIDRIVEN
 
 # -------------------------------------
 # Some Useful args for debugging
