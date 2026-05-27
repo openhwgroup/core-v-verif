@@ -76,12 +76,34 @@ testscases inherited from the RISC-V foundation or the PULP-Platform
 team use them. As such they are likely to be deprecated and their use by
 new test programs developed for CORE-V is strongly discouraged.
 
+The CLINT Machine Timer and Sail Interrupt Generator were added to support
+the RISC-V Architectural Certification Tests (ACT4).
+ACT4's machine-mode interrupt and timer certification tests require the
+testbench to supply memory-mapped ``mtime``/``mtimecmp`` registers and a way
+to assert and clear ``mip.MSIP`` and ``mip.MEIP``.
+These two peripherals (below) provide exactly that, mirroring the RISC-V Sail
+reference model.
+
 +--------------------------+-----------------------+----------------------------------------------------------------+
 | Virtual Peripheral       | VP Address            | Action on Write                                                |
 |                          | (data_addr_i)         |                                                                |
 +==========================+=======================+================================================================+
 | Address Range Check      | >= 2**20              | Terminate simulation (unless address is one of the virtual     |
 |                          |                       | peripherals, below).                                           |
++--------------------------+-----------------------+----------------------------------------------------------------+
+| CLINT Machine Timer      | 32’h0200_4000         | MTIMECMP_LO: mtimecmp[31:0]. Resets to all-ones so MTIP        |
+|                          |                       | stays low until a test arms it. Readable and writable.         |
+|                          +-----------------------+----------------------------------------------------------------+
+|                          | 32’h0200_4004         | MTIMECMP_HI: mtimecmp[63:32]. Readable and writable.           |
+|                          +-----------------------+----------------------------------------------------------------+
+|                          | 32’h0200_BFF8         | MTIME_LO: mtime[31:0]. Free-running 64-bit counter that        |
+|                          |                       | increments every clock cycle; resets to 0 on reset.            |
+|                          |                       | Readable and writable.                                         |
+|                          +-----------------------+----------------------------------------------------------------+
+|                          | 32’h0200_BFFC         | MTIME_HI: mtime[63:32]. Readable and writable.                 |
+|                          |                       |                                                                |
+|                          |                       | MTIP (irq\_o[7], mip.MTIP) is level-sensitive: asserted        |
+|                          |                       | while mtime >= mtimecmp. Drives the core's irq_timer_i pin.    |
 +--------------------------+-----------------------+----------------------------------------------------------------+
 | Virtual Printer          | 32’h1000_0000         | $write("%c", wdata[7:0]);                                      |
 +--------------------------+-----------------------+----------------------------------------------------------------+
@@ -109,6 +131,19 @@ new test programs developed for CORE-V is strongly discouraged.
 |                          |                       |   wdata[15]    = start delay is random                         |
 |                          |                       +----------------------------------------------------------------+
 |                          |                       |   wdata[14:0]  = start delay or start random max rangee        |
++--------------------------+-----------------------+----------------------------------------------------------------+
+| Sail Interrupt Generator | 32’h1500_0020         | SIG Version (read-only). Reads return 32’h0001_0000            |
+|                          |                       | (version 1.0). Writes are ignored.                             |
+|                          +-----------------------+----------------------------------------------------------------+
+|                          | 32’h1500_0024         | SIG Platform (write-only). Sets or clears the machine-         |
+|                          |                       | mode interrupt lines asserted on irq\_o:                       |
+|                          |                       |                                                                |
+|                          |                       |   wdata[31]=1 sets the bits in irq\_o selected by              |
+|                          |                       |   wdata[30:0]; wdata[31]=0 clears them.                        |
+|                          |                       |                                                                |
+|                          |                       | Implemented bits: bit 3 (MSI, mip.MSIP), bit 11 (MEI,          |
+|                          |                       | mip.MEIP). Reserved bits are ignored. State is level-          |
+|                          |                       | sensitive and held until explicitly cleared.                   |
 +--------------------------+-----------------------+----------------------------------------------------------------+
 | Random Number Generator  | 32'h1500_1000         | Reads return a random 32-bit value with generated by the       |
 |                          |                       | simulator's random number generator.                           |
