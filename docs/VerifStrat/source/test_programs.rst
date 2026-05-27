@@ -76,6 +76,14 @@ testscases inherited from the RISC-V foundation or the PULP-Platform
 team use them. As such they are likely to be deprecated and their use by
 new test programs developed for CORE-V is strongly discouraged.
 
+The CLINT Machine Timer and Sail Interrupt Generator were added to support
+the RISC-V Architectural Certification Tests (ACT4).
+ACT4's machine-mode interrupt and timer certification tests require the
+testbench to supply memory-mapped ``mtime``/``mtimecmp`` registers and a way
+to assert and clear ``mip.MSIP`` and ``mip.MEIP``.
+These two peripherals (below) provide exactly that, mirroring the RISC-V Sail
+reference model.
+
 +--------------------------+-----------------------+----------------------------------------------------------------+
 | Virtual Peripheral       | VP Address            | Action on Write                                                |
 |                          | (data_addr_i)         |                                                                |
