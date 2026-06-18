@@ -177,40 +177,41 @@ task uvma_obi_memory_drv_c::run_phase(uvm_phase phase);
 
    if (cfg.enabled && cfg.is_active) begin
       drv_idle();
-      
+
       forever begin
-         // Wait for reset deasserted
-         wait(cntxt.vif.reset_n === 1);
-         
-         @(slv_mp.drv_slv_cb);
-         if (cntxt.vif.reset_n !== 1'b1) continue;
-         
-         cntxt.vif.release_nets();
-         
-         fork
-            begin
+               
+               cntxt.reset_deasserted_ev.wait_on();
+
                fork
-                  begin : chan_a
-                     forever begin
-                        drv_slv_gnt();
-                     end
-                  end
+                  begin
+                     
+                     @(slv_mp.drv_slv_cb);
 
-                  begin : chan_r
-                     if (cfg.drv_mode == UVMA_OBI_MEMORY_MODE_MSTR) begin
-                        drv_mstr_loop();
-                     end else begin
-                        drv_slv_loop();
-                     end
-                  end
-               join_none
+                     cntxt.vif.release_nets();
 
-               // Wait for reset to assert
-               wait(cntxt.vif.reset_n !== 1'b1);
-            end
-         join_any
-         disable fork;
-         
+                     fork
+                        begin : chan_a
+                           forever begin
+                              drv_slv_gnt();
+                           end
+                        end
+
+                        begin : chan_r
+                           if (cfg.drv_mode == UVMA_OBI_MEMORY_MODE_MSTR) begin
+                              drv_mstr_loop();
+                           end else begin
+                              drv_slv_loop();
+                           end
+                        end
+                     join
+                  end
+                  begin
+                     // Wait for reset to assert
+                     cntxt.reset_asserted_ev.wait_on();
+                  end
+               join_any
+               disable fork;
+
          // Cleanup in one place
          if (req != null) begin
             seq_item_port.item_done();
