@@ -2,8 +2,8 @@
 
 ## Introduction
 
-The Pulse Gererator is a SystemVerilog UVM module which is used to configure and generate pulses. Pulse Generator can be configured to generate multiple pulses. 
-A pulse can be a sysncronous pulse with respect to a clock or an asynchronous pulse. Timeunit of pico second is used to genarate an asynchronous pulse. 
+The Pulse Generator is a SystemVerilog UVM module which is used to configure and generate pulses. Pulse Generator can be configured to generate multiple pulses.
+A pulse can be a synchronous pulse with respect to a clock or an asynchronous pulse. Timeunit of pico second is used to generate an asynchronous pulse.
 
 ## Configuration
 
@@ -16,7 +16,7 @@ Here are the parameters that user should configure
     
     //////////////////////////////////////////////////////
     // if 1: Generate a pulse synchronous to a clock
-    //    0: Generate an asynchronos pulse  
+    //    0: Generate an asynchronous pulse
     /////////////////////////////////////////////////////
     rand bit unsigned                m_pulse_clock_based;
 
@@ -77,6 +77,16 @@ Pulse driver provides following APIs.
     // ------------------------------------------------------------------------
     virtual function string convert2string();
 
+    // Return the current value of the internal pulse counter
+    function int get_pulse_cnt();
+```
+
+## Synchronisation
+The pulse driver exposes a `pulse_fired` event that is triggered after each pulse deasserts. Other testbench components can wait on this event to synchronise with individual pulse occurences without directly polling DUT interface.
+
+```
+    // Block until a pulse is detected
+    @(env.m_pulse_driver.pulse_fired);
 ```
 
 ## Integration guide

@@ -45,6 +45,7 @@ class pulse_gen_driver extends uvm_driver #( dummy_txn, dummy_txn ) ;
 
     event reset_asserted ;
     event reset_deasserted ;
+    event pulse_fired;
 
 
     //--------------------------------------------
@@ -158,8 +159,9 @@ class pulse_gen_driver extends uvm_driver #( dummy_txn, dummy_txn ) ;
         m_pulse_vif.wait_n_clocks(m_pulse_cfg.m_pulse_width);
         #(phase_shift_delay * 1ps);
         m_pulse_vif.m_pulse_out = 0;
-        if(m_pulse_cfg.m_pulse_num == m_pulse_cnt+1) break; 
-        m_pulse_cnt++; 
+        -> pulse_fired;
+        m_pulse_cnt++;
+        if(m_pulse_cfg.m_pulse_num == m_pulse_cnt) break; 
       end
     endtask
 
@@ -174,9 +176,14 @@ class pulse_gen_driver extends uvm_driver #( dummy_txn, dummy_txn ) ;
         m_pulse_vif.m_pulse_out = 1;
         #(m_pulse_cfg.m_pulse_width * 1ps);
         m_pulse_vif.m_pulse_out = 0;
-        if(m_pulse_cfg.m_pulse_num == m_pulse_cnt+1) break; 
         m_pulse_cnt++; 
+        if(m_pulse_cfg.m_pulse_num == m_pulse_cnt) break; 
       end
     endtask
+
+    // Get pulse counter
+    function int get_pulse_cnt();
+      return m_pulse_cnt;
+    endfunction
 endclass : pulse_gen_driver
 

@@ -24,8 +24,11 @@ import re
 
 parser = argparse.ArgumentParser(description='compile options')
 parser.add_argument('--yaml'     ,dest='yaml_file', type=str, help='Top YAML with compile and simulation options')
-parser.add_argument('--outdir'   ,dest='outdir', type=str, help='Logs are directed to outdir: default output')
+parser.add_argument('--outdir'   ,dest='outdir',    type=str, help='Logs are directed to outdir: default output')
+parser.add_argument('--cover'    ,dest='cover',     type=int, help='1: instrument for coverage (adds +cover to vopt), 0: no coverage, default 0')
 args = parser.parse_args()
+
+cover = args.cover if args.cover is not None else 0
 
    
 
@@ -86,6 +89,8 @@ else:
     else:
        elab_opt = ""
 
+    cover_opt = "+cover" if cover == 1 else ""
+
     if 'top_entity' in comp:
       top  = comp['top_entity']
     else:
@@ -100,11 +105,14 @@ else:
         os.system(comp_cmd)
 
         print("[INFO]: Starting elaboration with Questasim...")
-        elab_cmd = f"vopt {elab_opt} -work {work_lib} {top} -o opt"
+        elab_cmd = f"vopt {cover_opt} {elab_opt} -work {work_lib} {top} -o opt"
         print("[INFO] Elaboration command:\n{}".format(elab_cmd))
         os.system(elab_cmd)
 
     elif entry['tool'] == "xcelium":
+        if cover == 1:
+            print("[ERROR]: --cover option is only supported with questa")
+            exit(1)
         print("[INFO]: Starting compilation with Xcelium...")
         comp_cmd = f"xrun -compile {comp_opt} -f {filelist} -work {work_lib} -logfile {outdir}/xcelium_compile.log"
         print("[INFO] Compilation command:\n{}".format(comp_cmd))
@@ -116,6 +124,9 @@ else:
         os.system(elab_cmd)
 
     elif entry['tool'] == "vcs":
+        if cover == 1:
+            print("[ERROR]: --cover option is only supported with questa")
+            exit(1)
         print("[INFO]: Starting compilation and elaboration with VCS...")
         #removing existing timestamp for recompilation
         if os.path.isfile("simv.daidir/.vcs.timestamp") == True:

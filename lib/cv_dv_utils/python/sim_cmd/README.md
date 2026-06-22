@@ -20,28 +20,67 @@
 
 # SIM CMD
 ## Introduction
-These are python scripts, they allow to compile and run a test. 
+Python scripts to compile, elaborate, and run UVM tests. Supports waveform dumping and coverage collection. Compatible with Questasim, Xcelium, and VCS.
 
 # Usage
-To compile a code in system verilog:
+
+## Compilation
+
+To compile and elaborate a design:
 ```
-python3 compile.py --yaml_file.yaml
+python3 compile.py --yaml yaml_file.yaml [--outdir output_dir] [--cover 0/1]
 ```
 
-To run a UVM test:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--yaml` | Top YAML file with compile and simulation options | required |
+| `--outdir` | Directory for compilation logs | `output` |
+| `--cover` | `1`: instrument for coverage during elaboration (Questasim only); `0`: no coverage | `0` |
+
+## Running a single test
+
 ```
-python3 run_test.py --yaml_file.yaml --test_name name_of_the_test --seed n_seed --debug UVM_verbosity --dump 0/1 --batch 0/1
+python3 run_test.py --yaml yaml_file.yaml --test_name name_of_the_test --seed n_seed [options]
 ```
 
-There is also the possibility to run a set of regression tests reported in a specified reg_list_file:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--yaml` | Top YAML file with compile and simulation options | required |
+| `--test_name` | Name of the UVM test to run | required |
+| `--seed` | Random seed | `1` |
+| `--debug` | UVM verbosity: `UVM_NONE/LOW/MEDIUM/HIGH/DEBUG` | `UVM_LOW` |
+| `--batch` | `1`: batch mode; `0`: GUI mode | `1` |
+| `--dump` | `1`: log all signals to waveform database; `0`: no dump | `0` |
+| `--cover` | `1`: enable coverage collection (Questasim only); `0`: disabled | `0` |
+| `--stdout` | `1`: print log to stdout; `0`: redirect to log file | `1` |
+| `--outdir` | Output directory for logs and databases | `output` |
+| `--run_time` | Simulation run time (e.g. `100ns`) | `-all` |
+| `--verbose` | Print informational messages | `False` |
+
+## Running a regression
+
 ```
-python3 run_reg.py --yaml_file.yaml --nthreads n --reg_list reg_list_file
+python3 run_reg.py --yaml yaml_file.yaml --reg_list reg_list_file [--nthreads n] [--cover 0/1] [--outdir output_dir]
 ```
-where the nthreads option specifies the occurences of the simulation tool that run in parallel.
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--yaml` | Top YAML file with compile and simulation options | required |
+| `--reg_list` | File listing tests and number of seeds | required |
+| `--nthreads` | Number of parallel simulation instances | `1` |
+| `--cover` | `1`: enable coverage for all tests (Questasim only); `0`: disabled | `0` |
+| `--outdir` | Output directory | `regression` |
+| `--verbose` | Print informational messages | `False` |
+
+## Coverage (Questasim only)
+
+To enable coverage, pass `--cover 1` to `compile.py` and `run_test.py` (or `run_reg.py` for regressions). Each test saves its UCDB file to `{outdir}/coverage/{test_name}_{seed}.ucdb`.
+
+## Waveform inspection
 
 The user can also use post_proc.py after batch mode simulations with dumping option enabled for inspecting the DUT waveforms:
 ```
-python3 ${SCRIPTS_DIR}/post_proc.py --tool user_tool --db_file ./path/to/db/file 
+python3 ${SCRIPTS_DIR}/post_proc.py --tool user_tool --db_file ./path/to/db/file
 ```
 
-The templates of yaml files are provided with the script, which can be used to compile and run the test with Questasim, Xcelium and VCS
+The templates of yaml files are provided with the script, which can be used to compile and run the test with Questasim, Xcelium and VCS.
