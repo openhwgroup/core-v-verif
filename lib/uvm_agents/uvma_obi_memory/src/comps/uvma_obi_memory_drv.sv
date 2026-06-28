@@ -214,7 +214,7 @@ task uvma_obi_memory_drv_c::run_phase(uvm_phase phase);
 
          // Cleanup in one place
          if (req != null) begin
-            seq_item_port.item_done();
+            // seq_item_port.item_done();
             req = null;
          end
          mon_trn_fifo.flush();
@@ -265,7 +265,9 @@ task uvma_obi_memory_drv_c::drv_mstr_loop();
 
       // 3. Send out to TLM and tell sequencer we're ready for the next sequence item
       mstr_ap.write(mstr_req);
-      seq_item_port.item_done();
+      if (cntxt.reset_deasserted_ev.is_on()) begin
+         seq_item_port.item_done();
+      end
       req = null;
    end
 
@@ -289,7 +291,9 @@ task uvma_obi_memory_drv_c::drv_slv_loop();
 
          // 2. Send out to TLM and tell sequencer we're ready for the next sequence item
          slv_ap.write(slv_req);
-         seq_item_port.item_done();
+         if (cntxt.reset_deasserted_ev.is_on()) begin
+            seq_item_port.item_done();
+         end
          req = null;
       end else begin
          drv_slv_idle();
