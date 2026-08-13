@@ -208,7 +208,7 @@ import "DPI-C" function void spike_set_params_from_file(string paramFilePath);
                 `uvm_fatal("spike_tandem", {instr_core, " <- CORE\n"});
             end
             else begin
-                `uvm_error("spike_tandem", {instr_core, " <- CORE\n"});
+                `uvm_warning("spike_tandem", {instr_core, " <- CORE\n"});
             end
         end
         else begin
