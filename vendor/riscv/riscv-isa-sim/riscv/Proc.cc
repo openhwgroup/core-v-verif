@@ -214,6 +214,47 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
         if (taken && !((mcountinhibit >> 9) & 1)) incr(this->hpm_branches_taken, 1);
       }
       if (compressed && !((mcountinhibit >> 10) & 1)) incr(this->hpm_instret_c, 1);
+
+      // Store verification: independently compute the store
+      // address/mask/data from Spike's own decode + register file.
+      // Allows a scoreboard component such as "spike_tandem" to check it
+      // against the RTL's self-reported rvfi_mem_addr/wmask/wdata.
+      if (is_store) {
+        auto &insn_obj = this->get_state()->last_inst_fetched;
+        reg_t base_addr, wdata;
+        uint64_t wmask;
+
+        if ((insn & MASK_C_SW) == MATCH_C_SW) {
+          base_addr = this->get_XPR(insn_obj.rvc_rs1s()) + insn_obj.rvc_lw_imm();
+          wdata     = this->get_XPR(insn_obj.rvc_rs2s());
+          wmask     = 0xF;
+        } else if ((insn & MASK_C_SWSP) == MATCH_C_SWSP) {
+          base_addr = this->get_XPR(2 /* x2 = sp; CSS format has no base field */) + insn_obj.rvc_swsp_imm();
+          wdata     = this->get_XPR(insn_obj.rvc_rs2());
+          wmask     = 0xF;
+        } else {
+          // SB/SH/SW share the S-type format.
+          base_addr = this->get_XPR(insn_obj.rs1()) + insn_obj.s_imm();
+          wdata     = this->get_XPR(insn_obj.rs2());
+          wmask     = ((insn & MASK_SW) == MATCH_SW) ? 0xF
+                     : ((insn & MASK_SH) == MATCH_SH) ? 0x3 : 0x1;
+        }
+
+        rvfi.mem_addr  = base_addr;
+        rvfi.mem_wmask = wmask;
+        rvfi.mem_wdata = wdata;
+      } else {
+        // The outer memset() only runs once before this function's
+        // do-while loop, not per iteration -- without an explicit clear
+        // here, a non-store instruction retired on a later loop iteration
+        // (e.g. the jump following a trap handler's epilogue store, under
+        // unified_traps) would otherwise inherit a stale nonzero
+        // mem_addr/wmask/wdata left behind by an earlier iteration's real
+        // store.
+        rvfi.mem_addr  = 0;
+        rvfi.mem_wmask = 0;
+        rvfi.mem_wdata = 0;
+      }
     }
 
     rvfi.rs1_addr = this->get_state()->last_inst_fetched.rs1();
@@ -397,6 +438,8 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
     if (this->get_xlen() == 32) {
       rvfi.pc_rdata &= 0xffffffffULL;
       rvfi.rd1_wdata &= 0xffffffffULL;
+      rvfi.mem_addr &= 0xffffffffULL;
+      rvfi.mem_wdata &= 0xffffffffULL;
     }
 
   } while (unified_traps && this->taken_trap && (this->which_trap >> 31));
