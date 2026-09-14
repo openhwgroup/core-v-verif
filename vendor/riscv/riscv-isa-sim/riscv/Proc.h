@@ -76,6 +76,21 @@ protected:
 
   commit_log_reg_t last_log_reg_write;
 
+  // Independently-modeled retirement-event HPM counters (mhpmcounter5..10:
+  // NumLoads/Stores/Jumps/Branches/BranchesTaken/InstrRetC, see Performance Counters
+  // in the CV32E20 User Manual.
+  std::shared_ptr<basic_csr_t> hpm_loads;          // mhpmcounter5
+  std::shared_ptr<basic_csr_t> hpm_stores;         // mhpmcounter6
+  std::shared_ptr<basic_csr_t> hpm_jumps;          // mhpmcounter7
+  std::shared_ptr<basic_csr_t> hpm_branches;       // mhpmcounter8
+  std::shared_ptr<basic_csr_t> hpm_branches_taken; // mhpmcounter9
+  std::shared_ptr<basic_csr_t> hpm_instret_c;      // mhpmcounter10
+
+  // CVE2's one hardware trigger hardwires every tmatch_control (tdata1)
+  // field except `execute` (see Proc.cc's CSR_TDATA1 handling). Defaults to
+  // false, matching the RTL's reset value.
+  bool cve2_trigger_execute = false;
+
   static std::unordered_map<char, std::tuple<uint64_t, uint64_t>> priv_ranges;
 
 };

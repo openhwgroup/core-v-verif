@@ -33,12 +33,10 @@ class uvma_debug_seq_item_c extends uvml_trn_seq_item_c;
    `uvm_object_utils_end
    
    
-   // TODO Add uvma_debug_seq_item_c constraints
-   //      Ex: constraint default_cons {
-   //             abc inside {0,2,4,8,16,32};
-   //          }
+   // Lower bound of 4 (rather than 1): a debug_req_i pulse that ends too soon after being
+   // asserted can be missed by the DUT if it arrives while the core is asleep in WFI.
    constraint active_cons {
-       active_cycles > 0 && active_cycles < 100;
+       active_cycles >= 4 && active_cycles < 100;
    }
    
    /**
