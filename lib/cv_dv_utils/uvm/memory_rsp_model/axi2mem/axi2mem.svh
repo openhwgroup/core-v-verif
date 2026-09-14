@@ -515,63 +515,53 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
     virtual task write_b_chan_fifo( );
        // Drive axi iterface
        b_chan_t        rsp;
-       int             cnt;
-       int             err_cnt;
-       int             ex_fail_cnt;
-       aw_ar_chan_t    req;
-       cnt     = 0; 
-       err_cnt = 0;
-       ex_fail_cnt = 0;
+       aw_ar_chan_t    req[integer];
+       int             cnt[integer];
+       int             err_cnt[integer];
+       int             ex_fail_cnt[integer];
+       int             id;
+
        forever begin
          @ (posedge mem_wr_vif.clk);
          if(mem_wr_vif.wr_res_valid) begin
+           id = int'(mem_wr_vif.wr_res_id);
 
-           // ------------------------------------------------------
-           // In a burst there could be multiple error responses  
-           // ------------------------------------------------------
-           if(mem_wr_vif.wr_res_err== 1) err_cnt++;
-           if(mem_wr_vif.wr_res_ex_fail == 1) ex_fail_cnt++;
+           if(!cnt.exists(id))
+             cnt[id] = 0;
 
-           // ------------------------------------------------------
-           // First response: Get the request 
-           // ------------------------------------------------------
-           if(cnt == 0) begin
-             req = q_num_aw_chan_req[mem_wr_vif.wr_res_id].pop_front;
-           end 
+           // At the burst boundary, associate the next response with its AW
+           // request and clear status accumulated for the previous burst.
+           if(cnt[id] == 0) begin
+             req[id]         = q_num_aw_chan_req[id].pop_front();
+             err_cnt[id]     = 0;
+             ex_fail_cnt[id] = 0;
+           end
 
-           // ------------------------------------------------------
-           // Error response 
-           // Depending on the status of exclusive accès 
-           // ------------------------------------------------------
-           if(req.lock == 1) begin
-             if(err_cnt == 0 && ex_fail_cnt == 0) begin
+           // In a burst there could be multiple error responses.
+           if(mem_wr_vif.wr_res_err == 1)     err_cnt[id]++;
+           if(mem_wr_vif.wr_res_ex_fail == 1) ex_fail_cnt[id]++;
+
+           // Determine the AXI response from the accumulated burst status.
+           if(req[id].lock == 1) begin
+             if(err_cnt[id] == 0 && ex_fail_cnt[id] == 0)
                rsp.resp = RESP_EXOKAY;
-             end else if(err_cnt == 0 && ex_fail_cnt == 1) begin
+             else if(err_cnt[id] == 0 && ex_fail_cnt[id] > 0)
                rsp.resp = RESP_OKAY;
-             end else if(err_cnt == 1) begin
+             else
                rsp.resp = RESP_SLVERR;
-             end 
-           end else begin 
-             if(err_cnt == 0) begin
-               rsp.resp = RESP_OKAY;
-             end else begin
-               rsp.resp = RESP_SLVERR;
-             end
+           end else begin
+             rsp.resp = (err_cnt[id] == 0) ? RESP_OKAY : RESP_SLVERR;
            end
 
            rsp.id   = mem_wr_vif.wr_res_id;
-           rsp.user = req.user;
+           rsp.user = req[id].user;
 
-           // ------------------------------------------------------
-           // check if the last response is received from the memory
-           // ------------------------------------------------------
-           if(req.len == cnt) begin
-             cnt     = 0;
-             err_cnt = 0;
-             ex_fail_cnt = 0;
+           // Emit B only after the final memory response of the burst.
+           if(req[id].len == cnt[id]) begin
              mb_b_chan.push_back(rsp);
+             cnt[id] = 0;
            end else begin
-             cnt++;
+             cnt[id]++;
            end
 
 
