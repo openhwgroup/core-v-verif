@@ -2,7 +2,7 @@
 
 This directory contains Verification Plans and plan templates applicable all CORE-V cores.
 
-Refer to the co-locted VerificationPlanning101.md for a description of the philosophy and implementation of CORE-V verification plans.
+Refer to the co-located [VerificationPlanning101](./VerificationPlanning101.md) for a description of the philosophy and implementation of CORE-V verification plans.
 
 The subdirectories contain a set of plans for each standard RISCV-V ISA base feature or extension.
 The general idea is that all planning regarding frozen RISC-V Unprivileged Specifications should remain in this directory.
