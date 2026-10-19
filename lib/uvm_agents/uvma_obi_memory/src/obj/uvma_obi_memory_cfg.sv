@@ -344,8 +344,8 @@ function bit uvma_obi_memory_cfg_c::calc_random_exokay(bit[31:0] addr);
 
    // Check for a directed error reponse first
    if (directed_slv_exokay_valid &&
-       (addr <= directed_slv_exokay_addr_min) &&
-       (addr <= directed_slv_exokay_addr_min)) begin
+       (addr >= directed_slv_exokay_addr_min) &&
+       (addr <= directed_slv_exokay_addr_max)) begin
       return 0;
    end
 
