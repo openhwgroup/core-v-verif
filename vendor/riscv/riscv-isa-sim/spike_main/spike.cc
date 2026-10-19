@@ -3,7 +3,7 @@
 #include "config.h"
 #include "cfg.h"
 #include "sim.h"
-#include "Simulation.h"
+#include "openhw/common/Simulation.h"
 #include "mmu.h"
 #include "arith.h"
 #include "remote_bitbang.h"
@@ -19,7 +19,7 @@
 #include <fstream>
 #include <limits>
 #include <cinttypes>
-#include "YamlParamSetter.h"
+#include "openhw/common/YamlParamSetter.h"
 #include "../VERSION"
 
 #define stringify(s) tostr(s)

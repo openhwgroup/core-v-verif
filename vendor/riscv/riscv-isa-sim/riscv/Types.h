@@ -7,7 +7,7 @@
 #include <memory>
 #include <thread>
 #include <sys/types.h>
-#include "Params.h"
+#include "openhw/common/Params.h"
 
 #define CSR_MAX_SIZE 4096
 

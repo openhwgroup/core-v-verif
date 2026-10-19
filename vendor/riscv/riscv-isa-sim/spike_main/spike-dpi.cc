@@ -14,7 +14,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <iostream>
-#include "riscv_dpi.cc"
+#include "openhw/common/riscv_dpi.cc"
 
 int main(int UNUSED argc, char** argv)
 {

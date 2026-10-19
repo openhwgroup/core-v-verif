@@ -14,8 +14,9 @@
 #include "cvxif.h"
 #include "mmu.h"
 #include <cstring>
-#include "Proc.h"
-#include "Params.h"
+// See 'reference/spike-implementation.md' for Core selection details
+#include "openhw/core_select.h"
+#include "openhw/common/Params.h"
 
 // Define custom insns templates.
 // The insn-level wrapper is 'c##n' (default implementation,

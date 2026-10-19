@@ -17,6 +17,13 @@
 #include <stdexcept>
 #include <string>
 
+// Note: there are multiple references in this file to 'register forwarding',
+//       or just simply 'forwarding'.  This is a process by which the state
+//       of certain CSRs in the RTL is written (forwarded) to the equivalent
+//       CSR in the Spike model.  In all cases, the reason for doign so will
+//       be justified.  In some cases, additional verification, that does not
+//       relay on this model, will be necessary.
+
 namespace openhw {
 st_rvfi Processor::step(size_t n, st_rvfi reference_) {
   st_rvfi rvfi;
@@ -60,8 +67,10 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
         if (cause) {
             enter_debug_mode(cause);
             rvfi.dbg = cause;
-            rvfi.trap = 0b101;
-            rvfi.trap |= (cause << 9);
+            // Do NOT preset rvfi.trap: CVE2 reports plain trap=0 on a
+            // debug-entry retirement (dbg/dbg_mode carry the entry signal
+            // instead). Presetting it here left nothing to clear it when
+            // step() below retires cleanly, mismatching every haltreq entry.
         }
     }
 
@@ -80,6 +89,12 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
 
     rvfi.pc_rdata = this->get_state()->pc;
 
+    // Snapshot before step(): dret clears debug_mode as part of its own
+    // execution (riscv/insns/dret.h), so dret's own retirement must report
+    // debug_mode=1 (the context it ran under), not the post-effect value --
+    // same convention as rvfi.mode/last_inst_priv below.
+    bool debug_mode_before_step = this->get_state()->debug_mode;
+
     processor_t::step(n);
 
     if (this->taken_trap && (this->which_trap >> 31))
@@ -97,7 +112,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
         }
     }
 
-    rvfi.dbg_mode = this->get_state()->debug_mode;
+    rvfi.dbg_mode = debug_mode_before_step;
 
     rvfi.mode = this->get_state()->last_inst_priv;
     rvfi.insn =
@@ -107,6 +122,140 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
     auto &reg_commits = this->get_state()->log_reg_write;
     int xlen = this->get_state()->last_inst_xlen;
     int flen = this->get_state()->last_inst_flen;
+
+    // Bump the independently-modeled HPM counters (mhpmcounter5..10, see
+    // Proc.h) for this retirement, gated on mcountinhibit like real hardware.
+    if (!rvfi.trap) {
+      reg_t mcountinhibit = get_state()->csrmap[CSR_MCOUNTINHIBIT]->read();
+      uint32_t insn = rvfi.insn;
+      bool compressed = (insn & 0x3) != 0x3;
+      reg_t insn_len = compressed ? 2 : 4;
+      reg_t pc_before = rvfi.pc_rdata;
+      reg_t pc_after = this->get_state()->pc;
+      reg_t pc_mask = (this->get_xlen() == 32) ? 0xffffffffULL : ~0ULL;
+      bool sequential = ((pc_after & pc_mask) == ((pc_before + insn_len) & pc_mask));
+
+      bool is_jump =
+          (insn & MASK_JAL)    == MATCH_JAL    ||
+          (insn & MASK_JALR)   == MATCH_JALR   ||
+          (insn & MASK_C_J)    == MATCH_C_J    ||
+          (insn & MASK_C_JAL)  == MATCH_C_JAL  ||
+          (insn & MASK_C_JR)   == MATCH_C_JR   ||
+          (insn & MASK_C_JALR) == MATCH_C_JALR;
+
+      bool is_base_branch =
+          (insn & MASK_BEQ)    == MATCH_BEQ    ||
+          (insn & MASK_BNE)    == MATCH_BNE    ||
+          (insn & MASK_BLT)    == MATCH_BLT    ||
+          (insn & MASK_BGE)    == MATCH_BGE    ||
+          (insn & MASK_BLTU)   == MATCH_BLTU   ||
+          (insn & MASK_BGEU)   == MATCH_BGEU;
+      bool is_compressed_branch =
+          (insn & MASK_C_BEQZ) == MATCH_C_BEQZ ||
+          (insn & MASK_C_BNEZ) == MATCH_C_BNEZ;
+      bool is_branch = is_base_branch || is_compressed_branch;
+
+      // "Taken" comes from the branch condition, not PC comparison: a
+      // branch whose target equals the fall-through PC (e.g. "beq x0, x0,
+      // 1f" with "1:" right after -- hpmcounter_basic_test does this) is
+      // still taken even though the PC doesn't change. Evaluate the real
+      // condition for base-ISA branches; compressed C.BEQZ/C.BNEZ fall back
+      // to the PC-comparison heuristic (untested simplification).
+      bool taken;
+      if (is_base_branch) {
+        reg_t rs1 = this->get_state()->last_inst_fetched.rs1();
+        reg_t rs2 = this->get_state()->last_inst_fetched.rs2();
+        reg_t v1 = this->get_XPR(rs1);
+        reg_t v2 = this->get_XPR(rs2);
+        uint32_t funct3 = (insn >> 12) & 0x7;
+        switch (funct3) {
+          case 0: taken = (v1 == v2); break;                    // BEQ
+          case 1: taken = (v1 != v2); break;                    // BNE
+          case 4: taken = ((sreg_t)v1 <  (sreg_t)v2); break;     // BLT
+          case 5: taken = ((sreg_t)v1 >= (sreg_t)v2); break;     // BGE
+          case 6: taken = (v1 <  v2); break;                    // BLTU
+          case 7: taken = (v1 >= v2); break;                    // BGEU
+          default: taken = !sequential; break;
+        }
+      } else {
+        taken = !sequential;
+      }
+
+      // log_mem_read/log_mem_write need get_log_commits_enabled(), which
+      // this DPI flow never sets -- detect loads/stores by opcode instead.
+      // Doesn't implement the "misaligned = two accesses" rule from
+      // doc/03_reference/performance_counters.rst (untested simplification).
+      bool is_load =
+          (insn & MASK_LB)     == MATCH_LB     ||
+          (insn & MASK_LBU)    == MATCH_LBU    ||
+          (insn & MASK_LH)     == MATCH_LH     ||
+          (insn & MASK_LHU)    == MATCH_LHU    ||
+          (insn & MASK_LW)     == MATCH_LW     ||
+          (insn & MASK_C_LW)   == MATCH_C_LW   ||
+          (insn & MASK_C_LWSP) == MATCH_C_LWSP;
+
+      bool is_store =
+          (insn & MASK_SB)     == MATCH_SB     ||
+          (insn & MASK_SH)     == MATCH_SH     ||
+          (insn & MASK_SW)     == MATCH_SW     ||
+          (insn & MASK_C_SW)   == MATCH_C_SW   ||
+          (insn & MASK_C_SWSP) == MATCH_C_SWSP;
+
+      // basic_csr_t has no bump() -- increment via read()+write(log=false)
+      // so this doesn't get mistaken for a CSR write by log_reg_write.
+      auto incr = [](std::shared_ptr<basic_csr_t> &c, reg_t n) {
+        c->write(c->read() + n, false);
+      };
+      if (is_load  && !((mcountinhibit >> 5)  & 1)) incr(this->hpm_loads, 1);
+      if (is_store && !((mcountinhibit >> 6)  & 1)) incr(this->hpm_stores, 1);
+      if (is_jump  && !((mcountinhibit >> 7)  & 1)) incr(this->hpm_jumps, 1);
+      if (is_branch) {
+        if (!((mcountinhibit >> 8) & 1)) incr(this->hpm_branches, 1);
+        if (taken && !((mcountinhibit >> 9) & 1)) incr(this->hpm_branches_taken, 1);
+      }
+      if (compressed && !((mcountinhibit >> 10) & 1)) incr(this->hpm_instret_c, 1);
+
+      // Store verification: independently compute the store
+      // address/mask/data from Spike's own decode + register file.
+      // Allows a scoreboard component such as "spike_tandem" to check it
+      // against the RTL's self-reported rvfi_mem_addr/wmask/wdata.
+      if (is_store) {
+        auto &insn_obj = this->get_state()->last_inst_fetched;
+        reg_t base_addr, wdata;
+        uint64_t wmask;
+
+        if ((insn & MASK_C_SW) == MATCH_C_SW) {
+          base_addr = this->get_XPR(insn_obj.rvc_rs1s()) + insn_obj.rvc_lw_imm();
+          wdata     = this->get_XPR(insn_obj.rvc_rs2s());
+          wmask     = 0xF;
+        } else if ((insn & MASK_C_SWSP) == MATCH_C_SWSP) {
+          base_addr = this->get_XPR(2 /* x2 = sp; CSS format has no base field */) + insn_obj.rvc_swsp_imm();
+          wdata     = this->get_XPR(insn_obj.rvc_rs2());
+          wmask     = 0xF;
+        } else {
+          // SB/SH/SW share the S-type format.
+          base_addr = this->get_XPR(insn_obj.rs1()) + insn_obj.s_imm();
+          wdata     = this->get_XPR(insn_obj.rs2());
+          wmask     = ((insn & MASK_SW) == MATCH_SW) ? 0xF
+                     : ((insn & MASK_SH) == MATCH_SH) ? 0x3 : 0x1;
+        }
+
+        rvfi.mem_addr  = base_addr;
+        rvfi.mem_wmask = wmask;
+        rvfi.mem_wdata = wdata;
+      } else {
+        // The outer memset() only runs once before this function's
+        // do-while loop, not per iteration -- without an explicit clear
+        // here, a non-store instruction retired on a later loop iteration
+        // (e.g. the jump following a trap handler's epilogue store, under
+        // unified_traps) would otherwise inherit a stale nonzero
+        // mem_addr/wmask/wdata left behind by an earlier iteration's real
+        // store.
+        rvfi.mem_addr  = 0;
+        rvfi.mem_wmask = 0;
+        rvfi.mem_wdata = 0;
+      }
+    }
 
     rvfi.rs1_addr = this->get_state()->last_inst_fetched.rs1();
     rvfi.rs1_rdata = this->get_XPR(reference->rs1_addr);
@@ -158,12 +307,20 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
           (rvfi.insn & MASK_CSRRWI) == MATCH_CSRRWI ) {
 
           reg_t read_csr = this->get_state()->last_inst_fetched.csr();
-          switch (read_csr) {
-          case CSR_MIP: // MIP
-          case 0xC00: // cycle
-          case 0xC80: // cycleh
-          case 0xB00: // mcycle
-          case 0xB80: // mcycleh
+          // mhpmcounter5..10 and CSR_MIP are excluded here -- independently
+          // modeled below/in Proc.h instead of forwarded, so a real mismatch
+          // can be caught instead of trusting the RTL's own value.
+          bool counter_csr =
+              read_csr == 0xC00      || // cycle
+              read_csr == 0xC80      || // cycleh
+              read_csr == CSR_MCYCLE || // mcycle
+              read_csr == CSR_MCYCLEH || // mcycleh
+              (read_csr >= CSR_MHPMCOUNTER3  && read_csr <= CSR_MHPMCOUNTER4)   || // NumCyclesLSU/IF (timing - forwarded)
+              (read_csr >= CSR_MHPMCOUNTER11 && read_csr <= CSR_MHPMCOUNTER31)  || // NumCyclesWFI/DivWait (timing) + unused/reserved
+              (read_csr >= CSR_MHPMCOUNTER3H && read_csr <= CSR_MHPMCOUNTER4H)  ||
+              (read_csr >= CSR_MHPMCOUNTER11H && read_csr <= CSR_MHPMCOUNTER31H) ||
+              (read_csr >= CSR_MHPMEVENT3    && read_csr <= CSR_MHPMEVENT31);      // mhpmevent3..31 (hardwired selectors)
+          if (counter_csr) {
 
             if (reference->rd1_addr) {
               this->set_XPR(reference->rd1_addr, this->xlen_format(reference->rd1_wdata));
@@ -191,10 +348,89 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
                     rvfi.csr_wdata[INDEX_CSR(read_csr)] = reference->csr_wdata[INDEX_CSR(read_csr)];
                 }
             }
-            break;
-          default:
-            break;
+          } else if (read_csr == CSR_MIP) {
+            // mip is a pure combinational reflection of the external IRQ
+            // lines (read-only, no software write path). Trusting the RTL's
+            // own readback would make this tautological, so compute it
+            // independently from the raw pre-DUT IRQ lines smuggled into
+            // reference->csr_rdata[CSR_MIP] by spike_tandem.sv (same
+            // mechanism as mcause above).
+            if (reference->rd1_addr) {
+              reg_t expected_mip = reference->csr_rdata[INDEX_CSR(CSR_MIP)];
+              this->set_XPR(reference->rd1_addr, this->xlen_format(expected_mip));
+              rvfi.rd1_wdata = expected_mip;
+            }
+          } else if (read_csr == CSR_TDATA1) {
+            // Independently model CVE2's fixed-function trigger CSR instead of
+            // trusting Spike's generic, reconfigurable trigger module. Mirrors
+            // cve2 tmatch_control_rdata bit-for-bit
+            reg_t tmatch_control = (2ULL << 28) | (1ULL << 27) | (1ULL << 12) |
+                                   (1ULL << 6) | (this->cve2_trigger_execute ? (1ULL << 2) : 0);
+
+            if (reference->rd1_addr) {
+              this->set_XPR(reference->rd1_addr, this->xlen_format(tmatch_control));
+              rvfi.rd1_wdata = tmatch_control;
+            }
+
+            // The RTL only latches bit 2 of the fully-computed write value,
+            // and only in debug mode (tmatch_control_we's debug_mode_i gate)
+            // -- replicate that arithmetic instead of trusting Spike's own
+            // CSR-write path.
+            uint32_t insn = rvfi.insn;
+            bool is_imm = (insn & MASK_CSRRWI) == MATCH_CSRRWI ||
+                          (insn & MASK_CSRRSI) == MATCH_CSRRSI ||
+                          (insn & MASK_CSRRCI) == MATCH_CSRRCI;
+            reg_t rs1_field = this->get_state()->last_inst_fetched.rs1();
+            reg_t operand = is_imm ? rs1_field : this->get_XPR(rs1_field);
+            bool is_rw  = (insn & MASK_CSRRW)  == MATCH_CSRRW  || (insn & MASK_CSRRWI) == MATCH_CSRRWI;
+            bool is_set = (insn & MASK_CSRRS)  == MATCH_CSRRS  || (insn & MASK_CSRRSI) == MATCH_CSRRSI;
+            bool is_clr = (insn & MASK_CSRRC)  == MATCH_CSRRC  || (insn & MASK_CSRRCI) == MATCH_CSRRCI;
+            bool does_write = is_rw || ((is_set || is_clr) && operand != 0);
+
+            if (does_write && this->get_state()->debug_mode) {
+              reg_t new_val = tmatch_control;
+              if (is_rw)       new_val = operand;
+              else if (is_set) new_val = tmatch_control | operand;
+              else if (is_clr) new_val = tmatch_control & ~operand;
+              this->cve2_trigger_execute = (new_val >> 2) & 1;
+            }
+          } else if (read_csr == CSR_MTVAL) {
+            // [RVpriv] permits mtval to be either 0 or the EBREAK's PC on a
+            // breakpoint exception. The CV32E20 User Manual states:
+            // "...For all other exceptions, mtval is 0." Ebreak
+            // is neither a load-store error nor illegal instruction, so 0 is
+            // the documented, correct value here. Spike's own default
+            // (ebreak.h: always the PC) must be overridden (forwarded).
+            reg_t mcause_now = this->get_csr(CSR_MCAUSE);
+            if (mcause_now == CAUSE_BREAKPOINT && reference->rd1_addr) {
+              this->set_XPR(reference->rd1_addr, this->xlen_format(0));
+              rvfi.rd1_wdata = 0;
+            }
           }
+      }
+    }
+
+    // The testbench is assumed to support a free-running TICKS counter and
+    // CLINT mtime/mtimeh CSRs that increment every RTL clock cycle -- unlike
+    // mip/tdata1/mtval above, this is testbench infrastructure, not DUT
+    // logic, so forwarding carries no risk.
+    {
+      // TODO: pass these values at compile or run-time (not hardcoded like this!).
+      constexpr reg_t MMADDR_TICKS  = 0x15001004ULL;
+      constexpr reg_t MMADDR_MTIME  = 0x0200BFF8ULL;
+      constexpr reg_t MMADDR_MTIMEH = 0x0200BFFCULL;
+      if (csr_counters_injection && !rvfi.trap &&
+          (reference->mem_addr == MMADDR_TICKS ||
+           reference->mem_addr == MMADDR_MTIME ||
+           reference->mem_addr == MMADDR_MTIMEH)) {
+        bool is_word_load =
+            (rvfi.insn & MASK_LW)     == MATCH_LW     ||
+            (rvfi.insn & MASK_C_LW)   == MATCH_C_LW   ||
+            (rvfi.insn & MASK_C_LWSP) == MATCH_C_LWSP;
+        if (is_word_load && reference->rd1_addr) {
+          this->set_XPR(reference->rd1_addr, this->xlen_format(reference->rd1_wdata));
+          rvfi.rd1_wdata = reference->rd1_wdata;
+        }
       }
     }
 
@@ -202,6 +438,8 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
     if (this->get_xlen() == 32) {
       rvfi.pc_rdata &= 0xffffffffULL;
       rvfi.rd1_wdata &= 0xffffffffULL;
+      rvfi.mem_addr &= 0xffffffffULL;
+      rvfi.mem_wdata &= 0xffffffffULL;
     }
 
   } while (unified_traps && this->taken_trap && (this->which_trap >> 31));
@@ -321,6 +559,51 @@ Processor::Processor(
 
   std::cerr << "### [SPIKE] Calling Processor::reset() on hart " << std::dec << this->get_id() << "..." << std::endl;
   this->reset();
+
+  // CVE2's tdata1.type is hardwired (not writable) -- per the Debug spec
+  // (riscv-debug-v1.0.0-stable.pdf §5.5.5), tinfo "is optional if ... type
+  // is not writable", and CVE2 does not implement it, so we expect an illegal
+  // instruction here.
+  get_state()->csrmap.erase(CSR_TINFO);
+
+  // Spike registers "mcontext" (0x7A8) as a proxy alias for hcontext (Debug
+  // spec §5.5.9) but never registers mscontext (0x7AA), even though §5.5.10
+  // says it's an alias for scontext the same way -- a plain Spike omission,
+  // not a CVE2 carve-out. CVE2 does implement this address.
+  get_state()->csrmap[CSR_MSCONTEXT] = std::make_shared<proxy_csr_t>(
+      this, CSR_MSCONTEXT, get_state()->csrmap[CSR_SCONTEXT]);
+
+  // CVE2-custom "secureseed" CSR (0x7C1)is  not standard RISC-V, so Spike has
+  // no knowledge of it and throws an illegal-instruction trap. Not an RTL defect
+  // (no RVpriv existence rule applies, same category as tinfo above).
+  get_state()->csrmap[0x7C1] = std::make_shared<const_csr_t>(this, 0x7C1, 0);
+
+  // Give mhpmcounter5..10 a real backing register (see Proc.h) so
+  // Processor::step() can increment them on qualifying retirements.
+  {
+    auto install_hpm_counter = [this](reg_t addr, reg_t addrh,
+                                       std::shared_ptr<basic_csr_t> &slot) {
+      slot = std::make_shared<basic_csr_t>(this, addr, 0);
+      if (this->get_xlen() == 32) {
+        get_state()->csrmap[addr]  = std::make_shared<rv32_low_csr_t>(this, addr, slot);
+        get_state()->csrmap[addrh] = std::make_shared<rv32_high_csr_t>(this, addrh, slot);
+      } else {
+        get_state()->csrmap[addr] = slot;
+      }
+    };
+    install_hpm_counter(CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER5H,  this->hpm_loads);
+    install_hpm_counter(CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER6H,  this->hpm_stores);
+    install_hpm_counter(CSR_MHPMCOUNTER7,  CSR_MHPMCOUNTER7H,  this->hpm_jumps);
+    install_hpm_counter(CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER8H,  this->hpm_branches);
+    install_hpm_counter(CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER9H,  this->hpm_branches_taken);
+    install_hpm_counter(CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER10H, this->hpm_instret_c);
+
+    // Real backing register for mcountinhibit (base Spike hardwires it
+    // read-only-0) so the shadow counters above honor software's inhibit
+    // bits, matching CVE2's documented gating (performance_counters.rst).
+    get_state()->csrmap[CSR_MCOUNTINHIBIT] =
+        std::make_shared<basic_csr_t>(this, CSR_MCOUNTINHIBIT, 0);
+  }
 }
 
 void Processor::take_trap(trap_t &t, reg_t epc) {

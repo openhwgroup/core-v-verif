@@ -6,7 +6,7 @@
 // For processor_t:
 #include "mmu.h"
 #include "processor.h"
-#include "Proc.h"
+#include "openhw/cv32e20/Proc.h"
 // For get_field():
 #include "decode_macros.h"
 // For trap_virtual_instruction and trap_illegal_instruction:

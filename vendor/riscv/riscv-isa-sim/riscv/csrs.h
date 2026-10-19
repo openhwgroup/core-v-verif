@@ -12,7 +12,7 @@
 #include "memtracer.h"
 #include <cassert>
 
-#include "csrs_ext.h"
+#include "openhw/common/csrs_ext.h"
 
 class processor_t;
 namespace openhw { class Processor; }

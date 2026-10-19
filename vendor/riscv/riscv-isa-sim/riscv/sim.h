@@ -7,7 +7,7 @@
 #include "debug_module.h"
 #include "devices.h"
 #include "log_file.h"
-#include "Proc.h"
+#include "openhw/core_select.h"
 #include "simif.h"
 #include "Types.h"
 

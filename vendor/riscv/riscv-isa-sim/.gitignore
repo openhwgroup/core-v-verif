@@ -1,5 +1,6 @@
 build/
 *.gch
+openhw/core_select.h
 autom4te.cache/
 .*.swp
 *.o

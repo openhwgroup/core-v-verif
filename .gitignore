@@ -36,8 +36,6 @@ waves.shm/
 *.log
 stdout.txt
 .vscode
-cva6
-cv32e20
 riviera_results/
 */vendor_lib/dpi_dasm_spike/
 */vendor_lib/verilab/svlib/
