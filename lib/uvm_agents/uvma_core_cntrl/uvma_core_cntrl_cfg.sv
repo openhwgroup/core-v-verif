@@ -746,6 +746,7 @@ function bit[MAX_XLEN-1:0] uvma_core_cntrl_cfg_c::get_misa();
    if (ext_a_supported)      get_misa[0] = 1;
    if (is_ext_b_supported()) get_misa[1] = 1;
    if (ext_c_supported)      get_misa[2] = 1;
+   if (ext_d_supported)      get_misa[3] = 1;
    if (ext_f_supported)      get_misa[5] = 1;
    if (ext_i_supported)      get_misa[8] = 1;
    if (ext_m_supported)      get_misa[12] = 1;
