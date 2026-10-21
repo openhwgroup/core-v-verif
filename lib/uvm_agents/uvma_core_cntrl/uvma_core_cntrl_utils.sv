@@ -70,6 +70,7 @@ function bit[MAX_XLEN-1:0] get_misa(st_core_cntrl_cfg cfg);
    if (cfg.ext_a_supported)         get_misa[0] = 1;
    if (is_ext_b_supported(cfg))     get_misa[1] = 1;
    if (cfg.ext_c_supported)         get_misa[2] = 1;
+   if (cfg.ext_d_supported)         get_misa[3] = 1;
    if (cfg.ext_f_supported)         get_misa[5] = 1;
    if (cfg.ext_i_supported)         get_misa[8] = 1;
    if (cfg.ext_m_supported)         get_misa[12] = 1;
