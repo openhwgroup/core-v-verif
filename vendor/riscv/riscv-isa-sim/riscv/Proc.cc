@@ -126,7 +126,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference_) {
     last_log_reg_write.clear();
 
     for (auto &reg : reg_commits) {
-        if ((reg.first >> 4) > 32) {
+        if ((reg.first & 0xF) == 4) {
             if (rvfi.trap) {
                 last_log_reg_write[reg.first] = reg.second;
             }
